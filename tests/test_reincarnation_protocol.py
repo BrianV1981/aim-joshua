@@ -1,38 +1,53 @@
 #!/usr/bin/env python3
-"""TDD: Verify reincarnation protocol simplification — no REINCARNATION_CONNECT.md redundancy."""
+"""TDD: Verify Ephemeral Context Injection — no continuity folder, no manual tmux relay."""
 import os, sys
 
 AIM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-failures = 0
 
-# Test 1: Wake-up prompt does NOT include REINCARNATION_CONNECT.md
-print("Test 1: Wake-up prompt excludes REINCARNATION_CONNECT.md (simplified protocol)")
-with open(os.path.join(AIM_ROOT, "aim_core", "aim_reincarnate.py")) as f:
-    content = f.read()
-if "REINCARNATION_CONNECT.md" not in content:
-    print("  PASS")
-else:
-    print("  FAIL: REINCARNATION_CONNECT.md still referenced in aim_reincarnate.py")
-    failures += 1
+def run_tests():
+    failures = 0
 
-# Test 2: AGENTS.md step 10c instructs extracting session name from stdout
-print("Test 2: AGENTS.md step 10c uses stdout-based session extraction")
-with open(os.path.join(AIM_ROOT, "AGENTS.md")) as f:
-    content = f.read()
-if "Extract the tmux session name from the script stdout output" in content:
-    print("  PASS")
-else:
-    print("  FAIL: Missing stdout-based session extraction in AGENTS.md step 10c")
-    failures += 1
+    # Test 1: aim_reincarnate.py does not reference REINCARNATION_CONNECT.md
+    print("Test 1: aim_reincarnate.py excludes REINCARNATION_CONNECT.md")
+    with open(os.path.join(AIM_ROOT, "aim_core", "aim_reincarnate.py")) as f:
+        content = f.read()
+    if "REINCARNATION_CONNECT.md" not in content:
+        print("  PASS")
+    else:
+        print("  FAIL: REINCARNATION_CONNECT.md still referenced in aim_reincarnate.py")
+        failures += 1
 
-# Test 3: aim_reincarnate.py no longer writes a connect file
-print("Test 3: aim_reincarnate.py does not write REINCARNATION_CONNECT.md")
-if "REINCARNATION_CONNECT.md" not in open(os.path.join(AIM_ROOT, "aim_core", "aim_reincarnate.py")).read():
-    print("  PASS")
-else:
-    print("  FAIL: REINCARNATION_CONNECT.md still referenced in aim_reincarnate.py")
-    failures += 1
+    # Test 2: AGENTS.md uses Ephemeral Context Injection
+    print("Test 2: AGENTS.md uses Ephemeral Context Injection (auto-inject, no continuity folder)")
+    with open(os.path.join(AIM_ROOT, "AGENTS.md")) as f:
+        content = f.read()
+    if "inject your gameplan directly into the new agent's wake-up prompt" in content:
+        print("  PASS")
+    else:
+        print("  FAIL: Missing auto-injection pattern")
+        failures += 1
+    if "continuity/" in content:
+        print("  FAIL: AGENTS.md still references continuity/ folder")
+        failures += 1
+    else:
+        print("  PASS (no continuity/ references)")
 
-print()
-print(f"Passed: {3 - failures}/3")
-sys.exit(failures)
+    # Test 3: Handoff references wake-up prompt, not file reading
+    print("Test 3: AGENTS.md handoff references wake-up prompt injection")
+    if "There is no continuity folder for you to read" in content:
+        print("  PASS")
+    else:
+        print("  FAIL: Missing 'no continuity folder' clause")
+        failures += 1
+    if "Ephemeral Context Injection" in content:
+        print("  PASS")
+    else:
+        print("  FAIL: Missing 'Ephemeral Context Injection'")
+        failures += 1
+
+    print()
+    print(f"Passed: {5 - failures}/5")
+    return failures
+
+if __name__ == "__main__":
+    sys.exit(run_tests())

@@ -85,6 +85,57 @@ class TestPhase5InitTemplates(unittest.TestCase):
         self.assertNotIn("Node.js V8 engine", content,
                          "T_SOUL must not reference Node.js V8 engine")
 
+    # ── #7: Ephemeral Context Injection (aim-agy alignment) ──────
+
+    def test_t_soul_no_continuity_folder_references(self):
+        """T_SOUL must not reference the abolished continuity/ folder."""
+        content = self._load_init_source()
+        t_soul = content.split('T_SOUL = """')[1].split('"""')[0] if 'T_SOUL = """' in content else ""
+        self.assertNotIn("continuity/", t_soul,
+                         "T_SOUL must not reference continuity/ folder after Ephemeral Context Injection")
+        self.assertNotIn("continuity/ISSUE_TRACKER.md", t_soul,
+                         "T_SOUL must not reference continuity/ISSUE_TRACKER.md via cat")
+
+    def test_t_soul_has_ephemeral_context_injection(self):
+        """T_SOUL must describe Ephemeral Context Injection — context in wake-up prompt, no file I/O."""
+        content = self._load_init_source()
+        t_soul = content.split('T_SOUL = """')[1].split('"""')[0] if 'T_SOUL = """' in content else ""
+        self.assertIn("wake-up prompt", t_soul,
+                      "T_SOUL must reference wake-up prompt for context injection")
+        self.assertIn("injected", t_soul,
+                      "T_SOUL must reference context injection pattern")
+
+    def test_t_soul_no_critical_protocol_block(self):
+        """CRITICAL PROTOCOL block must be removed — no more file read ordering rules."""
+        content = self._load_init_source()
+        t_soul = content.split('T_SOUL = """')[1].split('"""')[0] if 'T_SOUL = """' in content else ""
+        self.assertNotIn("CRITICAL PROTOCOL", t_soul,
+                         "T_SOUL must not contain CRITICAL PROTOCOL block")
+
+    def test_t_soul_no_catastrophic_memory_crashes(self):
+        """Catastrophic Memory Crashes subsection must be removed — crash recovery deprecated."""
+        content = self._load_init_source()
+        t_soul = content.split('T_SOUL = """')[1].split('"""')[0] if 'T_SOUL = """' in content else ""
+        self.assertNotIn("Catastrophic Memory Crashes", t_soul,
+                         "T_SOUL must not contain Catastrophic Memory Crashes subsection")
+
+    def test_t_soul_issue_tracker_injected(self):
+        """Issue tracker reference must use injected wake-up prompt, not cat of file."""
+        content = self._load_init_source()
+        t_soul = content.split('T_SOUL = """')[1].split('"""')[0] if 'T_SOUL = """' in content else ""
+        self.assertNotIn("ISSUE_TRACKER.md via `cat`", t_soul,
+                         "T_SOUL must not reference cat of ISSUE_TRACKER.md")
+        self.assertNotIn("ISSUE_TRACKER.md` via cat", t_soul,
+                         "T_SOUL must not reference cat of ISSUE_TRACKER.md")
+
+    def test_t_soul_new_reincarnation_trigger(self):
+        """Reincarnation trigger must match aim-agy: write to .aim_core/temp, auto-inject, auto-delete."""
+        content = self._load_init_source()
+        t_soul = content.split('T_SOUL = """')[1].split('"""')[0] if 'T_SOUL = """' in content else ""
+        # Should have the new pattern, not the old continuity/ path
+        self.assertNotIn("continuity/REINCARNATION_GAMEPLAN.md", t_soul,
+                         "T_SOUL must not write gameplan to continuity/ folder")
+
 
 class TestPhase5SkillsAndAgents(unittest.TestCase):
     """Phase 5, Issues #16-#17: Port skills and agents to OpenCode format."""

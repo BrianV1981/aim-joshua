@@ -109,7 +109,7 @@ You must write tests before or alongside your implementation. Prove the code wor
 ## 4. THE INDEX (DO NOT GUESS)
 If you need information about this project, the codebase, or your own rules, execute `{cli_name} search` for the specific files below:
 - **My Operating Rules:** `{cli_name} search "A_I_M_HANDBOOK.md"` (This is an Index Card. Read it to find the specific `POLICY_*.md` file you need, then run a second search to read that specific policy).
-- **My Current Tasks:** Read `continuity/ISSUE_TRACKER.md` via `cat`
+- **My Current Tasks:** Read the live Issue Tracker injected into your wake-up prompt, or manually query GitHub using the `gh issue list` command.
 - **The Project State:** Read `memory-wiki/index.md`
 - **The Operator Profile:** `{cli_name} search "OPERATOR_PROFILE.md"`
 
@@ -130,17 +130,13 @@ When you run into ANY type of question, architectural issue, or test failure, yo
 - Let the official documentation guide your fix. Do not rely on your base training weights if the documentation is available.
 - **Heuristic Search Mandate:** If you encounter an obscure error code, a hanging process, or a traceback not covered by official docs, you MUST execute `{cli_name} search "<error_snippet>" --full` to query the ingested troubleshooting cartridges (like `python_troubleshooting.engram`) for generalized human heuristics.
 - **HALT AND CATCH FIRE MANDATE:** If you encounter a catastrophic system state (e.g., `opencode.json` is missing or malformed, the context loader is broken, or a command is inexplicably hanging in an infinite panic loop), you MUST HALT immediately. Do not attempt to fix global configuration files. Do not guess. You must exit the execution loop and explicitly ask the Operator for intervention.
-- **Catastrophic Memory Crashes:** If the session compaction fails or the context window overflows, execute `{cli_name} crash` in a fresh terminal to autonomously extract the session signal, purge the JSON noise, and generate a clean handoff bridge without losing your place.
 
 ## 7. THE REINCARNATION PIPELINE & PREVIOUS SESSION CONTEXT
 You are part of a continuous, multi-agent relay race. When your context window fills up (the "Amnesia Problem"), you must undergo **Reincarnation**.
 1. **The Architecture:** Read `{cli_name} search "Reincarnation-Map.md"` to understand how your "Will" is passed to the next vessel.
-2. **The Handoff:** Before beginning any new tactical work or writing any code, **you must read the following files** to inherit the epistemic certainty of the previous session:
-1. `continuity/ISSUE_TRACKER.md` (The local zero-latency index of all active project tasks).
-
-*(NOTE: You MUST use `run_shell_command` with `cat` to read files inside the `continuity/` folder, as they are gitignored and the standard `read_file` tool will fail).*
-
-**CRITICAL PROTOCOL:** You MUST read `continuity/REINCARNATION_GAMEPLAN.md` BEFORE executing any tool calls to read other files in the `continuity/` folder. NEVER batch-read the Flight Recorder preemptively.
+2. **The Handoff (Ephemeral Context Injection):** Before beginning any new tactical work or writing any code, **you must carefully read your injected wake-up prompt** to inherit the epistemic certainty of the previous session. 
+Your wake-up prompt will dynamically contain the `REINCARNATION_GAMEPLAN.md` and the live `ISSUE_TRACKER`.
+There is no continuity folder for you to read; all context is injected directly into your brain on Turn 1.
 
 ## 8. ABSOLUTE WORKSPACE ISOLATION (THE SANDBOX)
 You must respect the operational boundaries of this specific project directory.
@@ -162,12 +158,8 @@ If you need instructions on how to use specific, complex tools, do not guess. Yo
 **When Context Gets Heavy:** Do not wait for a fatal memory crash. If you feel you are losing context or getting confused:
 1. Run `{cli_name} pulse` to manually generate a handoff document.
 2. **Agentic Reincarnation Protocol:** When the Operator types `/reincarnate` or `/{cli_name} reincarnate`, you MUST manually execute the handoff. Use the `run_shell_command` tool to:
-   a. Write a brief handover message to `continuity/REINCARNATION_GAMEPLAN.md`.
-   b. Execute `{cli_name} pulse` to save the state.
-   c. Spin up a new agent using: `tmux new-session -d -s aim_reincarnation_$(date +%s) -c $(pwd) "gemini --yolo --prompt-interactive 'Wake up. MANDATE: 1. Read AGENTS.md and acknowledge your core constraints. 2. Read continuity/REINCARNATION_GAMEPLAN.md and continuity/ISSUE_TRACKER.md before taking any action or responding. (NOTE: Use run_shell_command with cat to read the continuity files, as they are gitignored and your read_file tool will fail).'"`
-   d. Switch the Operator's view to the new session: `tmux switch-client -t aim_reincarnation_$(date +%s)`
-   e. Terminate your own dying session: `tmux kill-session -t $(tmux display-message -p '#S')`
-   *(Fallback: If the manual tmux commands fail, you may run `venv/bin/python aim_core/aim_reincarnate.py` as a backup).*
+   a. Write a structured handover message to `aim_core/temp/REINCARNATION_GAMEPLAN.md` covering: Commander's Summary, Tactical State, Key Files, Epistemic Warnings, and Immediate Next Action.
+   b. Execute `venv/bin/python aim_core/aim_reincarnate.py` to seamlessly teleport your context. The system will inject your gameplan directly into the new agent's wake-up prompt, delete the temp file, and safely self-terminate.
 
 ## 11. THE PROJECT WIKI (LONG-TERM MEMORY)
 - **To Read:** The project's synthesized lore and architecture live in the `memory-wiki/` folder. Always start by reading `memory-wiki/index.md`.
