@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# aim-opencode CLI wrapper — routes to local A.I.M. engine
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS_ROOT="$ROOT/aim-agy_os"
+VENV_PY="$ROOT/venv/bin/python3"
+CLI="$OS_ROOT/.aim_core/aim_cli.py"
+
+if [[ ! -x "$VENV_PY" ]]; then
+  echo "[aim-opencode] venv missing. Run: bash aim-agy_os/setup.sh" >&2
+  exit 1
+fi
+if [[ ! -f "$CLI" ]]; then
+  echo "[aim-opencode] aim_cli.py missing at $CLI" >&2
+  exit 1
+fi
+
+export PYTHONPATH="${OS_ROOT}:${OS_ROOT}/.aim_core${PYTHONPATH:+:$PYTHONPATH}"
+exec "$VENV_PY" "$CLI" "$@"
