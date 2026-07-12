@@ -122,7 +122,11 @@ class VectorBackend:
                 pa.field("vector", pa.list_(pa.float32(), 768))
             ])
             self.db.create_table(self.table_name, schema=schema)
-            
+            try:
+                t = self.db.open_table(self.table_name)
+                t.create_fts_index("content", replace=True)
+            except Exception:
+                pass
     def get_table(self):
         self.ensure_table()
         return self.db.open_table(self.table_name)
