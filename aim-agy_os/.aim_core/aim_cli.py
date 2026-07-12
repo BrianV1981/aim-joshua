@@ -19,8 +19,9 @@ if os.path.exists(venv_python) and sys.executable != venv_python:
     os.execv(venv_python, [venv_python] + sys.argv)
 
 # --- CONFIG BOOTSTRAP ---
-src_dir = os.path.join(aim_root, "aim_core")
-if src_dir not in sys.path: sys.path.append(src_dir)
+src_dir = current_dir  # nested .aim_core
+if src_dir not in sys.path: sys.path.insert(0, src_dir)
+if aim_root not in sys.path: sys.path.insert(0, aim_root)
 
 from config_utils import CONFIG, AIM_ROOT
 
@@ -34,7 +35,7 @@ if not os.path.exists(VENV_PYTHON):
         VENV_PYTHON = parent_venv
     else:
         VENV_PYTHON = sys.executable
-AIM_CORE_DIR = os.path.join(BASE_DIR, "aim_core")
+AIM_CORE_DIR = current_dir  # always the directory containing this aim_cli.py
 
 def run_script(script_path, args):
     """Executes an A.I.M. script with the provided arguments."""
@@ -86,7 +87,7 @@ def cmd_search(args):
 
 def cmd_wiki(args):
     """Manages the Persistent LLM Wiki."""
-    from aim_core.wiki_tools import search_wiki, process_wiki
+    from wiki_tools import search_wiki, process_wiki
     if args.wiki_command == "search":
         query = " ".join(args.query)
         search_wiki(query)
@@ -223,7 +224,7 @@ def cmd_bug_operator(args):
 def cmd_swarm(args):
     """Manages co-agent swarms via tmux orchestration."""
     import json
-    from aim_core.aim_swarm import spawn_coagent, send_message, capture_output, check_coagent, kill_coagent, list_sessions
+    from aim_swarm import spawn_coagent, send_message, capture_output, check_coagent, kill_coagent, list_sessions
     
     if args.swarm_command == "spawn":
         print(json.dumps(spawn_coagent(args.name, BASE_DIR, args.prompt), indent=2))
@@ -434,7 +435,7 @@ def cmd_sync(args):
     print("--- A.I.M. SYNC ---")
     try:
         from sovereign_sync import export_to_jsonl, import_from_jsonl
-        from aim_core.legacy_sqlite import ForensicDB
+        from legacy_sqlite import ForensicDB
         
         print("[1/3] Translating Engram DB...")
         db = ForensicDB()
@@ -465,12 +466,12 @@ def cmd_handoff(args):
 
 def cmd_audit(args):
     """Generates a strategic synthesis/morning report from recent sessions."""
-    from aim_core.audit_tools import run_audit
+    from audit_tools import run_audit
     run_audit(args.n)
 
 def cmd_recall(args):
     """Synthesizes memory recall from historical sessions."""
-    from aim_core.recall_tools import run_recall
+    from recall_tools import run_recall
     query = " ".join(args.query)
     run_recall(query)
 
@@ -737,7 +738,7 @@ def cmd_uninstall(args):
             if os.path.isfile(p): os.unlink(p)
             elif os.path.isdir(p): shutil.rmtree(p)
     else:
-        dirs = ["aim_core/", "aim_core/", "hooks/", "venv/", "archive/experimental/"]
+        dirs = [".aim_core/", ".aim_core/", "hooks/", "venv/", "archive/experimental/"]
         for d in dirs:
             p = os.path.join(BASE_DIR, d)
             if os.path.exists(p): shutil.rmtree(p)
@@ -816,7 +817,7 @@ def cmd_update(args):
         # 2. Ingest Sovereign Sync data
         try:
             from sovereign_sync import import_from_jsonl
-            from aim_core.legacy_sqlite import ForensicDB
+            from legacy_sqlite import ForensicDB
             print("[2/2] Ingesting Sovereign Sync data...")
             db = ForensicDB()
             sync_dir = os.path.join(project_dir, "archive/sync")
@@ -832,10 +833,10 @@ def cmd_update(args):
         print("--- A.I.M. FORK UPDATE ---")
         dry_run = getattr(args, "dry_run", False)
         try:
-            from aim_core.aim_opencode_update import run_updater
+            from aim_opencode_update import run_updater
             run_updater(dry_run=dry_run)
         except ImportError:
-            print("[ERROR] aim_opencode_update.py not found in aim_core/. Has it been built?")
+            print("[ERROR] aim_opencode_update.py not found in .aim_core/. Has it been built?")
         except Exception as e:
             print(f"[ERROR] Fork update failed: {e}")
 

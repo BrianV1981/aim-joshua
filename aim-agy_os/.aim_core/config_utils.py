@@ -47,7 +47,7 @@ def load_config():
             "archive_raw_dir": os.path.join(AIM_ROOT, "archive/raw"),
             "opencode_export_dir": os.path.join(AIM_ROOT, "archive/raw"),
             "continuity_dir": os.path.join(AIM_ROOT, "continuity"),
-            "src_dir": os.path.join(AIM_ROOT, "aim_core"),
+            "src_dir": os.path.join(AIM_ROOT, ".aim_core") if os.path.isdir(os.path.join(AIM_ROOT, ".aim_core")) else os.path.join(AIM_ROOT, "aim_core"),
             "tmp_chats_dir": os.path.join(home, f".gemini/tmp/{os.path.basename(AIM_ROOT)}/chats")
         },
         "models": {
