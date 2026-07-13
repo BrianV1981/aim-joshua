@@ -1,12 +1,10 @@
-"""Deprecated flat package: inject nested aim-agy_os/.aim_core onto sys.path."""
+"""Bootstrap: prefer nested aim-agy_os package alias."""
 from __future__ import annotations
-
 import sys
 from pathlib import Path
-
-_NESTED = Path(__file__).resolve().parents[1] / "aim-agy_os" / ".aim_core"
-_OS = Path(__file__).resolve().parents[1] / "aim-agy_os"
-for p in (_OS, _NESTED):
+_os = Path(__file__).resolve().parents[1] / "aim-agy_os"
+_core = _os / ".aim_core"
+for p in (_os, _core):
     s = str(p)
     if p.is_dir() and s not in sys.path:
         sys.path.insert(0, s)
