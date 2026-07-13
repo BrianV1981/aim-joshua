@@ -36,5 +36,5 @@ def trigger_background_pipelines(aim_root, workspace, session_id=None):
     except subprocess.TimeoutExpired as e:
         print(f"\n[WARNING] A reincarnation subprocess timed out: {e}\nContinuing reincarnation protocol anyway to preserve context...")
     except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Failed to generate handoff: {e}")
-        sys.exit(1)
+        # Pulse/scribe failure must not block vessel spawn — handoff is best-effort.
+        print(f"[WARNING] Handoff pipeline error (continuing reincarnation): {e}")
