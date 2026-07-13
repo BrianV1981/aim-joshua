@@ -73,16 +73,17 @@ def spawn_new_agent(workspace, session_name, wake_up_prompt):
         with open(gameplan_temp, "w", encoding="utf-8") as f:
             f.write(body.strip() + "\n")
 
+    # NOTE: do NOT use -f with a free-text message — OpenCode treats the text as a filename.
     short_msg = (
-        "REINCARNATION WAKE. Read REINCARNATION_WAKE.md in the workspace root and execute "
-        "it completely (doctor, wiki marker, HANDOFF_RECEIVED vessel=opencode). "
+        "REINCARNATION WAKE. Read the file REINCARNATION_WAKE.md in this directory "
+        "and execute every step completely (doctor, wiki marker search, report "
+        "HANDOFF_RECEIVED vessel=opencode WAKE_OK). "
         "Also read aim-agy_os/.aim_core/temp/REINCARNATION_GAMEPLAN.md if present. "
         "Do not invent unrelated tasks."
     )
 
     shell_cmd = (
-        f"exec {shlex.quote(cli)} run --interactive --auto "
-        f"-f {shlex.quote(wake_path)} {shlex.quote(short_msg)}"
+        f"exec {shlex.quote(cli)} run --interactive --auto {shlex.quote(short_msg)}"
     )
 
     try:
