@@ -16,22 +16,34 @@ def _merge_defaults(target, defaults):
 
 def find_aim_root():
     """
-    Dynamically discovers the A.I.M. root directory.
-    First checks the current working directory to support isolated workspaces.
-    Falls back to the physical installation directory.
+    Dynamically discovers the A.I.M. *vessel* project root (host repo hosting the OS).
+    Prefers nested aim-agy_os/.aim_core (lockstep with soul #99); falls back to legacy
+    core/CONFIG.json and setup.sh markers without treating aim-agy_os itself as root.
     """
-    # 1. Check current directory and parents (Dynamic Workspace Isolation)
     current = os.path.abspath(os.getcwd())
     while current != '/':
-        if os.path.exists(os.path.join(current, "core", "CONFIG.json")) or os.path.exists(os.path.join(current, "setup.sh")):
+        if os.path.isdir(os.path.join(current, "aim-agy_os", ".aim_core")):
+            return current
+        if os.path.isfile(os.path.join(current, "core", "CONFIG.json")):
+            return current
+        if os.path.isfile(os.path.join(current, "setup.sh")) and os.path.basename(current) not in (
+            "aim-agy_os", "aim_os", "aim-opencode_os"
+        ):
             return current
         current = os.path.dirname(current)
-        
-    # 2. Fallback to physical installation path (Global Execution)
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    here = os.path.abspath(__file__)
+    if os.path.basename(os.path.dirname(os.path.dirname(here))) in ("aim-agy_os", "aim_os"):
+        return os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    return os.path.dirname(os.path.dirname(here))
 
 AIM_ROOT = find_aim_root()
-CONFIG_PATH = os.path.join(AIM_ROOT, "core/CONFIG.json")
+_nested_cfg = os.path.join(AIM_ROOT, "aim-agy_os", ".aim_core", "CONFIG.json")
+_legacy_cfg = os.path.join(AIM_ROOT, "core", "CONFIG.json")
+if os.path.isfile(_nested_cfg) or os.path.isdir(os.path.join(AIM_ROOT, "aim-agy_os", ".aim_core")):
+    CONFIG_PATH = _nested_cfg
+else:
+    CONFIG_PATH = _legacy_cfg
 
 def load_config():
     """Loads, validates, and auto-repairs paths for the current machine."""

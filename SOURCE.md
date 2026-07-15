@@ -3,10 +3,10 @@
 | Field | Value |
 |-------|-------|
 | **Upstream** | aim-agy |
-| **Commit** | `619104de186415a54a8affe732cfe3c1303d8107` |
-| **Short** | `619104d` |
-| **Previous** | `be101453b659c61a74789d54d15b8e9091ccc374` |
-| **Date** | 2026-07-12 |
-| **Layout** | Nested `aim-agy_os/.aim_core/` canonical; flat `aim_core/` bootstrap-only |
+| **Commit** | `1505e2dcba84bb14a1bf36a02aac14d79a4f83f7` |
+| **Short** | `1505e2d` |
+| **Previous** | `8f25fe6dd6d0dc52cd35192fef64fb18a75a07c3` |
+| **Date** | 2026-07-14 |
+| **Layout** | Nested `aim-agy_os/.aim_core/` canonical; flat `aim_core/` / `core/` legacy fallbacks |
 | **Default vessel** | opencode |
-| **Notes** | Phase 2: dual-tree removed; communicate helper restored; OVERLAY_BOUNDARY mirrored. |
+| **Notes** | Port of soul #99: install-clean/agent scripts; nested CONFIG preference; blank host docs + OS gitignore in aim_init; config_utils nested discovery. OpenCode-specific init/plugins preserved. |

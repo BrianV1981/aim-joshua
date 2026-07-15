@@ -11,18 +11,37 @@ from datetime import datetime
 def find_aim_root(start_dir):
     current = os.path.abspath(start_dir)
     while current != '/':
-        if os.path.exists(os.path.join(current, "core/CONFIG.json")) or os.path.exists(os.path.join(current, "setup.sh")): return current
-        if os.path.exists(os.path.join(current, "setup.sh")): return current
+        # Nested layout (soul #99 / fleet lockstep)
+        if os.path.isdir(os.path.join(current, "aim-agy_os", ".aim_core")):
+            return current
+        if os.path.exists(os.path.join(current, "core/CONFIG.json")):
+            return current
+        if os.path.exists(os.path.join(current, "setup.sh")) and os.path.basename(current) not in (
+            "aim-agy_os", "aim_os", "aim-opencode_os"
+        ):
+            return current
         current = os.path.dirname(current)
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Prefer vessel root when this file lives under aim-agy_os/.aim_core/
+    here = os.path.abspath(__file__)
+    if os.path.basename(os.path.dirname(os.path.dirname(here))) in ("aim-agy_os", "aim_os"):
+        return os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    return os.path.dirname(os.path.dirname(here))
 
 BASE_DIR = find_aim_root(os.getcwd())
-CORE_DIR = os.path.join(BASE_DIR, "core")
-DOCS_DIR = os.path.join(BASE_DIR, "docs")
-ARCHIVE_DIR = os.path.join(BASE_DIR, "archive")
-HOOKS_DIR = os.path.join(BASE_DIR, "hooks")
-AIM_CORE_DIR = os.path.join(BASE_DIR, "aim_core")
-VENV_PYTHON = os.path.join(BASE_DIR, "venv/bin/python3")
+# Nested OS when present; else legacy flat layout under BASE_DIR
+OS_DIR = os.path.join(BASE_DIR, "aim-agy_os") if os.path.isdir(os.path.join(BASE_DIR, "aim-agy_os")) else BASE_DIR
+CORE_DIR = os.path.join(OS_DIR, ".aim_core") if OS_DIR != BASE_DIR else os.path.join(BASE_DIR, "core")
+if OS_DIR != BASE_DIR and not os.path.isdir(CORE_DIR):
+    CORE_DIR = os.path.join(OS_DIR, ".aim_core")
+DOCS_DIR = os.path.join(OS_DIR if OS_DIR != BASE_DIR else BASE_DIR, "docs")
+ARCHIVE_DIR = os.path.join(OS_DIR if OS_DIR != BASE_DIR else BASE_DIR, "archive")
+HOOKS_DIR = os.path.join(OS_DIR if OS_DIR != BASE_DIR else BASE_DIR, "hooks")
+AIM_CORE_DIR = (
+    os.path.join(OS_DIR, ".aim_core")
+    if OS_DIR != BASE_DIR
+    else (os.path.join(BASE_DIR, "aim_core") if os.path.isdir(os.path.join(BASE_DIR, "aim_core")) else os.path.join(BASE_DIR, ".aim_core"))
+)
+VENV_PYTHON = os.path.join(OS_DIR if OS_DIR != BASE_DIR else BASE_DIR, "venv/bin/python3")
 
 # --- INTERNAL TEMPLATES ---
 
@@ -495,7 +514,9 @@ def init_workspace(args=None):
     else:
         print("\n--- A.I.M. SOVEREIGN INSTALLER (Headless Mode) ---")
         
-    is_reinstall = os.path.exists(os.path.join(CORE_DIR, "CONFIG.json"))
+    is_reinstall = os.path.exists(os.path.join(CORE_DIR, "CONFIG.json")) or os.path.exists(
+        os.path.join(BASE_DIR, "aim-agy_os", ".aim_core", "CONFIG.json")
+    )
     mode = "INITIAL"
     
     is_light_mode = "--light" in args
@@ -763,10 +784,39 @@ def init_workspace(args=None):
         if mode == "OVERWRITE" or not os.path.exists(fp):
             with open(fp, 'w') as f: f.write(content)
             
-    config_path = os.path.join(CORE_DIR, "CONFIG.json")
+    # Nested CONFIG under aim-agy_os/.aim_core when nested OS present (fleet #99)
+    if OS_DIR != BASE_DIR:
+        config_path = os.path.join(OS_DIR, ".aim_core", "CONFIG.json")
+    else:
+        config_path = os.path.join(CORE_DIR, "CONFIG.json")
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
     if mode == "OVERWRITE" or not os.path.exists(config_path):
         config_dict = get_default_config(aim_root=BASE_DIR, gemini_tmp=gemini_tmp, allowed_root=allowed_root, obsidian_path=obsidian_path)
         with open(config_path, 'w') as f: json.dump(config_dict, f, indent=2)
+
+    # Blank host-facing docs if missing (never overwrite; never OS marketing)
+    for blank in ("README.md", "CHANGELOG.md", "VERSION", "CONTRIBUTING.md"):
+        bp = os.path.join(BASE_DIR, blank)
+        if not os.path.exists(bp):
+            open(bp, "w").close()
+
+    # Make A.I.M. OS paths invisible to host git (do not ignore blank host docs)
+    gitignore_path = os.path.join(BASE_DIR, ".gitignore")
+    ignore_entries = (
+        "\n# --- A.I.M. OS Exoskeleton ---\n"
+        ".gemini/\nAGENTS.md\naim-agy_os/\naim-agy_os_docs/\n.grok/\n.opencode/\n"
+        "memory-wiki/\nworkspace/\narchive/\ncontinuity/\nfoundry/\nengrams/\n"
+        "aim_core/\ncore/\n"
+    )
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path, "r") as f:
+            existing_ignore = f.read()
+        if "--- A.I.M. OS Exoskeleton ---" not in existing_ignore:
+            with open(gitignore_path, "a") as f:
+                f.write(ignore_entries)
+    else:
+        with open(gitignore_path, "w") as f:
+            f.write(ignore_entries.strip() + "\n")
 
     # Scaffold federated databases
     try:
