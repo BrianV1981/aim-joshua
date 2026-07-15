@@ -34,7 +34,17 @@ sys.path.insert(0, os.path.join(ENGINE, ".aim_core"))
 sys.path.insert(0, ENGINE)
 
 WIKI = os.path.join(VESSEL_ROOT, "memory-wiki")
-CONFIG_PATH = os.path.join(VESSEL_ROOT, "core", "CONFIG.json")
+def _resolve_config():
+    for c in (
+        os.path.join(VESSEL_ROOT, "core", "CONFIG.json"),
+        os.path.join(VESSEL_ROOT, "aim-agy_os", ".aim_core", "CONFIG.json"),
+        os.path.join(VESSEL_ROOT, ".aim_core", "CONFIG.json"),
+        os.path.join(ENGINE, ".aim_core", "CONFIG.json"),
+    ):
+        if os.path.isfile(c):
+            return c
+    return None
+CONFIG_PATH = _resolve_config()
 
 
 def _daemon_log(msg: str) -> None:

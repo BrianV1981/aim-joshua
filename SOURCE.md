@@ -3,10 +3,9 @@
 | Field | Value |
 |-------|-------|
 | **Upstream** | aim-agy |
-| **Commit** | `b4eba559666ff39d5635c49957bdf8dfe2dc42b5` |
-| **Short** | `b4eba55` |
-| **Previous** | `1505e2dcba84bb14a1bf36a02aac14d79a4f83f7` |
-| **Date** | 2026-07-14 |
+| **Commit** | `5b18bcf04d05bd5988029e84b648d738811dfefa` |
+| **Short** | `5b18bcf` |
+| **Date** | 2026-07-15 |
 | **Layout** | Nested `aim-agy_os/.aim_core/` canonical |
 | **Default vessel** | opencode |
-| **Notes** | Port #100: link_cli_alias.sh + install-agent/clean/core alias parity for headless. |
+| **Notes** | Lockstep B: wiki_compiler + AGENTS template; wiki_tools deterministic default; opencode agent mode preserved. |
