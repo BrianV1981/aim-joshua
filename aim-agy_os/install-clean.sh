@@ -59,27 +59,10 @@ echo "# A.I.M. Workspace
 This directory contains isolated Git Worktrees. When you type \`aim fix <id>\`, A.I.M. checks out a clean sandbox here to prevent you from working directly on the \`main\` branch." > aim-agy_os/workspace/README.md
 
 echo "    [*] Linking Local Alias ($CLI_NAME)..."
-RC_FILE="$HOME/.bashrc"
-if [ -f "$HOME/.zshrc" ]; then RC_FILE="$HOME/.zshrc"; fi
-
-# We set NODE_OPTIONS to 8GB (8192) to support heavy embedding processes and massive workspaces
-SED_ALIAS="alias $CLI_NAME='NODE_OPTIONS=\"--max-old-space-size=8192\" $CURRENT_DIR/aim-agy_os/venv/bin/python3 $CURRENT_DIR/aim-agy_os/.aim_core/aim_cli.py'"
-
-if ! grep -q "alias $CLI_NAME=" "$RC_FILE"; then
-    echo "" >> "$RC_FILE"
-    echo "$SED_ALIAS" >> "$RC_FILE"
-    echo "    [SUCCESS] Alias added to $RC_FILE"
-else
-    # Update existing alias to point to the new aim-agy_os path just in case
-    sed -i "s|alias $CLI_NAME=.*|$SED_ALIAS|g" "$RC_FILE"
-    echo "    [OK] Alias already exists (updated to new path)."
-fi
+bash ./aim-agy_os/link_cli_alias.sh "$CURRENT_DIR" "$CLI_NAME"
 
 echo ""
 echo "--- INSTALLATION COMPLETE ---"
-echo "CRITICAL: You MUST run this command now to load the alias:"
-echo "  source $RC_FILE"
-echo ""
 echo "A.I.M. is installed with default settings. To customize your agent's personality and project goals, run:"
 echo "  $CLI_NAME init"
 echo ""

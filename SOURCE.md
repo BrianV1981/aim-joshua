@@ -3,10 +3,10 @@
 | Field | Value |
 |-------|-------|
 | **Upstream** | aim-agy |
-| **Commit** | `1505e2dcba84bb14a1bf36a02aac14d79a4f83f7` |
-| **Short** | `1505e2d` |
-| **Previous** | `8f25fe6dd6d0dc52cd35192fef64fb18a75a07c3` |
+| **Commit** | `b4eba559666ff39d5635c49957bdf8dfe2dc42b5` |
+| **Short** | `b4eba55` |
+| **Previous** | `1505e2dcba84bb14a1bf36a02aac14d79a4f83f7` |
 | **Date** | 2026-07-14 |
-| **Layout** | Nested `aim-agy_os/.aim_core/` canonical; flat `aim_core/` / `core/` legacy fallbacks |
+| **Layout** | Nested `aim-agy_os/.aim_core/` canonical |
 | **Default vessel** | opencode |
-| **Notes** | Port of soul #99: install-clean/agent scripts; nested CONFIG preference; blank host docs + OS gitignore in aim_init; config_utils nested discovery. OpenCode-specific init/plugins preserved. |
+| **Notes** | Port #100: link_cli_alias.sh + install-agent/clean/core alias parity for headless. |
