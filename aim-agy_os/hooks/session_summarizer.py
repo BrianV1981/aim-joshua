@@ -17,11 +17,15 @@ def find_aim_root():
 
 AIM_ROOT = find_aim_root()
 sys.path.append(AIM_ROOT)
-sys.path.append(os.path.join(AIM_ROOT, "aim_core"))
+sys.path.append(os.path.join(AIM_ROOT, "aim-agy_os", ".aim_core"))
 
 from reasoning_utils import generate_reasoning
 from plugins.datajack.forensic_utils import chunk_text, get_embedding
-from aim_core.legacy_sqlite import ForensicDB
+from config_utils import AIM_ROOT as _UNUSED
+try:
+    from legacy_sqlite import ForensicDB
+except ImportError:
+    ForensicDB = None
 from wiki_tools import process_wiki
 
 CONFIG_PATH = os.path.join(AIM_ROOT, "core/CONFIG.json")
