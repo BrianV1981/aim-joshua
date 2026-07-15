@@ -1,194 +1,231 @@
 #!/usr/bin/env python3
-import os
-import json
-from extract_signal import skeleton_to_markdown
-import sys
+"""OpenCode vessel handoff: archive/raw session JSON → flight recorder → wiki daemon."""
+from __future__ import annotations
+
+import argparse
 import glob
+import json
+import os
+import sys
 from datetime import datetime
-from reasoning_utils import generate_reasoning, AIM_ROOT
+
+from reasoning_utils import AIM_ROOT
+
 try:
-    from extract_signal import extract_signal, skeleton_to_markdown
+    from extract_signal import (
+        extract_signal,
+        skeleton_to_markdown,
+        conversational_turn_count,
+    )
 except ImportError:
-    sys.path.append(os.path.join(AIM_ROOT, "aim_core"))
-    from extract_signal import extract_signal, skeleton_to_markdown
+    sys.path.append(os.path.join(AIM_ROOT, ".aim_core"))
+    from extract_signal import (
+        extract_signal,
+        skeleton_to_markdown,
+        conversational_turn_count,
+    )
 
-# --- CONFIGURATION (Load from core/CONFIG.json) ---
-CONFIG_PATH = os.path.join(AIM_ROOT, "core/CONFIG.json")
-with open(CONFIG_PATH, 'r') as f:
-    CONFIG = json.load(f)
+# Vessel root (parent of aim-agy_os when nested)
+VESSEL_ROOT = os.path.dirname(AIM_ROOT) if os.path.basename(AIM_ROOT) == "aim-agy_os" else AIM_ROOT
+CONFIG_PATH = os.path.join(VESSEL_ROOT, "core", "CONFIG.json")
+CONFIG = {}
+if os.path.isfile(CONFIG_PATH):
+    with open(CONFIG_PATH, "r") as f:
+        CONFIG = json.load(f)
 
-CONTINUITY_DIR = CONFIG['paths']['continuity_dir']
-ARCHIVE_RAW_DIR = CONFIG['paths'].get('opencode_export_dir', os.path.join(AIM_ROOT, "archive/raw"))
+paths = CONFIG.get("paths") or {}
+CONTINUITY_DIR = paths.get("continuity_dir") or os.path.join(VESSEL_ROOT, "continuity")
+ARCHIVE_RAW_DIR = paths.get("opencode_export_dir") or paths.get(
+    "archive_raw_dir"
+) or os.path.join(VESSEL_ROOT, "archive", "raw")
+os.makedirs(CONTINUITY_DIR, exist_ok=True)
+
+MIN_CONVERSATIONAL_TURNS = 1
+
 
 def atomic_write(file_path, content):
-    """
-    Safely writes content to a file by writing to a temporary file,
-    flushing, and then performing an atomic replacement.
-    """
     temp_path = f"{file_path}.tmp"
     try:
         with open(temp_path, "w", encoding="utf-8") as f:
             f.write(content)
             f.flush()
             os.fsync(f.fileno())
-        
-        # Perform the atomic swap
         os.replace(temp_path, file_path)
-    except Exception as e:
+    except Exception:
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        raise e
+        raise
 
-def generate_handoff_pulse():
-    """
-    Fast, Short-Term Continuity Engine.
-    Reads the latest significant session transcript from the prioritized session sources
-    (OpenCode exports first, Gemini CLI fallback), extracts the signal, and overwrites CURRENT_PULSE.md.
-    """
-    from config_utils import resolve_session_sources
 
-    sources = resolve_session_sources()
-    raw_files = []
-    for source_type, source_dir, file_pattern in sources:
-        if os.path.isdir(source_dir):
-            found = glob.glob(os.path.join(source_dir, file_pattern))
-            if found:
-                raw_files = found
-                break
+def find_session_files(explicit_session_id=None):
+    """Find OpenCode session JSON under archive/raw (and nested patterns)."""
+    found = []
+    if not os.path.isdir(ARCHIVE_RAW_DIR):
+        return found
+    patterns = [
+        os.path.join(ARCHIVE_RAW_DIR, "session-*.json"),
+        os.path.join(ARCHIVE_RAW_DIR, "*.json"),
+    ]
+    for pat in patterns:
+        for path in glob.glob(pat):
+            if path.endswith(".json") and os.path.isfile(path):
+                found.append(path)
+    # de-dupe
+    found = sorted(set(found), key=os.path.getmtime, reverse=True)
 
-    if not raw_files:
-        print("Handoff Generator: No raw transcripts found.")
-        return
-        
-    raw_files.sort(key=os.path.getmtime, reverse=True)
-    latest_transcript = raw_files[0]
-    
-    # Anti-Cannibalization Check: If the newest file is tiny (e.g. a brand new session that just woke up to run this), 
-    # skip it and grab the previous one so we don't overwrite a massive history with a 3-turn wake-up log.
-    if len(raw_files) > 1:
-        try:
-            with open(latest_transcript, 'r') as f:
-                lines = f.readlines()
-                valid_lines = [line for line in lines if line.strip()]
-                if len(valid_lines) < 15:
-                    print(f"Handoff Generator: {os.path.basename(latest_transcript)} has < 15 turns. Skipping to previous session to prevent context cannibalization.")
-                    latest_transcript = raw_files[1]
-        except Exception:
-            pass
-    
-    # 2. Extract Signal
-    try:
-        # Validate file is readable (format-aware)
-        with open(latest_transcript, 'r') as f:
-            content = f.read().strip()
-            if content.startswith('{'):
-                json.loads(content)  # single JSON object (OpenCode)
-            else:
-                for line in content.splitlines():
-                    if line.strip(): json.loads(line)  # JSONL (Gemini)
-            
-        skeleton = extract_signal(latest_transcript)
-        
-        # Write clean session artifact (Rolling Delta or Full History)
-        os.makedirs(CONTINUITY_DIR, exist_ok=True)
-        clean_path = os.path.join(CONTINUITY_DIR, "LAST_SESSION_FLIGHT_RECORDER.md")
-        
-        # Convert JSON skeleton into pure Markdown dialogue
-        session_id = os.path.basename(latest_transcript).replace('.jsonl', '')
-        md_content = skeleton_to_markdown(skeleton, session_id)
-        
-        now = datetime.now()
-        date_str = now.strftime('%Y-%m-%d')
-        timestamp_str = now.strftime('%H:%M:%S')
-        file_ts = now.strftime('%Y-%m-%d_%H%M')
-
-        # Pipeline 3: Historical Archive (Permanent Storage)
-        archive_dir = os.path.join(AIM_ROOT, "archive/history")
-        os.makedirs(archive_dir, exist_ok=True)
-        archive_path = os.path.join(archive_dir, f"{file_ts}_{session_id}.md")
-        atomic_write(archive_path, md_content)
-        print(f"      Historical Archive updated: {archive_path}")
-        
-        # Load configurable line limit, default to 0 (Full History)
-        tail_lines = CONFIG.get('settings', {}).get('handoff_context_lines', 0)
-        
-        if tail_lines > 0:
-            md_lines = md_content.splitlines()
-            if len(md_lines) > tail_lines:
-                truncated_lines = md_lines[-tail_lines:]
-            else:
-                truncated_lines = md_lines
-                
-            clean_content = "# A.I.M. Session Flight Recorder (Rolling Delta)\n"
-            clean_content += f"*This is a noise-reduced flight recorder showing only the last {tail_lines} lines. NOT automatically injected into LLM context.*\n\n"
-            clean_content += '\n'.join(truncated_lines) + '\n'
-            atomic_write(clean_path, clean_content)
-        else:
-            clean_content = "# A.I.M. Session Flight Recorder (Full History)\n"
-            clean_content += f"*This is a noise-reduced flight recorder showing the entire session. NOT automatically injected into LLM context.*\n\n"
-            clean_content += md_content + '\n'
-            atomic_write(clean_path, clean_content)
-            
-        # PHASE 33: Decoupled Brain (Frontline Mode)
-        # If this machine is just a frontline agent, drop the full transcript into the Obsidian Vault's Inbox
-        cognitive_mode = CONFIG.get('settings', {}).get('cognitive_mode', 'monolithic')
-        vault_path = CONFIG.get('settings', {}).get('obsidian_vault_path', '')
-        if cognitive_mode == 'frontline' and vault_path:
-            inbox_dir = os.path.join(vault_path, "AIM_Inbox")
-            os.makedirs(inbox_dir, exist_ok=True)
-            # The new mandate requires we route the Markdown file directly to avoid redundant parsing
-            inbox_file = os.path.join(inbox_dir, f"{session_id}.md")
-            atomic_write(inbox_file, md_content)
-            print(f"      [Frontline] Dropped Markdown session {session_id} into Obsidian AIM_Inbox.")
-        elif cognitive_mode == 'monolithic':
-            import subprocess
+    if explicit_session_id:
+        exclusive = []
+        for path in found:
+            base = os.path.basename(path)
+            if explicit_session_id in base or explicit_session_id in path:
+                exclusive.append(path)
+                continue
             try:
-                # Use Popen instead of run so the background compiler does not block the reincarnation handoff
-                log_path = os.path.join(AIM_ROOT, "memory-wiki", "daemon.log")
-                daemon_log = open(log_path, "a")
-                subprocess.Popen([sys.executable, os.path.join(AIM_ROOT, "aim-agy_os", "hooks", "session_summarizer.py"), "--reincarnate", archive_path], 
-                               stdout=daemon_log, stderr=daemon_log, start_new_session=True)
-                print(f"      [Monolithic] Triggered Subconscious Wiki Daemon & Vector Ingestion (Logging to memory-wiki/daemon.log).")
-            except Exception as e:
-                print(f"      [Monolithic] Subconscious daemon error: {e}")
-        
-        # --- PROJECT EDGE SYNTHESIS (High Fidelity) ---
-        # Instead of an LLM generation, we mechanically extract the last 5 conversational turns.
-        pulse_turns = []
-        if isinstance(skeleton, list):
-            for turn in skeleton:
-                role = turn.get('role', 'unknown').upper()
-                text = turn.get('text', '').strip()
-                # Only grab turns that actually have conversational text (ignore tool-only intermediate steps)
-                if role in ['USER', 'GEMINI', 'MODEL', 'ASSISTANT'] and text:
-                    pulse_turns.append(turn)
-        
-        last_5_turns = pulse_turns[-5:]
-        pulse_content = "## Last 5 Conversational Turns\n\n"
-        for turn in last_5_turns:
-            role_label = "USER" if turn.get('role', '').upper() == 'USER' else "A.I.M."
-            ts = turn.get('timestamp', '')
-            text = turn.get('text', '').strip()
-            pulse_content += f"### {role_label} ({ts})\n{text}\n\n---\n\n"
-        
-        if not last_5_turns:
-            pulse_content += "*(No conversational turns found)*\n\n"
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if str(data.get("sessionId", "")) == explicit_session_id:
+                    exclusive.append(path)
+            except Exception:
+                pass
+        return exclusive
+    return found
 
-    except Exception as e:
-        print(f"Handoff Generator: Signal extraction failure on {latest_transcript}: {e}")
-        return
 
+def session_id_from_path(path: str, data_hint=None) -> str:
+    if data_hint and isinstance(data_hint, dict) and data_hint.get("sessionId"):
+        return str(data_hint["sessionId"])
+    base = os.path.basename(path).replace(".json", "")
+    if base.startswith("session-"):
+        return base[len("session-") :]
+    return base
+
+
+def generate_handoff_pulse(explicit_session_id=None) -> int:
+    raw_files = find_session_files(explicit_session_id)
+    if not raw_files:
+        print(
+            f"Handoff Generator: [FATAL] No OpenCode session files "
+            f"(session_id={explicit_session_id!r}, dir={ARCHIVE_RAW_DIR})"
+        )
+        return 1
+
+    if explicit_session_id:
+        print(f"Handoff Generator: EXCLUSIVE session_id={explicit_session_id}")
+        latest = raw_files[0]
+    else:
+        latest = raw_files[0]
+        if len(raw_files) > 1:
+            try:
+                with open(latest, "r") as f:
+                    data = json.load(f)
+                msgs = data.get("messages") or []
+                if len(msgs) < 3:
+                    print("Handoff Generator: newest tiny; using previous.")
+                    latest = raw_files[1]
+            except Exception:
+                pass
 
     try:
-        pulse_path = os.path.join(CONTINUITY_DIR, "CURRENT_PULSE.md")
-        with open(pulse_path, "w") as f:
-            f.write(pulse_content)
+        skeleton = extract_signal(latest)
+        turns = conversational_turn_count(skeleton)
+        try:
+            with open(latest, "r", encoding="utf-8") as f:
+                data_hint = json.load(f)
+        except Exception:
+            data_hint = None
+        session_id = session_id_from_path(latest, data_hint)
+        print(
+            f"Handoff Generator: session_id={session_id} source={latest} "
+            f"conversational_turns={turns}"
+        )
+        if turns < MIN_CONVERSATIONAL_TURNS:
+            print(
+                "Handoff Generator: [FATAL] Zero conversational turns. "
+                "Refusing empty archive."
+            )
+            return 1
+
+        md = skeleton_to_markdown(skeleton, session_id)
+        file_ts = datetime.now().strftime("%Y-%m-%d_%H%M")
+        archive_dir = os.path.join(VESSEL_ROOT, "archive", "history")
+        os.makedirs(archive_dir, exist_ok=True)
+        # sanitize session id for filename
+        safe_sid = session_id.replace("/", "-")
+        archive_path = os.path.join(archive_dir, f"{file_ts}_{safe_sid}.md")
+        atomic_write(archive_path, md)
+        print(f"      Historical Archive updated: {archive_path}")
+
+        clean_path = os.path.join(CONTINUITY_DIR, "LAST_SESSION_FLIGHT_RECORDER.md")
+        # also engine temp for compatibility
+        os.makedirs(os.path.join(AIM_ROOT, ".aim_core", "temp"), exist_ok=True)
+        engine_clean = os.path.join(
+            AIM_ROOT, ".aim_core", "temp", "LAST_SESSION_FLIGHT_RECORDER.md"
+        )
+        header = (
+            "# A.I.M. Session Flight Recorder (Full History)\n"
+            "*NOT auto-injected into LLM context.*\n\n"
+        )
+        atomic_write(clean_path, header + md + "\n")
+        atomic_write(engine_clean, header + md + "\n")
+
+        # Wiki daemon — prefer nested hooks
+        hook = os.path.join(AIM_ROOT, "hooks", "session_summarizer.py")
+        if not os.path.isfile(hook):
+            hook = os.path.join(VESSEL_ROOT, "hooks", "session_summarizer.py")
+        log_path = os.path.join(VESSEL_ROOT, "memory-wiki", "daemon.log")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        try:
+            import subprocess
+
+            daemon_log = open(log_path, "a")
+            daemon_log.write(
+                f"\n--- handoff spawn {datetime.now().isoformat()} "
+                f"archive={archive_path} ---\n"
+            )
+            daemon_log.flush()
+            subprocess.Popen(
+                [sys.executable, "-u", hook, "--reincarnate", archive_path, "--bg"],
+                stdout=daemon_log,
+                stderr=daemon_log,
+                start_new_session=True,
+                cwd=VESSEL_ROOT,
+            )
+            print("      [Monolithic] Triggered wiki daemon (memory-wiki/daemon.log).")
+        except Exception as e:
+            print(f"      daemon error: {e}")
+
+        pulse_turns = [
+            t
+            for t in (skeleton if isinstance(skeleton, list) else [])
+            if isinstance(t, dict)
+            and (t.get("text") or "").strip()
+            and (t.get("role") or "").lower()
+            in ("user", "assistant", "model", "gemini")
+        ][-5:]
+        pulse = "## Last 5 Conversational Turns\n\n"
+        for t in pulse_turns:
+            label = "USER" if (t.get("role") or "").lower() == "user" else "A.I.M."
+            pulse += f"### {label}\n{(t.get('text') or '').strip()}\n\n---\n\n"
+        for pth in (
+            os.path.join(CONTINUITY_DIR, "CURRENT_PULSE.md"),
+            os.path.join(AIM_ROOT, ".aim_core", "temp", "CURRENT_PULSE.md"),
+        ):
+            os.makedirs(os.path.dirname(pth), exist_ok=True)
+            with open(pth, "w", encoding="utf-8") as f:
+                f.write(pulse)
 
         print("\n\033[92m--- A.I.M. HANDOFF READY ---\033[0m")
-
-
+        return 0
     except Exception as e:
-        print(f"      Handoff Generator Error: {e}")
+        print(f"Handoff Generator: failure: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
+
 
 if __name__ == "__main__":
-    generate_handoff_pulse()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--session-id", default=None)
+    args = ap.parse_args()
+    sys.exit(generate_handoff_pulse(explicit_session_id=args.session_id))

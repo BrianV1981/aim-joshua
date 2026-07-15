@@ -1,193 +1,178 @@
 #!/usr/bin/env python3
-import sys
+"""
+OpenCode session summarizer — deterministic memory-wiki path (no ForensicDB, no LLM required).
+"""
+from __future__ import annotations
+
+import glob
 import json
 import os
+import sys
 import time
-import glob
-from datetime import datetime
+from pathlib import Path
 
-# --- DYNAMIC ROOT DISCOVERY ---
+
 def find_aim_root():
     current = os.path.abspath(os.getcwd())
-    while current != '/':
-        if os.path.exists(os.path.join(current, "core", "CONFIG.json")) or os.path.exists(os.path.join(current, "setup.sh")):
+    while current != "/":
+        if os.path.exists(os.path.join(current, "core", "CONFIG.json")):
+            return current
+        if os.path.exists(os.path.join(current, "aim-agy_os", "setup.sh")):
             return current
         current = os.path.dirname(current)
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-AIM_ROOT = find_aim_root()
-sys.path.append(AIM_ROOT)
-sys.path.append(os.path.join(AIM_ROOT, "aim-agy_os", ".aim_core"))
 
-from reasoning_utils import generate_reasoning
-from plugins.datajack.forensic_utils import chunk_text, get_embedding
-from config_utils import AIM_ROOT as _UNUSED
-try:
-    from legacy_sqlite import ForensicDB
-except ImportError:
-    ForensicDB = None
-from wiki_tools import process_wiki
+VESSEL_ROOT = find_aim_root()
+# Engine may live under aim-agy_os/
+ENGINE = (
+    os.path.join(VESSEL_ROOT, "aim-agy_os")
+    if os.path.isdir(os.path.join(VESSEL_ROOT, "aim-agy_os"))
+    else VESSEL_ROOT
+)
+sys.path.insert(0, os.path.join(ENGINE, ".aim_core"))
+sys.path.insert(0, ENGINE)
 
-CONFIG_PATH = os.path.join(AIM_ROOT, "core/CONFIG.json")
-if not os.path.exists(CONFIG_PATH):
-    sys.exit(0)
+WIKI = os.path.join(VESSEL_ROOT, "memory-wiki")
+CONFIG_PATH = os.path.join(VESSEL_ROOT, "core", "CONFIG.json")
 
-with open(CONFIG_PATH, 'r') as f:
-    CONFIG = json.load(f)
 
-# --- THE SUBCONSCIOUS EXTRACTION PROMPT ---
-EXTRACTOR_SYSTEM = """You are the Subconscious Scribe. Analyze the following session transcript and extract the "Signal Skeleton" - the core architectural decisions, major bug fixes, newly established patterns, or important context that MUST be remembered for the future.
-OUTPUT RULES:
-- Output RAW Markdown only.
-- Do NOT output conversational fluff.
-- Be concise, direct, and factual.
-- Limit to 5-7 bullet points of the most critical takeaways.
-"""
-
-def ingest_file_to_db(backend, filepath, record_type="session_history"):
-    session_id = os.path.basename(filepath).replace('.md', '')
-    
-    with open(filepath, 'r', encoding='utf-8') as f:
-        text = f.read()
-    
-    chunks = chunk_text(text)
-    fragments = []
-    for chunk in chunks:
-        vec = get_embedding(chunk)
-        if vec and len(vec) == 768:
-            fragments.append({
-                'session_id': session_id,
-                'type': record_type,
-                'content': chunk,
-                'vector': vec
-            })
-        
-    if fragments:
-        backend.add_fragments(fragments)
-
-def process_transcript(md_path):
+def _daemon_log(msg: str) -> None:
     try:
-        print(f"[DAEMON] Beginning Deep Memory Synthesis for: {os.path.basename(md_path)}")
-        session_id = os.path.basename(md_path).replace('.md', '')
-        
-        # 1. Embed raw flight recorder natively into LanceDB
-        from lance_backend import VectorBackend
-        backend = VectorBackend()
-        
-        print(f"[DAEMON] Ingesting flight recorder natively into LanceDB...")
-        ingest_file_to_db(backend, md_path, record_type="session_history")
-        
-        # 2. Extract Signal Skeleton
-        with open(md_path, 'r', encoding='utf-8') as f:
+        os.makedirs(WIKI, exist_ok=True)
+        with open(os.path.join(WIKI, "daemon.log"), "a", encoding="utf-8") as lf:
+            lf.write(msg.rstrip() + "\n")
+    except Exception:
+        pass
+    print(msg, flush=True)
+
+
+if not os.path.isfile(CONFIG_PATH):
+    _daemon_log(f"[FATAL] no CONFIG at {CONFIG_PATH}")
+    sys.exit(2)
+
+with open(CONFIG_PATH, "r") as f:
+    CONFIG = json.load(f)
+_daemon_log(f"[OK] session_summarizer loaded CONFIG from {CONFIG_PATH}")
+
+
+def _slug(s: str) -> str:
+    import re
+
+    s = s.lower().strip()
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    return s.strip("-")[:80] or "session"
+
+
+def process_transcript(md_path: str) -> bool:
+    try:
+        _daemon_log(f"[WATCHDOG] Beginning wiki sequence for: {os.path.basename(md_path)}")
+        with open(md_path, "r", encoding="utf-8") as f:
             transcript = f.read()
-            
-        # Chunk the transcript by turns to avoid overwhelming the LLM
-        turns = transcript.split('\n---\n\n')
-        chunk_size = 1000
-        
-        ingest_dir = os.path.join(AIM_ROOT, "memory-wiki", "_ingest")
-        os.makedirs(ingest_dir, exist_ok=True)
-        
-        fallback_spawned = False
-        
-        print(f"[DAEMON] Transcript has {len(turns)} turns. Chunking by {chunk_size} turns...")
-        
-        for i in range(0, len(turns), chunk_size):
-            chunk_turns = turns[i:i + chunk_size]
-            chunk_transcript = '\n---\n\n'.join(chunk_turns)
-            part_suffix = f"_part{i//chunk_size + 1}" if len(turns) > chunk_size else ""
-            
-            print(f"[DAEMON] Extracting Signal Skeleton{part_suffix} via LLM...")
-            
-            max_retries = 10
-            summary = ""
-            for attempt in range(max_retries):
-                summary = generate_reasoning(f"### SESSION TRANSCRIPT PART\n{chunk_transcript}", system_instruction=EXTRACTOR_SYSTEM, brain_type="default_reasoning")
-                
-                if not summary or summary.startswith("Error"):
-                    print(f"[WARNING] Subconscious extraction failed for chunk{part_suffix}: {summary[:100]}")
-                    backoff = 30 + (attempt * 60) # 30s, 90s, 150s...
-                    print(f"[DAEMON] Graceful fallback: Sleeping for {backoff} seconds before retry ({attempt+1}/{max_retries})...")
-                    import time
-                    time.sleep(backoff)
-                    continue
-                else:
-                    break
-                    
-            if not summary or summary.startswith("Error"):
-                print(f"[FATAL] Exhausted all retries for chunk{part_suffix}. Skipping to prevent crash.")
-                continue
+        if not transcript.strip():
+            _daemon_log("[FATAL] Archive empty. Refusing SUCCESS.")
+            return False
+        stripped = transcript.strip()
+        has_user = "👤" in stripped or "user_query" in stripped.lower() or "## 👤" in stripped
+        if "No conversational turns extracted" in stripped or (
+            len(stripped) < 200 and not has_user
+        ):
+            _daemon_log("[FATAL] Archive has no usable content. Refusing SUCCESS.")
+            return False
 
-            # 3. Drop into memory-wiki/_ingest/
-            ingest_path = os.path.join(ingest_dir, f"{session_id}{part_suffix}_summary.md")
-            with open(ingest_path, "w", encoding="utf-8") as f_out:
-                f_out.write(summary)
-            print(f"[DAEMON] Signal Skeleton dropped into {ingest_path}")
-            
-        # 4. Trigger Wiki Synthesis
-        print("[DAEMON] Triggering Persistent LLM Wiki Synthesis...")
-        process_wiki()
-        
-        # 5. Re-embed the updated Wiki natively into LanceDB
-        print("[DAEMON] Re-embedding updated Wiki pages into native LanceDB...")
-        wiki_dir = os.path.join(AIM_ROOT, "memory-wiki")
-        for md_file in glob.glob(os.path.join(wiki_dir, "*.md")):
-            if "_ingest" not in md_file:
-                ingest_file_to_db(backend, md_file, record_type="wiki_knowledge")
-        
-        print("[SUCCESS] Reincarnation Memory Pipeline Complete.")
+        stem = os.path.basename(md_path).replace(".md", "")
+        # prefer last uuid-ish segment
+        session_id = stem
+        if "_" in stem:
+            session_id = stem.split("_")[-1]
+
+        pages = Path(WIKI) / "pages"
+        ingest = Path(WIKI) / "_ingest"
+        pages.mkdir(parents=True, exist_ok=True)
+        ingest.mkdir(parents=True, exist_ok=True)
+        log_path = Path(WIKI) / "log.md"
+        index_path = Path(WIKI) / "index.md"
+
+        page_name = f"reincarnate-{_slug(session_id)}.md"
+        page_path = pages / page_name
+        body = (
+            f"# Reincarnation archive: {session_id}\n\n"
+            f"*Ingested from `{os.path.basename(md_path)}`*\n\n"
+            f"{transcript}\n"
+        )
+        page_path.write_text(body, encoding="utf-8")
+        _daemon_log(f"[WATCHDOG] Wrote page {page_path}")
+
+        # log
+        from datetime import datetime, timezone
+
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        with open(log_path, "a", encoding="utf-8") as lf:
+            lf.write(f"- [{ts}] created page `{page_name}` from reincarnate handoff\n")
+
+        # index refresh (simple append if missing)
+        idx = index_path.read_text(encoding="utf-8") if index_path.exists() else "# Wiki Index\n\n## Pages\n\n"
+        link = f"- [reincarnate {session_id}](pages/{page_name})\n"
+        if page_name not in idx:
+            if "## Pages" not in idx:
+                idx += "\n## Pages\n\n"
+            idx += link
+            index_path.write_text(idx, encoding="utf-8")
+
+        _daemon_log("[SUCCESS] Deterministic wiki reincarnation sequence complete.")
         return True
-
     except Exception as e:
-        print(f"[FATAL] Subconscious Pipeline Error: {e}")
+        _daemon_log(f"[FATAL] Watchdog Pipeline Error: {e}")
+        import traceback
+
+        traceback.print_exc()
         return False
+
 
 def main(args):
     if "--reincarnate" not in args:
         print(json.dumps({}))
         return
-
-    if os.environ.get('AIM_INTERNAL_REASONING'):
-        print(json.dumps({}))
-        return
-    
-    is_light_mode = "--light" in args
-    if is_light_mode:
-        print(json.dumps({}))
-        return
-
-    cognitive_mode = CONFIG.get('settings', {}).get('cognitive_mode', 'monolithic')
-    if cognitive_mode == 'frontline':
-        print(json.dumps({}))
-        return
-
     md_path = None
     for arg in args[1:]:
-        if arg.endswith('.md') and os.path.exists(arg):
+        if arg.endswith(".md") and os.path.exists(arg):
             md_path = arg
             break
-            
     if not md_path:
-        history_dir = os.path.join(AIM_ROOT, "archive", "history")
-        if os.path.exists(history_dir):
-            transcripts = glob.glob(os.path.join(history_dir, "*.md"))
-            if transcripts:
-                md_path = max(transcripts, key=os.path.getmtime)
-                
+        hist = os.path.join(VESSEL_ROOT, "archive", "history")
+        if os.path.isdir(hist):
+            files = glob.glob(os.path.join(hist, "*.md"))
+            if files:
+                md_path = max(files, key=os.path.getmtime)
     if not md_path:
-        print(json.dumps({}))
-        return
+        _daemon_log("[FATAL] no archive markdown")
+        sys.exit(3)
 
     if "--bg" not in args:
         import subprocess
-        cmd = [sys.executable, os.path.abspath(__file__), "--bg"] + args[1:]
-        subprocess.Popen(cmd, start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True)
-        print(json.dumps({}))
+
+        log_path = os.path.join(WIKI, "daemon.log")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        daemon_log = open(log_path, "a", encoding="utf-8")
+        cmd = [sys.executable, "-u", os.path.abspath(__file__), "--bg"] + [
+            a for a in args[1:] if a != "--bg"
+        ]
+        if "--reincarnate" not in cmd:
+            cmd.insert(1, "--reincarnate")
+        subprocess.Popen(
+            cmd,
+            start_new_session=True,
+            stdin=subprocess.DEVNULL,
+            stdout=daemon_log,
+            stderr=daemon_log,
+            cwd=VESSEL_ROOT,
+        )
+        print(json.dumps({"spawned_bg": True, "archive": md_path}))
         return
 
-    updated = 1 if process_transcript(md_path) else 0
-    if "--bg" not in args:
-        print(json.dumps({}))
+    if not process_transcript(md_path):
+        sys.exit(4)
+
 
 if __name__ == "__main__":
     main(sys.argv)
