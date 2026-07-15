@@ -11,10 +11,14 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-VESSEL = Path("/home/kingb/aim-opencode")
+VESSEL = Path(os.environ.get("AIM_VESSEL", os.getcwd())).resolve()
 AIM = VESSEL / "aim-agy_os"
+if not (AIM / ".aim_core").is_dir():
+    AIM = VESSEL
 RAW = VESSEL / "archive" / "raw"
 WIKI = VESSEL / "memory-wiki"
+if not WIKI.is_dir() and (AIM / "memory-wiki").is_dir():
+    WIKI = AIM / "memory-wiki"
 REPORT = AIM / "planning-artifacts" / "OPERATOR_E2E_REINCARNATE_WIKI_OC_LATEST.md"
 MARKER = os.environ.get(
     "MARKER", f"OP_WIKI_OC_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
