@@ -68,12 +68,23 @@ def cmd_core_memory(args):
 
 def cmd_status(args):
     """Displays the current A.I.M. operational pulse."""
-    status_file = os.path.join(BASE_DIR, "continuity/CURRENT_PULSE.md")
-    if os.path.exists(status_file):
-        with open(status_file, 'r') as f:
+    # handoff_pulse_generator writes .aim_core/temp/CURRENT_PULSE.md (canonical).
+    # continuity/ is legacy doc path — still accepted as fallback.
+    candidates = [
+        os.path.join(BASE_DIR, ".aim_core", "temp", "CURRENT_PULSE.md"),
+        os.path.join(BASE_DIR, "continuity", "CURRENT_PULSE.md"),
+        os.path.join(os.path.dirname(BASE_DIR), "continuity", "CURRENT_PULSE.md"),
+    ]
+    status_file = next((p for p in candidates if os.path.isfile(p)), None)
+    if status_file:
+        with open(status_file, "r", encoding="utf-8") as f:
             print(f.read())
     else:
-        print("Error: CURRENT_PULSE.md not found. Run 'aim handoff' to generate.", file=sys.stderr)
+        print(
+            "Error: CURRENT_PULSE.md not found. Run 'aim handoff' / 'aim pulse' to generate "
+            f"(looked under {candidates[0]}).",
+            file=sys.stderr,
+        )
 
 def cmd_search(args):
     """Dispatches to retriever.py."""
@@ -282,6 +293,16 @@ def cmd_promote(args):
             
         print(f"[1/5] Preparing to promote '{current_branch}' to main...")
         
+        print('\n[CRITICAL INTERVENTION REQUIRED]')
+        print('[WARNING TO AGENT] You are strictly forbidden from guessing this answer.')
+        print('[WARNING TO AGENT] You MUST use your ask_question / UI modal tool to prompt the Operator.')
+        print('[WARNING TO AGENT] Once the Operator confirms, stream their answer to stdin (yes/no).')
+
+        confirm = input(f"\nMerge branch '{current_branch}' to main? (yes/no): ").strip().lower()
+        if confirm not in ['yes', 'y']:
+            print('\n[ABORTED] Promotion cancelled. Branch remains isolated.')
+            return
+        
         repo_root = os.path.dirname(os.path.dirname(BASE_DIR)) if in_worktree else BASE_DIR
         
         # 1. Fetch latest (run in repo_root)
@@ -323,6 +344,16 @@ def cmd_promote(args):
 
 def cmd_merge_batch(args):
     """Executes the aim_batch_merge.py script to cleanly merge an entire Phase of tickets."""
+    print('\n[CRITICAL INTERVENTION REQUIRED]')
+    print('[WARNING TO AGENT] You are strictly forbidden from guessing this answer.')
+    print('[WARNING TO AGENT] You MUST use your ask_question / UI modal tool to prompt the Operator.')
+    print('[WARNING TO AGENT] Once the Operator confirms, stream their answer to stdin (yes/no).')
+
+    confirm = input("\nExecute batch merge to main? (yes/no): ").strip().lower()
+    if confirm not in ['yes', 'y']:
+        print('\n[ABORTED] Batch merge cancelled. Main remains isolated.')
+        return
+
     merge_args = []
     if args.push:
         merge_args.append("--push")

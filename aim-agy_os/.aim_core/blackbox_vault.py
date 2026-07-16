@@ -62,7 +62,9 @@ def vault_session(jsonl_path):
         print(f"      [VAULT] Encrypted & Secured ground truth for {session_id} in Black Box.")
         return True
     except Exception as e:
-        print(f"      [FATAL] Failed to vault session {session_id}: {e}")
+        # Non-fatal: vault is forensic bonus, not reincarnate/wiki gate.
+        # (Headless hosts often lack a keyring backend — see issue #12 / agy #102.)
+        print(f"      [WARNING] Failed to vault session {session_id}: {e}")
         return False
 
 def audit_vault(session_id):
