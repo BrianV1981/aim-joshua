@@ -321,6 +321,150 @@ def process_raw_logs_to_ingest() -> List[str]:
     return out
 
 
+# --- Stage 0 multi-page integrate (deterministic, schema-aligned) ---
+
+# Concept keywords → page slugs (A.I.M. domain)
+_CONCEPT_KEYWORDS = {
+    "reincarnation": ("concept-reincarnation", "Reincarnation & handoff"),
+    "memory-wiki": ("concept-memory-wiki", "Memory Wiki (LLM Wiki)"),
+    "wiki schema": ("concept-memory-wiki", "Memory Wiki (LLM Wiki)"),
+    "lockstep": ("concept-fleet-lockstep", "Fleet lockstep (vessels)"),
+    "vessel": ("concept-fleet-lockstep", "Fleet lockstep (vessels)"),
+    "gitops": ("concept-gitops", "GitOps & promote HITL"),
+    "promote": ("concept-gitops", "GitOps & promote HITL"),
+    "engram": ("concept-engram", "Engram / Lance memory"),
+    "lancedb": ("concept-engram", "Engram / Lance memory"),
+    "session_summarizer": ("concept-memory-wiki", "Memory Wiki (LLM Wiki)"),
+    "headless": ("concept-headless-install", "Headless install & aliases"),
+    "install-agent": ("concept-headless-install", "Headless install & aliases"),
+    "opencode": ("entity-aim-opencode", "aim-opencode vessel"),
+    "aim-agy": ("entity-aim-agy", "aim-agy (soul)"),
+    "aim-grok": ("entity-aim-grok", "aim-grok vessel"),
+}
+
+
+def _noise_filter_lines(text: str) -> List[str]:
+    drop_sub = (
+        "system-reminder",
+        "skill.md",
+        "available tools",
+        "function call",
+        "tool_call",
+        "esc to cancel",
+        "prioritizing tool usage",
+        "click to expand",
+    )
+    keep = []
+    for line in text.splitlines():
+        low = line.lower()
+        if any(d in low for d in drop_sub):
+            continue
+        if line.strip().startswith("{") and len(line) > 180:
+            continue
+        keep.append(line)
+    return keep
+
+
+def stage0_multi_page_integrate(
+    source_path: Path,
+    source_id: Optional[str] = None,
+    max_source_chars: int = 8000,
+) -> List[str]:
+    """
+    Deterministic multi-page Stage 0 aligned with Schema-Version 2:
+    - source-* page from cleaned extract
+    - concept/entity stub updates when keywords hit
+    - index + log
+    Does not require an LLM agent.
+    """
+    paths = wiki_paths()
+    ensure_wiki_scaffold(paths)
+    results: List[str] = []
+    source_path = Path(source_path)
+    if not source_path.is_file():
+        return [f"ERROR missing source {source_path}"]
+
+    sid = source_id or _slug(source_path.stem)
+    raw = source_path.read_text(encoding="utf-8", errors="replace")
+    cleaned = "\n".join(_noise_filter_lines(raw))
+    if len(cleaned.strip()) < 80:
+        return [f"ERROR noise-only or empty after filter: {source_path.name}"]
+
+    summary = extractive_summary_from_markdown(source_path, max_chars=max_source_chars)
+    # Prefer cleaned body if extractive is too thin
+    if len(summary) < 200:
+        summary = f"# Source: {sid}\n\n{_excerpt(cleaned, max_chars=max_source_chars)}\n"
+
+    # 1) source page
+    src_slug = f"source-{_slug(sid)}"
+    src_page = paths["pages"] / f"{src_slug}.md"
+    title = _first_heading(summary, f"Source {sid}")
+    body = (
+        f"# {title}\n\n"
+        f"*Stage 0 multi-page integrate · source_id=`{sid}` · file=`{source_path}` · "
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d')}*\n\n"
+        f"{_excerpt(summary, max_chars=max_source_chars)}\n\n"
+        f"---\n[← Wiki index](../index.md)\n"
+    )
+    if src_page.is_file():
+        prev = src_page.read_text(encoding="utf-8")
+        src_page.write_text(
+            prev.rstrip()
+            + f"\n\n## Update {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n\n"
+            + _excerpt(summary, max_chars=3000)
+            + "\n",
+            encoding="utf-8",
+        )
+        results.append(f"updated {src_slug}.md")
+    else:
+        src_page.write_text(body, encoding="utf-8")
+        results.append(f"created {src_slug}.md")
+    update_index_entry(paths, title, f"pages/{src_slug}.md", f"Source {sid}")
+
+    # 2) concept/entity stubs for keyword hits
+    low = cleaned.lower()
+    hit_slugs = {}
+    for key, (slug, ctitle) in _CONCEPT_KEYWORDS.items():
+        if key in low:
+            hit_slugs[slug] = ctitle
+    for slug, ctitle in hit_slugs.items():
+        page = paths["pages"] / f"{slug}.md"
+        blurb = f"Mentioned in source `{sid}` ({source_path.name})."
+        section = (
+            f"\n\n## From source [{sid}]({src_slug}.md)\n\n"
+            f"{blurb}\n\n"
+            f"See also: [{title}]({src_slug}.md)\n"
+        )
+        if page.is_file():
+            existing = page.read_text(encoding="utf-8")
+            if sid in existing and source_path.name in existing:
+                results.append(f"skip {slug}.md (already linked)")
+                continue
+            page.write_text(existing.rstrip() + section + "\n", encoding="utf-8")
+            results.append(f"updated {slug}.md")
+        else:
+            page.write_text(
+                f"# {ctitle}\n\n"
+                f"*Auto-stub from Stage 0 multi-page integrate.*\n"
+                f"{section}\n---\n[← Wiki index](../index.md)\n",
+                encoding="utf-8",
+            )
+            results.append(f"created {slug}.md")
+        update_index_entry(paths, ctitle, f"pages/{slug}.md", blurb[:100])
+
+    # 3) log (schema-compatible prefix)
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    with paths["log"].open("a", encoding="utf-8") as f:
+        f.write(f"## [{ts}] ingest | {title[:60]} | {sid}\n")
+    results.append(f"log ingest | {sid}")
+    return results
+
+
+def stage0_from_archive(archive_path: str, source_id: Optional[str] = None) -> List[str]:
+    """CLI/helper entry: multi-page integrate one archive markdown."""
+    return stage0_multi_page_integrate(Path(archive_path), source_id=source_id)
+
+
 def bootstrap_wiki(include_history: bool = True, history_limit: int = 10) -> None:
     paths = wiki_paths()
     ensure_wiki_scaffold(paths)

@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Upstream** | aim-agy |
-| **Commit** | `0e7a77b8f0261817d67bc9b02f8bd2ad8172585b` |
-| **Short** | `0e7a77b` |
+| **Commit** | `5ec44920f92030266699d1adbb741d3a1a1ffdd2` |
+| **Short** | `5ec4492` |
 | **Date** | 2026-07-15 |
-| **Notes** | Wiki Schema-Version 2 (PR-A) lockstep: template + scaffold + deterministic wiki. |
+| **Notes** | Stage 0 multi-page + serial ingest script lockstep. |
