@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | **Upstream** | aim-agy |
-| **Commit** | `35ff75670c4902a11ba697e84b5e04192704c5be` |
-| **Short** | `35ff756` |
+| **Commit** | `62242c2f1375d81836e8e6ab68c4c4795d8b5310` |
+| **Short** | `62242c2` |
 | **Date** | 2026-07-16 |
-| **Notes** | Reincarnate hygiene Lane 1 lockstep (single wiki spawn, status pulse, vault WARNING). Soul PR #104. |
-| **Previous** | `5ec4492` Stage 0 multi-page |
+| **Notes** | AGY transcript detect fix (GENERIC lead-in). Soul lockstep. |
+| **Previous** | `35ff756` reincarnate hygiene |
