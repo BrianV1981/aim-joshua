@@ -69,20 +69,45 @@ def _excerpt(content: str, max_chars: int = 1200) -> str:
     return text[:max_chars].rsplit("\n", 1)[0] + "\n\n*(truncated for wiki)*\n"
 
 
+WIKI_SCHEMA_VERSION = 2  # must match <!-- Schema-Version: N --> in template
+
+
+def _wiki_agents_template_path() -> Path:
+    return Path(__file__).resolve().parent / "templates" / "memory_wiki_AGENTS.md"
+
+
 def _default_wiki_agents_text() -> str:
-    """Interim schema (lockstep B). Full LLM-Wiki v2 schema is a later PR."""
-    template = Path(__file__).resolve().parent / "templates" / "memory_wiki_AGENTS.md"
+    """Packaged schema (LLM Wiki Schema-Version 2). Single source for init/scaffold."""
+    template = _wiki_agents_template_path()
     if template.is_file():
         return template.read_text(encoding="utf-8")
     return (
-        "<!-- Schema-Version: 1-interim -->\n"
-        "# Wiki Maintainer\n\n"
+        f"<!-- Schema-Version: {WIKI_SCHEMA_VERSION} -->\n"
+        "# A.I.M. Memory Wiki Schema\n\n"
         "Process `_ingest/` one file at a time into index.md, log.md, and pages/.\n"
-        "Read this file and index.md before writing. Stay sandboxed to memory-wiki/.\n"
+        "Read this file and index.md first. Stay sandboxed to memory-wiki/.\n"
     )
 
 
-def ensure_wiki_scaffold(paths: dict) -> None:
+def schema_version_from_text(text: str) -> int:
+    m = re.search(r"Schema-Version:\s*(\d+)", text or "")
+    if m:
+        return int(m.group(1))
+    # 1-interim or unversioned thin templates
+    if "1-interim" in (text or ""):
+        return 1
+    return 0
+
+
+def ensure_wiki_scaffold(paths: dict, upgrade_schema: bool = False) -> None:
+    """
+    Ensure wiki dirs + index/log + AGENTS.md schema.
+    upgrade_schema: if True, overwrite AGENTS.md when packaged version is newer.
+    Also honors env AIM_WIKI_SCHEMA_UPGRADE=1.
+    """
+    if os.environ.get("AIM_WIKI_SCHEMA_UPGRADE", "").strip() in ("1", "true", "yes"):
+        upgrade_schema = True
+
     paths["wiki"].mkdir(parents=True, exist_ok=True)
     paths["ingest"].mkdir(parents=True, exist_ok=True)
     paths["raw"].mkdir(parents=True, exist_ok=True)
@@ -94,10 +119,28 @@ def ensure_wiki_scaffold(paths: dict) -> None:
         )
     if not paths["log"].is_file():
         paths["log"].write_text("# Wiki Log\n\n", encoding="utf-8")
-    # Always ensure AGENTS schema exists (install/init/reincarnate lockstep)
+
     agents = paths.get("agents") or (paths["wiki"] / "AGENTS.md")
+    packaged = _default_wiki_agents_text()
+    packaged_ver = schema_version_from_text(packaged)
+
     if not agents.is_file():
-        agents.write_text(_default_wiki_agents_text(), encoding="utf-8")
+        agents.write_text(packaged, encoding="utf-8")
+        return
+
+    if upgrade_schema:
+        current_ver = schema_version_from_text(agents.read_text(encoding="utf-8", errors="replace"))
+        if packaged_ver > current_ver:
+            agents.write_text(packaged, encoding="utf-8")
+
+
+def upgrade_wiki_schema(paths: Optional[dict] = None) -> str:
+    """Force-install packaged schema. Returns status string."""
+    paths = paths or wiki_paths()
+    ensure_wiki_scaffold(paths, upgrade_schema=True)
+    agents = paths.get("agents") or (paths["wiki"] / "AGENTS.md")
+    ver = schema_version_from_text(agents.read_text(encoding="utf-8", errors="replace"))
+    return f"wiki schema installed path={agents} Schema-Version={ver}"
 
 
 def append_log(paths: dict, message: str) -> None:

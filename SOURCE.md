@@ -3,9 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Upstream** | aim-agy |
-| **Commit** | `5b18bcf04d05bd5988029e84b648d738811dfefa` |
-| **Short** | `5b18bcf` |
+| **Commit** | `0e7a77b8f0261817d67bc9b02f8bd2ad8172585b` |
+| **Short** | `0e7a77b` |
 | **Date** | 2026-07-15 |
-| **Layout** | Nested `aim-agy_os/.aim_core/` canonical |
-| **Default vessel** | opencode |
-| **Notes** | Lockstep B: wiki_compiler + AGENTS template; wiki_tools deterministic default; opencode agent mode preserved. |
+| **Notes** | Wiki Schema-Version 2 (PR-A) lockstep: template + scaffold + deterministic wiki. |
