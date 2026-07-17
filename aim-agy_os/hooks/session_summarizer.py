@@ -38,14 +38,24 @@ def _resolve_config_path():
     return None
 
 def _daemon_log(msg):
+    """Append to daemon.log. Print only when stdout is a TTY.
+
+    Handoff launches us with stdout/stderr redirected to daemon.log — if we both
+    file-append and print, every line appears twice (false dual-SUCCESS / dual CONFIG).
+    """
+    line = msg.rstrip() + "\n"
     try:
         log_path = os.path.join(AIM_ROOT, "memory-wiki", "daemon.log")
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, "a", encoding="utf-8") as lf:
-            lf.write(msg.rstrip() + "\n")
+            lf.write(line)
     except Exception:
         pass
-    print(msg, flush=True)
+    try:
+        if sys.stdout.isatty():
+            print(msg, flush=True)
+    except Exception:
+        pass
 
 CONFIG_PATH = _resolve_config_path()
 if not CONFIG_PATH:
