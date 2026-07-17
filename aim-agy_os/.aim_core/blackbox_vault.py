@@ -323,6 +323,77 @@ def verify_manifest(
     return ok
 
 
+def _resolve_reincarnate_transcripts(
+    workspace: str, session_id: Optional[str]
+) -> Tuple[list, Optional[str]]:
+    """Return (paths, session_id_helper_name). Vessel-native fallbacks if no vessel_paths."""
+    paths: list = []
+    id_from_path = None
+    try:
+        from vessel_paths import (  # type: ignore
+            find_session_transcripts,
+            session_id_from_transcript_path,
+        )
+
+        paths = find_session_transcripts(
+            workspace,
+            explicit_session_id=session_id,
+            prefer="auto",
+            prefer_durable=True,
+        )
+        id_from_path = session_id_from_transcript_path
+    except Exception:
+        paths = []
+
+    if paths:
+        return paths, id_from_path
+
+    # AGY brain (soul / aim-agy — no vessel_paths module)
+    if session_id:
+        agy = (
+            Path.home()
+            / ".gemini"
+            / "antigravity-cli"
+            / "brain"
+            / session_id
+            / ".system_generated"
+            / "logs"
+            / "transcript.jsonl"
+        )
+        if agy.is_file():
+            return [str(agy)], id_from_path
+
+    # OpenCode archive/raw session-*.json
+    raw_dirs = [
+        Path(workspace) / "archive" / "raw",
+        Path(workspace) / "aim-agy_os" / "archive" / "raw",
+    ]
+    for raw in raw_dirs:
+        if not raw.is_dir():
+            continue
+        if session_id:
+            hits = sorted(raw.glob(f"*{session_id}*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+            if hits:
+                return [str(hits[0])], id_from_path
+        hits = sorted(raw.glob("session-*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if hits:
+            return [str(hits[0])], id_from_path
+
+    # Codex rollouts by session id substring
+    if session_id:
+        codex_root = Path.home() / ".codex" / "sessions"
+        if codex_root.is_dir():
+            hits = sorted(
+                codex_root.rglob(f"*{session_id}*.jsonl"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            if hits:
+                return [str(hits[0])], id_from_path
+
+    return [], id_from_path
+
+
 def seal_for_reincarnate(
     workspace: str,
     session_id: Optional[str] = None,
@@ -333,19 +404,31 @@ def seal_for_reincarnate(
     """
     workspace = os.path.abspath(workspace or ".")
     try:
-        from vessel_paths import find_session_transcripts, session_id_from_transcript_path
-
-        paths = find_session_transcripts(
-            workspace,
-            explicit_session_id=session_id,
-            prefer="auto",
-            prefer_durable=True,
-        )
+        paths, id_from_path = _resolve_reincarnate_transcripts(workspace, session_id)
         if not paths:
             _log("[VAULT] WARN no transcript to seal for reincarnate")
             return False
         src = paths[0]
-        sid = session_id or session_id_from_transcript_path(src)
+        sid = session_id
+        if not sid and id_from_path:
+            try:
+                sid = id_from_path(src)
+            except Exception:
+                sid = None
+        if not sid:
+            base = os.path.basename(src)
+            if base in ("chat_history.jsonl", "updates.jsonl", "transcript.jsonl"):
+                sid = os.path.basename(os.path.dirname(src))
+            elif base.startswith("rollout-") and base.endswith(".jsonl"):
+                # rollout-<ts>-<uuid>.jsonl — uuid often last 36-ish chars
+                sid = base[len("rollout-") : -len(".jsonl")]
+                if "-" in sid:
+                    # prefer trailing uuid-looking segment
+                    parts = sid.split("-")
+                    if len(parts) >= 5:
+                        sid = "-".join(parts[-5:])
+            else:
+                sid = base.replace(".jsonl", "").replace(".json", "")
         return vault_session(
             src,
             session_id=sid,

@@ -16,8 +16,12 @@ AIM = VESSEL / "aim-agy_os"
 if not (AIM / ".aim_core").is_dir():
     AIM = VESSEL
 RAW = VESSEL / "archive" / "raw"
-WIKI = VESSEL / "memory-wiki"
-if not WIKI.is_dir() and (AIM / "memory-wiki").is_dir():
+# Prefer nested engine wiki (monolithic daemon writes here) over stale vessel-root wiki.
+if (AIM / "memory-wiki" / "pages").is_dir() or (AIM / "memory-wiki").is_dir():
+    WIKI = AIM / "memory-wiki"
+elif (VESSEL / "memory-wiki").is_dir():
+    WIKI = VESSEL / "memory-wiki"
+else:
     WIKI = AIM / "memory-wiki"
 REPORT = AIM / "planning-artifacts" / "OPERATOR_E2E_REINCARNATE_WIKI_OC_LATEST.md"
 MARKER = os.environ.get(
