@@ -440,6 +440,44 @@ def cmd_reincarnate(args):
     """Triggers the automated reincarnate handoff loop."""
     run_script(os.path.join(AIM_CORE_DIR, "aim_reincarnate.py"), [])
 
+def cmd_vault(args):
+    """Operator forensic black box (audit/verify/seal). Non-agent critical path."""
+    sys.path.insert(0, AIM_CORE_DIR)
+    from blackbox_vault import (
+        audit_vault,
+        verify_manifest,
+        vault_session,
+        seal_for_reincarnate,
+    )
+
+    vessel = getattr(args, "vessel", None) or os.getcwd()
+    sub = getattr(args, "vault_command", None)
+    if sub == "audit":
+        audit_vault(args.session_id, vessel_root=vessel)
+    elif sub == "verify":
+        ok = verify_manifest(
+            args.session_id, vessel_root=vessel, live_path=getattr(args, "live", None)
+        )
+        sys.exit(0 if ok else 1)
+    elif sub == "seal":
+        if getattr(args, "path", None):
+            ok = vault_session(
+                args.path,
+                session_id=getattr(args, "session_id", None),
+                vessel_root=vessel,
+                reason="reincarnate",
+            )
+        else:
+            ok = seal_for_reincarnate(
+                vessel, session_id=getattr(args, "session_id", None)
+            )
+        sys.exit(0 if ok else 1)
+    else:
+        print("Usage: aim vault {audit|verify|seal} ...")
+        sys.exit(2)
+
+
+
 def cmd_plan_pinger(args):
     """Dispatches to aim_plan_pinger.py for tmux-based background reminders."""
     script_path = os.path.join(BASE_DIR, "scripts", "aim_plan_pinger.py")
@@ -938,6 +976,26 @@ def main():
     subparsers.add_parser("sync")
     subparsers.add_parser("sync-issues", help="Synchronize remote GitHub issues to local ledger")
     subparsers.add_parser("crash", help="Trigger the Crash Recovery Protocol (Extracts signal from crashed session, generates handoff, and syncs issues)")
+
+    vault_parser = subparsers.add_parser(
+        "vault",
+        help="Operator black-box forensic seal (audit/verify; seal is reincarnate-policy)",
+    )
+    vault_sub = vault_parser.add_subparsers(dest="vault_command")
+    vault_audit = vault_sub.add_parser("audit", help="Decrypt sealed session to stdout")
+    vault_audit.add_argument("session_id")
+    vault_audit.add_argument("--vessel", default=None, help="Vessel root (default cwd)")
+    vault_verify = vault_sub.add_parser("verify", help="Compare sealed sha256 to live file")
+    vault_verify.add_argument("session_id")
+    vault_verify.add_argument("--vessel", default=None)
+    vault_verify.add_argument("--live", default=None, help="Path to live transcript")
+    vault_seal = vault_sub.add_parser(
+        "seal", help="Manual seal (Operator); same reincarnate-only reason string"
+    )
+    vault_seal.add_argument("--session-id", default=None)
+    vault_seal.add_argument("--path", default=None, help="Explicit raw transcript path")
+    vault_seal.add_argument("--vessel", default=None)
+
     subparsers.add_parser("reincarnate", help="Trigger the Reincarnation Protocol (Automated context handoff and terminal swap)")
     
     delegate_parser = subparsers.add_parser("delegate", help="Spawn parallel sub-agents to analyze multiple files (The RLM Pattern)")
@@ -1074,6 +1132,7 @@ def main():
     elif args.command == "sync-issues": cmd_sync_issues(args)
     elif args.command == "crash": cmd_crash(args)
     elif args.command == "reincarnate": cmd_reincarnate(args)
+    elif args.command == "vault": cmd_vault(args)
     elif args.command == "clean": cmd_clean(args)
     elif args.command == "bake": cmd_bake(args)
     elif args.command == "exchange": cmd_exchange(args)
