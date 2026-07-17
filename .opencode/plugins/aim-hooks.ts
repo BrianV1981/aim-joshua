@@ -85,8 +85,27 @@ export const AimHooks: Plugin = async ({ project, client, $, directory, worktree
   const agentsPath = join(aimRoot, "AGENTS.md")
 
   return {
-    // ── 1. Session Idle → Session Summarizer ────────────────
+    // ── 1. Session Idle → turn chime + Session Summarizer ──
     "session.idle": async () => {
+      // Operator cue: agent finished responding / went idle
+      try {
+        const chimeHome = join(
+          process.env.HOME || "/home/kingb",
+          ".aim/bin/aim_turn_chime.sh",
+        )
+        const chimeVessel = join(aimRoot, "scripts", "aim_turn_chime.sh")
+        const chime = existsSync(chimeHome)
+          ? chimeHome
+          : existsSync(chimeVessel)
+            ? chimeVessel
+            : null
+        if (chime && process.env.AIM_TURN_CHIME !== "0") {
+          $`bash ${chime} session_idle`.quiet().nothrow()
+        }
+      } catch {
+        /* never block idle path */
+      }
+
       const transcript = findLatestTranscript(historyDir)
       if (!transcript) {
         await client.app.log({
