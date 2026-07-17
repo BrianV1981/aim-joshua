@@ -1002,7 +1002,21 @@ def main():
     vault_seal.add_argument("--path", default=None, help="Explicit raw transcript path")
     vault_seal.add_argument("--vessel", default=None)
 
-    subparsers.add_parser("reincarnate", help="Trigger the Reincarnation Protocol (Automated context handoff and terminal swap)")
+    rein_parser = subparsers.add_parser(
+        "reincarnate",
+        help="Trigger the Reincarnation Protocol (Automated context handoff and terminal swap)",
+    )
+    rein_parser.add_argument(
+        "--session-id",
+        type=str,
+        default=None,
+        help="Explicit conversation UUID for pulse extraction",
+    )
+    rein_parser.add_argument(
+        "--no-teleport",
+        action="store_true",
+        help="Pulse + vault + wake prompt only; skip tmux spawn/teleport (E2E/CI safe)",
+    )
     
     delegate_parser = subparsers.add_parser("delegate", help="Spawn parallel sub-agents to analyze multiple files (The RLM Pattern)")
     delegate_parser.add_argument("instruction", help="The prompt to give each sub-agent")
