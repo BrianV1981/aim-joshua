@@ -6,10 +6,12 @@ Supports:
   - Grok chat_history.jsonl (type: user|assistant|system|reasoning)
   - Grok updates.jsonl (method: session/update with user_message_chunk / agent_*)
   - AGY-style role/type message JSONL
+  - OpenCode archive/raw session-*.json (single JSON object with messages[])
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from typing import Any, Dict, List, Optional, Union
@@ -231,6 +233,59 @@ def extract_signal_from_chat_style(json_path: str) -> Signal:
     return signal
 
 
+def extract_signal_from_opencode_session(json_path: str) -> Signal:
+    """
+    OpenCode vessel session export (single JSON, not JSONL)::
+
+        {"sessionId": "...", "messages": [{"type":"user"|"assistant", "content":[{"text":...}]}, ...]}
+
+    Also accepts a bare list of message objects.
+    """
+    signal: Signal = []
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            raw = f.read()
+        data = json.loads(raw)
+    except (OSError, json.JSONDecodeError):
+        return signal
+
+    messages: List[Any] = []
+    if isinstance(data, dict):
+        messages = data.get("messages") or data.get("turns") or []
+    elif isinstance(data, list):
+        messages = data
+    if not isinstance(messages, list):
+        return signal
+
+    for msg in messages:
+        if not isinstance(msg, dict):
+            continue
+        m_role = (msg.get("type") or msg.get("role") or "").lower()
+        if m_role in ("human",):
+            m_role = "user"
+        if m_role in ("ai", "model", "bot"):
+            m_role = "assistant"
+        if m_role not in ("user", "assistant", "system", "agy", "model"):
+            continue
+        text = _process_content(msg.get("content"))
+        if not text.strip() and isinstance(msg.get("text"), str):
+            text = msg["text"]
+        if not text.strip():
+            continue
+        if m_role == "model":
+            m_role = "assistant"
+        fragment: Dict[str, Any] = {
+            "role": m_role,
+            "timestamp": msg.get("timestamp", "Unknown"),
+            "text": text,
+        }
+        if m_role in ("assistant", "agy"):
+            fragment["thoughts"] = []
+            fragment["actions"] = []
+        signal.append(fragment)
+    return signal
+
+
 def extract_signal_from_agy_transcript(json_path: str) -> Signal:
     """
     Antigravity brain transcript.jsonl:
@@ -307,13 +362,41 @@ _AGY_TOOLISH_TYPES = frozenset(
 _AGY_SOURCES = frozenset({"MODEL", "USER_EXPLICIT", "SYSTEM", "USER"})
 
 
+def _looks_like_opencode_session_blob(path: str) -> bool:
+    """True if path is a single-JSON OpenCode session export."""
+    base = os.path.basename(path)
+    norm = path.replace("\\", "/")
+    if base.startswith("session-") and base.endswith(".json"):
+        return True
+    if "/archive/raw/" in norm and base.endswith(".json") and not base.endswith(".jsonl"):
+        return True
+    # Peek: whole-file JSON with messages[]
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            head = f.read(4096).lstrip()
+        if not head.startswith("{"):
+            return False
+        # cheap heuristic before full parse
+        if '"messages"' in head or '"sessionId"' in head:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return isinstance(data, dict) and isinstance(data.get("messages"), list)
+    except (OSError, json.JSONDecodeError, ValueError):
+        return False
+    return False
+
+
 def detect_jsonl_kind(json_path: str) -> str:
-    """Return 'grok_updates' | 'agy_transcript' | 'chat_style' | 'unknown'.
+    """Return 'grok_updates' | 'agy_transcript' | 'chat_style' | 'opencode_session' | 'unknown'.
 
     Scan enough leading rows: AGY brain transcripts frequently start with
     GENERIC/tool events (still have ``type``), which must not be labeled
     chat_style before USER_INPUT appears.
     """
+    # OpenCode sessions are a single JSON document (not line-delimited).
+    if _looks_like_opencode_session_blob(json_path):
+        return "opencode_session"
+
     saw_agy_toolish = False
     saw_chat_role = False
     try:
@@ -363,16 +446,27 @@ def detect_jsonl_kind(json_path: str) -> str:
         return "chat_style"
     if json_path.endswith("transcript.jsonl"):
         return "agy_transcript"
+    # last-chance OpenCode (whole-file JSON that failed cheap path heuristics)
+    if json_path.endswith(".json") and not json_path.endswith(".jsonl"):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict) and isinstance(data.get("messages"), list):
+                return "opencode_session"
+        except (OSError, json.JSONDecodeError, ValueError):
+            pass
     return "unknown"
 
 
 def extract_signal(json_path: str) -> ExtractResult:
     """
-    Surgically extracts conversational signal from a session JSONL.
+    Surgically extracts conversational signal from a session JSONL or OC session JSON.
     Returns a list of turn fragments, or an error string.
     """
     try:
         kind = detect_jsonl_kind(json_path)
+        if kind == "opencode_session":
+            return extract_signal_from_opencode_session(json_path)
         if kind == "grok_updates" or (
             kind == "unknown" and json_path.endswith("updates.jsonl")
         ):
@@ -398,6 +492,11 @@ def extract_signal(json_path: str) -> ExtractResult:
                 signal if isinstance(signal, list) else []
             ):
                 return agy_sig
+        # Recover: OpenCode single-JSON session
+        if not signal or conversational_turn_count(signal) < 1:
+            oc_sig = extract_signal_from_opencode_session(json_path)
+            if conversational_turn_count(oc_sig) > 0:
+                return oc_sig
         return signal
     except Exception as e:
         return f"Extraction Error: {e}"
