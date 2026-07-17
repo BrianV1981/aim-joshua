@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Three-vessel A.I.M. engine core diff.
+Four-vessel A.I.M. engine core diff.
 
 Compares Python modules across:
   aim-agy      →  aim-agy_os/.aim_core
   aim-grok     →  aim-agy_os/.aim_core
-  aim-opencode →  aim_core   (flat layout)
+  aim-opencode →  nested aim-agy_os/.aim_core (or legacy flat aim_core/)
+  aim-codex    →  aim-agy_os/.aim_core
 
 Default roots (override with env or flags):
-  AIM_AGY_ROOT, AIM_GROK_ROOT, AIM_OPENCODE_ROOT
+  AIM_AGY_ROOT, AIM_GROK_ROOT, AIM_OPENCODE_ROOT, AIM_CODEX_ROOT
 
 Exit codes:
   0  — all compared shared modules identical (rare) OR --report-only
@@ -16,9 +17,9 @@ Exit codes:
   2  — usage / missing path error
 
 Examples:
-  python3 scripts/vessel_core_diff.py
-  python3 scripts/vessel_core_diff.py --pair agy,grok
-  python3 scripts/vessel_core_diff.py --pair agy,opencode --json
+  python3 scripts/vessel_core_diff.py --report-only
+  python3 scripts/vessel_core_diff.py --pair agy,codex
+  python3 scripts/vessel_core_diff.py --pair agy,grok --json
   python3 scripts/vessel_core_diff.py --lockstep-checklist
 """
 from __future__ import annotations
@@ -37,14 +38,15 @@ DEFAULTS = {
     "opencode": Path(
         os.environ.get("AIM_OPENCODE_ROOT", "/home/kingb/aim-opencode")
     ),
+    "codex": Path(os.environ.get("AIM_CODEX_ROOT", "/home/kingb/aim-codex")),
 }
 
 # Relative path from vessel root → engine core
-# Goal: all vessels nested under aim-agy_os/.aim_core (opencode may still be flat during migration)
 CORE_REL = {
     "agy": Path("aim-agy_os/.aim_core"),
     "grok": Path("aim-agy_os/.aim_core"),
     "opencode": Path("aim_core"),  # migrate → aim-agy_os/.aim_core
+    "codex": Path("aim-agy_os/.aim_core"),
 }
 
 
@@ -55,6 +57,7 @@ def _resolve_opencode_core(root: Path) -> Path:
     if nested.is_dir():
         return nested
     return flat
+
 
 SKIP_DIR_PARTS = {
     "__pycache__",
@@ -74,13 +77,26 @@ KNOWN_OVERLAYS = {
         "wiki_compiler.py",
         "agent_session_names.py",
         "reincarnation/session_naming.py",
+        "session_naming.py",
+        "reincarnation/teleport_engine.py",
+        "handoff_pulse_generator.py",
     },
     "opencode": {
         "aim_crash.py",
         "daemon.py",
         "session_bridge.py",
         "aim_opencode_update.py",
-        "forensic_utils.py",  # may exist elsewhere under plugins on agy
+        "forensic_utils.py",
+        "reincarnation/teleport_engine.py",
+        "handoff_pulse_generator.py",
+        "session_naming.py",
+    },
+    "codex": {
+        "vessel_paths.py",
+        "session_naming.py",
+        "reincarnation/session_naming.py",
+        "reincarnation/teleport_engine.py",
+        "handoff_pulse_generator.py",
     },
     "agy": set(),
 }
@@ -95,6 +111,7 @@ LOCKSTEP_REQUIRED = [
     "extract_signal.py",
     "handoff_pulse_generator.py",
     "session_porter.py",
+    "blackbox_vault.py",
 ]
 
 
@@ -113,8 +130,6 @@ def collect_py_modules(core: Path) -> dict[str, Path]:
         return out
     core = core.resolve()
     for p in core.rglob("*.py"):
-        # Only skip noise dirs *under* the core root — never filter on parent
-        # path segments like .../workspace/issue-11/... (worktree paths).
         try:
             rel_parts = p.resolve().relative_to(core).parts
         except ValueError:
@@ -172,9 +187,8 @@ def pair_diff(
 def _overlay_hint(a: str, b: str, rel: str) -> str:
     tags = []
     for v in (a, b):
-        if rel in KNOWN_OVERLAYS.get(v, set()) or any(
-            rel.endswith(x) or rel == x for x in KNOWN_OVERLAYS.get(v, set())
-        ):
+        overlays = KNOWN_OVERLAYS.get(v, set())
+        if rel in overlays or any(rel.endswith(x) for x in overlays):
             tags.append(f"known-{v}-overlay")
     return ",".join(tags) if tags else ""
 
@@ -197,20 +211,21 @@ def lockstep_checklist(modules: dict[str, dict[str, Path]]) -> list[dict]:
     return rows
 
 
-def read_source_pin(grok_root: Path) -> str:
-    pin = grok_root / "SOURCE.md"
+def read_source_pin(root: Path) -> str:
+    pin = root / "SOURCE.md"
     if not pin.is_file():
         return "(no SOURCE.md)"
     text = pin.read_text(encoding="utf-8", errors="replace")
     for line in text.splitlines():
         if "Commit" in line and "`" in line:
             return line.strip()
-    return pin.read_text(encoding="utf-8", errors="replace")[:200]
+    return text[:200]
 
 
 def print_human(report: dict) -> None:
-    print("=== A.I.M. VESSEL CORE DIFF ===")
-    print(f"Grok SOURCE pin: {report.get('source_pin', '')}")
+    print("=== A.I.M. VESSEL CORE DIFF (4 pillars) ===")
+    print(f"Grok SOURCE pin: {report.get('source_pin_grok', '')}")
+    print(f"Codex SOURCE pin: {report.get('source_pin_codex', '')}")
     print()
     for v, info in report["vessels"].items():
         status = "OK" if info["exists"] else "MISSING"
@@ -250,7 +265,9 @@ def print_human(report: dict) -> None:
         print("--- LOCKSTEP REQUIRED MODULES ---")
         for row in report["lockstep"]:
             flag = "SYNC" if row["in_sync"] else "DRIFT"
-            parts = " ".join(f"{k}={v}" for k, v in row.items() if k in DEFAULTS)
+            parts = " ".join(
+                f"{k}={v}" for k, v in row.items() if k in DEFAULTS
+            )
             print(f"  [{flag}] {row['module']:28} {parts}")
         print()
 
@@ -263,36 +280,42 @@ def print_human(report: dict) -> None:
 
 def build_orchestration_hints(report: dict) -> list[str]:
     hints = [
-        "Soul = aim-agy. Sync agy→grok via SYNC_FROM_AIM_AGY.md; pin SOURCE.md.",
-        "aim-opencode is flat aim_core/; treat as re-port target, not blind rsync delete.",
+        "Soul = aim-agy. Sync agy→grok/codex via SYNC_FROM_AIM_AGY.md; pin SOURCE.md.",
+        "Four pillars: agy · grok · opencode · codex. Host overlays only for CLI spawn/paths.",
         "Host-agnostic features: implement on agy first, then sync vessels.",
+        "extract_signal should include codex_rollout + opencode_session on all vessels.",
     ]
-    # opencode missing lockstep modules
     lock = report.get("lockstep") or []
-    missing_oc = [
-        r["module"] for r in lock if r.get("opencode") == "MISSING"
-    ]
-    if missing_oc:
-        hints.append(
-            "aim-opencode MISSING lockstep modules: " + ", ".join(missing_oc)
-            + " — port from agy (or stub doctor)."
-        )
-    # large only_opencode / only_agy from agy↔opencode pair
+    for vessel in ("opencode", "codex", "grok"):
+        missing = [r["module"] for r in lock if r.get(vessel) == "MISSING"]
+        if missing:
+            hints.append(
+                f"aim-{vessel} MISSING lockstep modules: "
+                + ", ".join(missing)
+                + " — port from agy."
+            )
     for p in report.get("pairs", []):
+        if p["pair"] == "agy↔codex" and p["differ_count"] > 0:
+            non_overlay = [d for d in p["differ"] if not d.get("overlay_hint")]
+            if non_overlay:
+                hints.append(
+                    "agy↔codex unexpected diffs: "
+                    + ", ".join(d["path"] for d in non_overlay[:8])
+                )
+            else:
+                hints.append(
+                    f"agy↔codex: {p['differ_count']} known-overlay diffs only — OK"
+                )
         if p["pair"] == "agy↔opencode" and p["differ_count"] > 20:
             hints.append(
                 f"agy↔opencode has {p['differ_count']} differing shared modules — "
                 "schedule deliberate re-sync sprint, not drive-by edits."
             )
         if p["pair"] == "agy↔grok" and p["differ_count"] > 0:
-            non_overlay = [
-                d
-                for d in p["differ"]
-                if not d.get("overlay_hint")
-            ]
+            non_overlay = [d for d in p["differ"] if not d.get("overlay_hint")]
             if non_overlay:
                 hints.append(
-                    f"agy↔grok unexpected diffs (not tagged overlay): "
+                    "agy↔grok unexpected diffs (not tagged overlay): "
                     + ", ".join(d["path"] for d in non_overlay[:8])
                 )
     return hints
@@ -300,52 +323,27 @@ def build_orchestration_hints(report: dict) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--agy",
-        type=Path,
-        default=DEFAULTS["agy"],
-        help="aim-agy vessel root",
-    )
-    parser.add_argument(
-        "--grok",
-        type=Path,
-        default=DEFAULTS["grok"],
-        help="aim-grok vessel root",
-    )
-    parser.add_argument(
-        "--opencode",
-        type=Path,
-        default=DEFAULTS["opencode"],
-        help="aim-opencode vessel root",
-    )
+    parser.add_argument("--agy", type=Path, default=DEFAULTS["agy"])
+    parser.add_argument("--grok", type=Path, default=DEFAULTS["grok"])
+    parser.add_argument("--opencode", type=Path, default=DEFAULTS["opencode"])
+    parser.add_argument("--codex", type=Path, default=DEFAULTS["codex"])
     parser.add_argument(
         "--pair",
         action="append",
         default=[],
-        help="Limit pairs, e.g. agy,grok or agy,opencode (repeatable). Default: all pairs.",
+        help="Limit pairs, e.g. agy,codex (repeatable). Default: all pairs.",
     )
-    parser.add_argument("--json", action="store_true", help="JSON output")
-    parser.add_argument(
-        "--lockstep-checklist",
-        action="store_true",
-        help="Include lockstep required-module matrix",
-    )
-    parser.add_argument(
-        "--report-only",
-        action="store_true",
-        help="Always exit 0 (for human browsing)",
-    )
-    parser.add_argument(
-        "--list-identical",
-        action="store_true",
-        help="Include full identical file lists in JSON (verbose)",
-    )
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--lockstep-checklist", action="store_true")
+    parser.add_argument("--report-only", action="store_true")
+    parser.add_argument("--list-identical", action="store_true")
     args = parser.parse_args(argv)
 
     roots = {
         "agy": args.agy.expanduser().resolve(),
         "grok": args.grok.expanduser().resolve(),
         "opencode": args.opencode.expanduser().resolve(),
+        "codex": args.codex.expanduser().resolve(),
     }
 
     vessels_info = {}
@@ -366,7 +364,25 @@ def main(argv: list[str] | None = None) -> int:
     if not any(v["exists"] for v in vessels_info.values()):
         return 2
 
-    default_pairs = [("agy", "grok"), ("agy", "opencode"), ("grok", "opencode")]
+    names = list(roots.keys())
+    default_pairs = [
+        (names[i], names[j])
+        for i in range(len(names))
+        for j in range(i + 1, len(names))
+    ]
+    # Prefer soul-centric pairs first for readability
+    preferred = [
+        ("agy", "grok"),
+        ("agy", "opencode"),
+        ("agy", "codex"),
+        ("grok", "opencode"),
+        ("grok", "codex"),
+        ("opencode", "codex"),
+    ]
+    default_pairs = [p for p in preferred if p in default_pairs or True]
+    # keep preferred order only
+    default_pairs = preferred
+
     pairs_req: list[tuple[str, str]] = []
     if args.pair:
         for spec in args.pair:
@@ -400,31 +416,26 @@ def main(argv: list[str] | None = None) -> int:
         pr = pair_diff(a, modules[a], b, modules[b])
         if not args.list_identical:
             pr.pop("identical_list", None)
-        if pr["differ_count"] or pr["only_a_count"] or pr["only_b_count"]:
-            # only_* is expected across vessels; "drift" for exit = shared module content differ
-            # or missing required lockstep later
-            if pr["differ_count"]:
-                has_drift = True
+        if pr["differ_count"]:
+            has_drift = True
         pair_reports.append(pr)
 
     report: dict = {
-        "source_pin": read_source_pin(roots["grok"]),
+        "source_pin_grok": read_source_pin(roots["grok"]),
+        "source_pin_codex": read_source_pin(roots["codex"]),
         "vessels": vessels_info,
         "pairs": pair_reports,
         "has_drift": has_drift,
     }
 
-    if args.lockstep_checklist or True:
-        # always compute; cheap and useful for orchestration
-        present = {k: v for k, v in modules.items() if vessels_info[k]["exists"]}
-        report["lockstep"] = lockstep_checklist(present)
-        if any(not r["in_sync"] for r in report["lockstep"]):
-            report["has_drift"] = True
+    present = {k: v for k, v in modules.items() if vessels_info[k]["exists"]}
+    report["lockstep"] = lockstep_checklist(present)
+    if any(not r["in_sync"] for r in report["lockstep"]):
+        report["has_drift"] = True
 
     report["orchestration_hints"] = build_orchestration_hints(report)
 
     if args.json:
-        # JSON-safe (no Path)
         print(json.dumps(report, indent=2))
     else:
         print_human(report)
