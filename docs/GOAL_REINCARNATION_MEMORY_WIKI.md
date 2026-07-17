@@ -126,3 +126,5 @@ If they cannot produce those four, it is **not** done.
 - AGY PR #101 · OpenCode PR #22  
 - Fleet scoreboard: `aim-agy_os/planning-artifacts/FLEET_STATUS_REINCARNATE_OPERATOR_E2E.md`  
 - Harness scripts under each vessel: `aim-agy_os/scripts/operator_reincarnate_wiki_e2e*.py`  
+
+- **Optional forensic seal (not part of wiki PASS):** `docs/BLACKBOX_VAULT.md` (reincarnate-only, one box per vessel)

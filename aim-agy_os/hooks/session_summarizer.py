@@ -22,7 +22,8 @@ sys.path.append(os.path.join(AIM_ROOT, ".aim_core"))
 
 from plugins.datajack.forensic_utils import chunk_text, get_embedding
 from wiki_tools import process_wiki
-from blackbox_vault import vault_session
+# Black box seal runs only from reincarnation (background_tasks / aim reincarnate),
+# not from generic wiki summarizer — see docs/BLACKBOX_VAULT.md.
 
 def _resolve_config_path():
     """Nested engine CONFIG, vessel-root CONFIG, then fail loudly (never silent 0)."""
@@ -108,29 +109,6 @@ def process_transcript(md_path):
                     session_id = parts[-1]
                 else:
                     session_id = stem
-
-        # Prefer Grok jsonl vault when session dir exists
-        jsonl_candidates = [
-            os.path.expanduser(f"~/.gemini/antigravity-cli/brain/{session_id}/.system_generated/logs/transcript.jsonl"),
-        ]
-        # Grok: search under sessions for this uuid
-        grok_root = os.path.expanduser("~/.grok/sessions")
-        if os.path.isdir(grok_root):
-            for pat in (
-                os.path.join(grok_root, "*", session_id, "updates.jsonl"),
-                os.path.join(grok_root, "*", session_id, "chat_history.jsonl"),
-            ):
-                import glob as _g
-                for hit in _g.glob(pat):
-                    jsonl_candidates.insert(0, hit)
-        for jsonl_path in jsonl_candidates:
-            if os.path.exists(jsonl_path):
-                print(f"[WATCHDOG] Securing {session_id} into the Immutable Black Box ({jsonl_path})...")
-                try:
-                    vault_session(jsonl_path)
-                except Exception as ve:
-                    print(f"[WATCHDOG] vault_session warning: {ve}")
-                break
 
         # Stage raw + deterministic ingest/pages (no agent required)
         raw_logs_dir = os.path.join(AIM_ROOT, "memory-wiki", "_raw_logs")

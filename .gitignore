@@ -55,3 +55,10 @@ planning-artifacts/
 engrams/
 memory-wiki/
 workspace/aim-agy_os/venv/
+
+# Vessel black box
+archive/.raw_jsonl_blackbox/
+**/.raw_jsonl_blackbox/
+**/*.enc
+.aim/blackbox.key
+**/blackbox.key
