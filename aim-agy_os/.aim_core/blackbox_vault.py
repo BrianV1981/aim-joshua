@@ -168,8 +168,10 @@ def vault_session(
     Always non-fatal: returns False on skip/failure.
     """
     try:
-        if reason != "reincarnate":
-            _log(f"[VAULT] skip reason={reason!r} (reincarnate-only policy)")
+        # Allowed seal reasons: reincarnate (legacy) + cron (nightly vNext)
+        allowed = {"reincarnate", "cron", "handoff_vnext"}
+        if reason not in allowed:
+            _log(f"[VAULT] skip reason={reason!r} (allowed={sorted(allowed)})")
             return False
 
         root = Path(vessel_root) if vessel_root else find_vessel_root()
@@ -177,9 +179,17 @@ def vault_session(
         if settings.get("blackbox_enabled") is False:
             _log("[VAULT] skip blackbox_enabled=false")
             return False
-        if settings.get("blackbox_on_reincarnate_only", True) and reason != "reincarnate":
-            _log("[VAULT] skip not reincarnate")
-            return False
+        allow_cron = __import__("os").environ.get("AIM_BLACKBOX_ALLOW_CRON", "1") not in (
+            "0", "false", "no",
+        )
+        if settings.get("blackbox_on_reincarnate_only", True):
+            if reason == "reincarnate":
+                pass
+            elif reason in ("cron", "handoff_vnext") and allow_cron:
+                pass
+            else:
+                _log("[VAULT] skip not reincarnate (and cron not allowed)")
+                return False
 
         if not source_path or not os.path.isfile(source_path):
             _log(f"[VAULT] WARN skip: source missing {source_path!r}")

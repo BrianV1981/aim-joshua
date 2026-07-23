@@ -1,0 +1,5 @@
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "Wake. Project aim-grok. E2E_HANDOFF_VNEXT_MARKER_7f3a MANDATE: build handoff vNext three pipelines."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Acknowledged. Implementing handoff, wiki batch, blackbox cron."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "[[KEEP]] Do not spin agents for handoff. Use nightly cron for wiki."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "TODO: ship E2E tests. NEXT: verify all three systems."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "Proceed with staged fixtures and crons."}}}}

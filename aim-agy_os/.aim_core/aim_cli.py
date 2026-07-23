@@ -539,6 +539,18 @@ def cmd_handoff(args):
     except:
         pass
 
+def cmd_handoff_vnext(args):
+    """Dispatches to handoff vNext three-pipeline CLI."""
+    cli_path = os.path.join(AIM_ROOT, "aim-agy_os", "handoff", "cli.py")
+    cli_args = [args.handoff_command, "--adapter", args.handoff_adapter or "opencode", "--vessel-root", AIM_ROOT]
+    if args.session_id:
+        cli_args += ["--session-id", args.session_id]
+    if args.marker:
+        cli_args += ["--marker", args.marker]
+    if args.json:
+        cli_args += ["--json"]
+    run_script(cli_path, cli_args)
+
 def cmd_audit(args):
     """Generates a strategic synthesis/morning report from recent sessions."""
     from audit_tools import run_audit
@@ -1125,6 +1137,13 @@ def main():
     push_parser = subparsers.add_parser("push")
     push_parser.add_argument("message")
 
+    handoff_vnext_parser = subparsers.add_parser("handoff-vnext", help="Handoff vNext three pipelines (handoff|wiki-batch|blackbox-cron|cron-all|e2e-staged)")
+    handoff_vnext_parser.add_argument("handoff_command", nargs="?", default="handoff", choices=["handoff", "wiki-batch", "blackbox-cron", "cron-all", "e2e-staged"], help="Pipeline command (default: handoff)")
+    handoff_vnext_parser.add_argument("--session-id", default=None)
+    handoff_vnext_parser.add_argument("--adapter", default="opencode")
+    handoff_vnext_parser.add_argument("--marker", default=None)
+    handoff_vnext_parser.add_argument("--json", action="store_true")
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)
@@ -1147,6 +1166,7 @@ def main():
     elif args.command == "scrape": cmd_scrape(args)
     elif args.command == "ingest": cmd_ingest(args)
     elif args.command in ["handoff", "pulse"]: cmd_handoff(args)
+    elif args.command == "handoff-vnext": cmd_handoff_vnext(args)
     elif args.command == "push": cmd_push(args)
     elif args.command == "sync": cmd_sync(args)
     elif args.command == "sync-issues": cmd_sync_issues(args)
