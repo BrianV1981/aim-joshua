@@ -1,0 +1,4 @@
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "Second session E2E_HANDOFF_VNEXT_MARKER_7f3a DO NOT forget blackbox is cron-only."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Blackbox cron will seal every session."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "Also Flight Recorder before embed."}}}}
+{"timestamp": 1, "method": "session/update", "params": {"sessionId": "x", "update": {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "FR cleans then embed into DB."}}}}
