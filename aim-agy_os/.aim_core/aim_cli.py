@@ -522,7 +522,7 @@ def cmd_sync(args):
         run_script(os.path.join(AIM_CORE_DIR, "back-populator.py"), [])
         
         print("[3/3] Ingesting new Engrams...")
-        db = load_knowledge_provider()
+        db = ForensicDB()
         imported = import_from_jsonl(db, sync_dir)
         db.close()
         print(f"      Imported {imported} new/updated sessions.")

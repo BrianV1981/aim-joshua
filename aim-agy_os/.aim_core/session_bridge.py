@@ -95,6 +95,19 @@ def export_session(session_id):
     try:
         return json.loads(stdout)
     except json.JSONDecodeError as e:
+        # Attempt to repair truncated/malformed JSON from opencode export
+        try:
+            # Find the last complete object bracket
+            last_bracket = stdout.rfind('}')
+            if last_bracket != -1:
+                repaired = stdout[:last_bracket+1]
+                # If it was an array of objects, close the array
+                if repaired.strip().startswith('['):
+                    repaired += ']'
+                return json.loads(repaired)
+        except Exception:
+            pass
+            
         raise RuntimeError(
             f"Invalid JSON from opencode export for {session_id}: {e}"
         ) from e
