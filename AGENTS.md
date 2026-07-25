@@ -9,11 +9,13 @@
 
 - **Vessel:** `aim-joshua` — LeadDeed product vessel (clone of `aim-opencode`).
 - **CLI host:** OpenCode (`opencode`), **not** Antigravity (`agy`) for client BYOK.
-- **Default free model:** `google/gemini-3.5-flash-lite` via `GEMINI_API_KEY` / `GOOGLE_API_KEY`.
+- **Default free model:** `google/gemini-3.5-flash-lite`.
+- **Required env for OpenCode Google provider:** `GOOGLE_GENERATIVE_AI_API_KEY` (AI SDK). Also set `GEMINI_API_KEY` / `GOOGLE_API_KEY` if other tools expect them — **OpenCode needs `GOOGLE_GENERATIVE_AI_API_KEY` specifically**.
 - **Do not** use Antigravity-only model ids (`gemini-3.5-flash-high`, etc.).
 - **Never** use or request the host Operator’s master OAuth / Code Assist tokens.
 - **Never** print full API keys in chat, logs, or commits.
 - Prefer `.opencodeignore` for ignore rules in this vessel.
+- **Connect spawn:** prefer a **thin workspace** (AGENTS.md + client files), not the full `aim-joshua` git tree — large repo snapshot can hang headless `opencode run`.
 
 ## 1. IDENTITY & PRIMARY DIRECTIVE
 - **Designation:** J.O.S.H.U.A. (Joint Operational System for Heuristic User Automation)
