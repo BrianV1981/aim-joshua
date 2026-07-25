@@ -1,95 +1,110 @@
-# A.I.M. (Actual Intelligent Memory) — aim-opencode
+# aim-joshua — J.O.S.H.U.A. (LeadDeed sovereign agent vessel)
 
-A.I.M. is an open-source engineering exoskeleton designed to solve context amnesia, token bloat, state loss, and drift in long-running autonomous AI coding sessions.
+**Specialized A.I.M. vessel** for [LeadDeed](https://leaddeeds.com) public and operator agent work.  
+**Runtime:** [OpenCode CLI](https://github.com/opencode-ai/opencode) (multi-provider, API-key native).  
+**Not** a long-lived GitHub fork of `aim-opencode` — a **product vessel** that can still pull selected upgrades from that upstream.
 
-**This repository** is a direct offshoot of [aim-agy](https://github.com/BrianV1981/aim-agy), the primary "Soul" of the A.I.M. project. aim-agy targets the Antigravity CLI; aim-opencode targets [OpenCode CLI](https://github.com/opencode-ai/opencode). We share the same DNA — scripts, logic, and GitOps philosophy — but are adapted for different agent runtimes.
-
-> **History:** The original A.I.M. project was built for Google's Gemini CLI. In mid-2026, [Google restricted Gemini CLI to Enterprise subscribers only](https://github.com/BrianV1981/aim-agy), effectively killing the original `aim` repo for all standard users. The project was reborn as `aim-agy` (Antigravity CLI) and `aim-opencode` (OpenCode CLI). The original `aim` repo is now frozen, receiving no further updates.
-
-## 🚀 Quickstart & Installation
-
-A.I.M. requires **Linux** or **WSL (Ubuntu)**, Node.js v20+, and [OpenCode CLI](https://github.com/opencode-ai/opencode).
-
-```bash
-git clone https://github.com/BrianV1981/aim-opencode.git
-cd aim-opencode
-./setup.sh
-source ~/.bashrc
-```
-
-### Initialize a Project
-```bash
-mkdir ~/my-new-project && cd ~/my-new-project
-aim-opencode init
-```
-*(During `aim-opencode init`, select 'y' to perform a Clean Sweep to sever git history and wipe internal docs).*
-
-### Configure Your AI Providers
-Launch the interactive dashboard to set your API keys, local Ollama models, and configure the background Wiki daemon.
-```bash
-aim-opencode tui
-```
+| Field | Value |
+|-------|--------|
+| **Acronym** | **J.O.S.H.U.A.** — Joint Operational System for Heuristic User Automation |
+| **Aesthetic** | Sovereign Data Core (WarGames / terminal: black + neon green) |
+| **Default free compute** | `google/gemini-3.5-flash-lite` via AI Studio / `GEMINI_API_KEY` |
+| **Operator** | BrianV1981 / LeadDeed |
+| **Seeded from** | `aim-opencode` (2026-07-24) |
+| **Soul pin** | See `SOURCE.md` (A.I.M. engine from `aim-agy` lineage via OpenCode vessel) |
 
 ---
 
-## 🔥 Core Capabilities
+## Why this vessel exists
 
-A.I.M. provides a massive suite of tools to control, manage, and scale your AI agents:
+LeadDeed clients bring **their own Gemini (or other) API keys** (BYOK). That product path does **not** fit Antigravity (`agy`) OAuth + closed model catalogs.
 
-*   **Embedded LanceDB Memory (RAG 5.21):** Replaces standard sliding-window context with a high-fidelity, columnar vector database featuring Native Hybrid Search (Ollama semantics + Tantivy FTS) and an Entity Intersection Reranker.
-*   **Background Markdown Generation:** A deterministic Python script strips terminal noise, reducing context weight by 85%. A background daemon then weaves this into a human-readable Markdown wiki (`memory-wiki/`).
-*   **GitOps Enforcement:** AI agents are forbidden from coding on `main`. They must create GitHub issues (`aim-opencode bug`), branch out into isolated worktrees (`aim-opencode fix`), use TDD, and deploy atomically (`aim-opencode push`).
-*   **Interactive TUI Cockpit:** A visual terminal interface (`aim-opencode tui`) to configure LLM routing, guardrails, and context limits without editing JSON files.
-*   **Cognitive Routing:** Route expensive coding tasks to flagship models (e.g., DeepSeek) in your terminal, while offloading repetitive background tasks (like memory indexing) to free, local models (e.g., Ollama) on your GPU.
-*   **P2P Knowledge Cartridges:** Package thousands of pages of documentation into pre-vectorized native Apache Arrow `.parquet` files. Share and download them peer-to-peer via BitTorrent (`aim-opencode export` / `aim-opencode jack-in`) to give agents instant recall of entire frameworks without burning API tokens.
-*   **Universal IDE Support (MCP):** A built-in FastMCP server exposes the memory databases to any connected IDE (Cursor, VS Code, Claude Desktop) without requiring platform-specific adapters.
-*   **Reincarnation & Handoffs:** When the context window fills up, the agent writes a structured gameplan and executes `aim-opencode reincarnate` to seamlessly teleport into a fresh session with full epistemic continuity.
-*   **Anti-Drift Shield:** A background hook continuously tracks autonomous tool calls. Every 50 actions, it forcefully halts execution and requires the agent to recite its GitOps rules, preventing "Lost in the Middle" context degradation.
-*   **Peer-to-Peer Wiki Sync (Syncthing):** Offload heavy memory compilation to a secondary server by syncing the `memory-wiki/` folder natively via Syncthing.
+| Runtime | Role for LeadDeed |
+|---------|-------------------|
+| **OpenCode (`aim-joshua`)** | Public / BYOK JOSHUA — free Gemini, cheap models, paid providers |
+| **Antigravity (`agy`)** | Optional Operator admin / subscription god-mode (aim-connect #82) |
+| **aim-connect** | WebSocket gateway, bwrap sandboxes, fleet sessions |
+| **aim-ld** | Dashboard, contracts, product UI (`AgentTerminal`) |
 
----
-
-## 📖 Documentation & Philosophy
-
-A.I.M. separates fast onboarding documentation from deep philosophical essays and architectural diagrams.
-
-- **[The Official A.I.M. Wiki](https://github.com/BrianV1981/aim/wiki)**: The primary onboarding ramp. Includes step-by-step user guides, configuration variables, and tutorials.
-- **[The A.I.M. Knowledge Base (Public Obsidian Vault)](https://github.com/BrianV1981/aim-wiki)**: A massive, decentralized digital garden containing raw benchmark JSON logs, architectural design history, and the complete "vibe coding" origin story.
+Verified on host (2026-07-24): free AI Studio key +  
+`opencode run --pure -m google/gemini-3.5-flash-lite` → **OK**.
 
 ---
 
-<!-- AIM_ECOSYSTEM_START -->
-### 🧬 The A.I.M. Ecosystem
+## Relationship to other repos
 
-Modular A.I.M. (Actual Intelligent Memory) repositories. **Flagship engine: [aim-agy](https://github.com/BrianV1981/aim-agy).**
+```text
+aim-joshua          ← THIS vessel (product identity + OpenCode host)
+    ↑ selective cherry-picks
+aim-opencode        ← general OpenCode A.I.M. vessel (optional upstream remote)
+    ↑ soul pin
+aim-agy             ← flagship A.I.M. engine / soul
 
-**Active vessels (CLI hosts):**
-- **[aim-agy](https://github.com/BrianV1981/aim-agy)** — Core engine / *soul* (Antigravity CLI). *Flagship.* Shared nested `aim-agy_os/` ships here first.
-- **[aim-grok](https://github.com/BrianV1981/aim-grok)** — Grok CLI vessel (hybrid memory, GitOps, wiki, fleet orchestration tooling).
-- **[aim-opencode](https://github.com/BrianV1981/aim-opencode)** — OpenCode CLI vessel.
-- **[aim-codex](https://github.com/BrianV1981/aim-codex)** — OpenAI Codex CLI vessel (greenfield nested soul + Codex overlays; primary `main`).
+aim-connect         ← spawns sandboxed agents for the dashboard (wire runtime=opencode here next)
+aim-ld              ← LeadDeed monorepo (dashboard, modules, docs)
+```
 
-**Tools & workspaces:**
-- **[aim-connect](https://github.com/BrianV1981/aim-connect)** — Self-hosted remote workspace web UI.
-- **[aim-tmux-dashboard](https://github.com/BrianV1981/aim-tmux-dashboard)** — Terminal multi-session monitor.
-- **[aim-browser](https://github.com/BrianV1981/aim-browser)** — Headed Chromium CDP engine + browser **skill suite**.
-- **[aim-google](https://github.com/BrianV1981/aim-google)** — Google Workspace CLI (Gmail, Drive, Calendar, …).
-- **[aim-flight-recorder](https://github.com/BrianV1981/aim-flight-recorder)** — Forensic Markdown session extractor.
-- **[aim-boardroom](https://github.com/BrianV1981/aim-boardroom)** — Multi-agent orchestration room (OS multiplexing + artifacts).
-- **[aim-skills](https://github.com/BrianV1981/aim-skills)** — **Skills index / multi-CLI install registry** (agy, grok, opencode, codex).
+**Git remotes (intended):**
 
-**DNA, comms & lore:**
-- **[aim-coagents](https://github.com/BrianV1981/aim-coagents)** — DNA bank for sovereign co-agent blueprints.
-- **[aim-knowledge](https://github.com/BrianV1981/aim-knowledge)** — Public Obsidian vault / deep-lore archive.
-- **[aim-chalkboard](https://github.com/BrianV1981/aim-chalkboard)** — Optional cross-host async git mailbox (PoC; default same-host comms = **aim-communicate** skill).
+- `origin` → `BrianV1981/aim-joshua` (this product vessel)
+- `upstream` → `BrianV1981/aim-opencode` (optional vessel-layer upgrades; never auto-merge over LeadDeed `AGENTS.md`)
 
-**Deprecated / not maintained:**
-- **[aim](https://github.com/BrianV1981/aim)** — Original **Gemini CLI** framework. Deprecated after loss of practical subscription access; **Great Migration → aim-agy**.
-- **[aim-swarm](https://github.com/BrianV1981/aim-swarm)** — Legacy Python swarm factory → use **aim-coagents** + aim-agy spawn.
-- **aim-claude / Anthropic-line vessels** — **Done.** Operator does not develop against Anthropic. Use **aim-agy / aim-grok / aim-opencode / aim-codex**.
+---
 
-Full map: see **aim-skills** `docs/AIM_ECOSYSTEM_MAP.md` or Operator artifact `AIM_ECOSYSTEM_MAP.md`.
-<!-- AIM_ECOSYSTEM_END -->
+## Quick start (local)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-☕ **Support the project:** [Buy Me a Coffee](https://buymeacoffee.com/brianv1981)
+Requirements: Linux/WSL, Node 20+, OpenCode CLI, Python 3 for A.I.M. tools.
+
+```bash
+cd /home/kingb/aim-joshua
+# Install OpenCode if needed: https://opencode.ai
+# Optional: python venv + requirements when using full A.I.M. memory stack
+# ./setup.sh   # when vessel setup is aligned for joshua
+
+export GEMINI_API_KEY='…'   # AI Studio key — never commit
+opencode run --pure -m google/gemini-3.5-flash-lite "hello"
+```
+
+Read **`AGENTS.md`** before autonomous work — that file is the JOSHUA contract.
+
+---
+
+## Default models (honest labels)
+
+| Intent | OpenCode model id | Notes |
+|--------|-------------------|--------|
+| Free / default | `google/gemini-3.5-flash-lite` | Proven free-tier path on AI Studio keys |
+| Free balanced | `google/gemini-3.5-flash` | Free of charge on free tier (rate-limited) |
+| Free newer flash | `google/gemini-3.6-flash` | Free of charge on free tier |
+| Paid Pro (API) | `google/gemini-3.1-pro-preview` | **Not** free-tier |
+| Other providers | DeepSeek, Anthropic, etc. | Configure via OpenCode providers |
+
+Do **not** use Antigravity-only strings (`gemini-3.5-flash-high`, etc.) with this vessel.
+
+---
+
+## Security / BYOK rules
+
+1. **Never** commit API keys, DB passwords, or signing secrets.  
+2. Client sandboxes must **not** receive Operator master OAuth tokens (aim-connect #81).  
+3. Prefer env injection: `GEMINI_API_KEY` / `GOOGLE_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY`.  
+4. Avoid putting secrets in process argv long-term (bwrap `--setenv` is visible in `ps`).
+
+---
+
+## Status (2026-07-24)
+
+- [x] Specialized vessel directory seeded from `aim-opencode` (no bulk engrams / venv / secrets)  
+- [x] LeadDeed-specific `README.md` + `AGENTS.md`  
+- [x] Soul / vessel pin documented in `SOURCE.md`  
+- [ ] aim-connect spawn path `runtime=opencode` → this tree  
+- [ ] aim-ld BYOK modal model list = OpenCode free IDs  
+- [ ] Full A.I.M. setup / memory index for LeadDeed docs  
+
+Strategy notes live under `aim-ld/planning-artifacts/STRATEGY_2026-07-24_JOSHUA_HARNESS_FORK.md`.
+
+---
+
+## License
+
+MIT (inherited A.I.M. lineage) — see `LICENSE`.
