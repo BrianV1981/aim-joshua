@@ -71,6 +71,26 @@ Because JOSHUA is routing real terminal input/output over the web, security is p
 2.  **Application Layer:** JOSHUA implements `E2EESocketWrapper.ts`. Even before the chat text hits the WebSocket, it is AES-GCM encrypted using a shared secret. `aim-connect` decrypts it on the server. If a middlebox or proxy intercepts the packets, they only see scrambled byte arrays.
 3.  **File Interception:** When the agent generates a file (like a CSV of leads) and prints a local path (e.g., `file:///path/to/leads.csv`), the React frontend hijacks the Markdown renderer. It converts that path into a secure download link hitting `aim-connect`'s `/download` endpoint, appending the user's JWT token to prove they have the rights to download that specific artifact from the server.
 
+## 5. Fleet Agents & OS Sandboxing (`bwrap`)
+
+JOSHUA enforces strict boundary constraints via OS-level sandboxing:
+- **Primary Node:** Has broader access (`harness-opencode`).
+- **Fleet Agents:** Restricted sub-sessions. They operate strictly within `fleet_workspaces/<sub_id>`.
+- The `bwrap` container mounts the host filesystem as read-only (`--ro-bind / /`), meaning any attempt by a sandboxed agent to modify files outside its explicitly bound workspace directory (`--bind`) will physically fail at the OS level with a `Read-only file system` error.
+
+## 6. Interactive Permission Bypassing (`--auto`)
+
+Because OpenCode is an interactive CLI tool, it natively pauses execution to present permission modals (e.g., `△ Permission required: Access external directory`) when an agent attempts to violate its directory constraints. 
+- In a headless setup running over `tmux`, these UI modals block execution indefinitely and cause the backend WebSocket bridging to hit inactivity timeouts (120 seconds).
+- **The Solution:** The OpenCode process is launched with the `--auto` flag. This automatically approves permissions, bypassing the modal. Because the agent is encased in `bwrap`, it does not grant actual file access; instead, the action hits the OS wall and immediately fails, allowing the agent to see the failure and continue chatting without hanging the connection.
+
+## 7. Real-Time SQLite WAL Polling
+
+The JOSHUA backend natively intercepts the conversation history in real-time by polling the active SQLite database (`opencode.db`) produced by the sandboxed OpenCode process.
+- **The Challenge:** OpenCode uses SQLite in Write-Ahead Log (WAL) mode. When the Python backend queries the database, standard connections can inadvertently unlink or delete the `-wal` and `-shm` files upon closure (`conn.close()`), destroying the open file descriptors of the sandboxed OpenCode process and crashing it ("Connection closed by remote node").
+- **The Solution:** The backend MUST connect to the SQLite database strictly using URI parameters `?mode=ro`. A read-only SQLite connection (`mode=ro`) correctly bypasses acquiring disruptive locks and inherently avoids checkpointing or deleting the `-wal` file when the connection is closed.
+- **Warning:** Do *not* use `nolock=1` in the connection string. While it prevents lock collisions, `nolock=1` entirely disables SQLite's ability to read `-wal` files. This causes complex `JOIN` queries against the live database to fail with an `unable to open database file` error.
+
 ---
 
 ## Summary Cheat Sheet
