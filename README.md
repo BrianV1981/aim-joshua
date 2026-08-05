@@ -45,7 +45,7 @@ Modular A.I.M. (Actual Intelligent Memory) repositories. While the original arch
 - **[aim-joshua](https://github.com/BrianV1981/aim-joshua)** — The Universal Operating System convergence point.
 
 **Tools & workspaces:**
-- **[aim-dash](https://github.com/BrianV1981/aim-tmux-dashboard)** — Terminal multi-session monitor and daily cockpit.
+- **[aim-tmux-dashboard](https://github.com/BrianV1981/aim-tmux-dashboard)** — Terminal multi-session monitor and daily cockpit (CLI alias: `aim-dash`).
 - **[aim-connect](https://github.com/BrianV1981/aim-connect)** — Self-hosted remote workspace web UI.
 - **[aim-skill-library](https://github.com/BrianV1981/aim-skill-library)** — Skills index / multi-CLI install registry. Home of the sleeper powerhouse: **`aim-communicate`**.
 - **[aim-browser](https://github.com/BrianV1981/aim-browser)** — Headed Chromium CDP engine + browser skill suite.
