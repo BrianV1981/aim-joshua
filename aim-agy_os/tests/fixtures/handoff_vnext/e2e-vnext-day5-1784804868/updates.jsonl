@@ -1,4 +1,0 @@
-{"timestamp": 5, "method": "session/update", "params": {"sessionId": "e2e-vnext-day5-1784804868", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "Day 5 work. E2E_DAY_5_MARKER MANDATE: continue multi-day soak."}}}}
-{"timestamp": 5, "method": "session/update", "params": {"sessionId": "e2e-vnext-day5-1784804868", "update": {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Day 5 assistant reply. TODO: verify cron."}}}}
-{"timestamp": 5, "method": "session/update", "params": {"sessionId": "e2e-vnext-day5-1784804868", "update": {"sessionUpdate": "user_message_chunk", "content": {"type": "text", "text": "[[KEEP]] day=5 soak checkpoint"}}}}
-{"timestamp": 5, "method": "session/update", "params": {"sessionId": "e2e-vnext-day5-1784804868", "update": {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Acknowledged keep."}}}}

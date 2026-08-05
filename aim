@@ -1,24 +1,16 @@
 #!/usr/bin/env bash
-# aim-opencode CLI wrapper — nested OS (aim-agy_os)
-set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OS_ROOT="$ROOT/aim-agy_os"
-VENV_PY="$OS_ROOT/venv/bin/python3"
-# fallbacks during migration
-if [[ ! -x "$VENV_PY" ]]; then
-  VENV_PY="$ROOT/venv/bin/python3"
-fi
-CLI="$OS_ROOT/.aim_core/aim_cli.py"
+ROOT="$(dirname "$(readlink -f "$0")")"
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=8192}"
+# 1. Execute Core Engine
+"$ROOT/joshua_os/venv/bin/python3" "$ROOT/joshua_os/.aim_core/aim_cli.py" "$@"
+EXIT_CODE=$?
 
-if [[ ! -x "$VENV_PY" ]]; then
-  echo "[aim-opencode] venv missing. Run: bash aim-agy_os/setup.sh" >&2
-  exit 1
-fi
-if [[ ! -f "$CLI" ]]; then
-  echo "[aim-opencode] aim_cli.py missing at $CLI" >&2
-  exit 1
+# 3. Teardown Hook: Commit memory state to sandbox ledger (Issue 11)
+if [[ "$PWD" == *"sandboxes"* ]] && [ -d ".git" ]; then
+    echo "[*] Session complete. Committing state to local sandbox ledger..."
+    git add memory_lance/ 2>/dev/null || true
+    git add AGENTS.md 2>/dev/null || true
+    git commit -m "Auto-commit: Agent session complete" > /dev/null 2>&1 || true
 fi
 
-export PYTHONPATH="${OS_ROOT}:${OS_ROOT}/.aim_core${PYTHONPATH:+:$PYTHONPATH}"
-export AIM_VESSEL_CLI="${AIM_VESSEL_CLI:-opencode}"
-exec "$VENV_PY" "$CLI" "$@"
+exit $EXIT_CODE

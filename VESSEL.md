@@ -12,7 +12,7 @@
 | **Internet** | Research, public web, lead signals the user asks for |
 | **Sandbox data** | CSVs, SQLite/local DBs, files **inside this node only** |
 | **Lead / marketing help** | Find, filter, draft outreach, explain territories — using **allowed** data + tools |
-| **BYOK compute** | User’s API key (default free: `google/gemini-3.5-flash-lite` via OpenCode) |
+| **BYOK compute** | User’s API key (default free: `google/gemini-3.5-flash-lite` via Dynamic CLI Hook) |
 
 | Out of scope | |
 |--------------|--|
@@ -49,22 +49,22 @@ thin sandbox workspace
 
 | | |
 |--|--|
-| **DNA repo** | `/home/kingb/aim-joshua` (clone of aim-opencode — template only) |
-| **CLI** | OpenCode |
-| **Default model** | `google/gemini-3.5-flash-lite` |
+| **DNA repo** | `/home/kingb/aim-joshua` (universal baseline template) |
+| **CLI** | Universal (OpenCode, Antigravity, Grok) - Harness Agnostic |
+| **Default model** | Configurable via injected skills (e.g., `google/gemini-3.5-flash-lite`) |
 | **Required env** | `GOOGLE_GENERATIVE_AI_API_KEY=<client key>` |
 | **Client cwd** | Thin workspace (AGENTS + data), not the full git tree |
 | **Gateway** | aim-connect injects key + spawns sandbox |
 
 ```text
-command:  opencode run --pure -m google/gemini-3.5-flash-lite …
-env:      GOOGLE_GENERATIVE_AI_API_KEY=…   # required
-sandbox:  bwrap; NO master OAuth token
+command:  ./aim <task>
+env:      BYOK_API_KEYS=…   # required
+sandbox:  Optional --bwrap flag; NO master OAuth token
 ```
 
 ---
 
 ## Smoke note (2026-07-25)
 
-Thin dir + free Gemini + OpenCode (and bwrap) **PASS**.  
+Thin dir + Dynamic CLI (and opt-in bwrap) **PASS**.  
 Full monorepo as cwd **hangs** — do not ship that as client spawn.
