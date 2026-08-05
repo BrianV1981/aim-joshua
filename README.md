@@ -7,18 +7,20 @@ J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve 
 
 J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Node.js v20+, and your preferred underlying LLM CLI.
 
-### Option A: The Universal Sandbox (Recommended)
-Installs the universal engine, sets up the Git sandbox, and provides the AI with a clean, lightweight shell.
+J.O.S.H.U.A. can be installed as a native, globally accessible operating framework, or in an isolated `bwrap` sandbox for secure, multi-tenant execution.
+
+### Option A: Native OS Installation (Default)
+Installs the universal engine natively. This is the recommended approach for standard development and daily driver use.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.sh | bash
 ```
 
-### Option B: The Core Contributor
-Preserves the GitHub connection and all internal testing folders for developing the OS itself.
+### Option B: Isolated Sandbox (bwrap)
+Sets up a strict, bubble-wrapped sandbox environment. Ideal for running untrusted code or maintaining strict tenant isolation.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/setup-core.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash
 ```
 
 ---
@@ -27,9 +29,9 @@ curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_o
 
 J.O.S.H.U.A. provides a massive suite of tools to control, manage, and scale your AI agents:
 
-*   **Universal Sandbox Protocol:** Every agent gets a localized, bubble-wrapped environment. 
-*   **Decentralized Updates:** Independent nodes can pull core OS updates without conflicting with their local `.git` histories.
-*   **Embedded Local Memory:** Tenant data remains strictly localized. The RAG database is instantiated inside the sandbox, not the global OS root.
+*   **Universal OS Framework:** J.O.S.H.U.A. runs natively as the foundational brain for autonomous coding agents.
+*   **Optional Sandbox Protocol:** For secure workloads, agents can be deployed into a localized, bubble-wrapped environment via `bwrap`.
+*   **Embedded Local Memory:** The RAG database (LanceDB) is stored locally. In sandboxed mode, memory is strictly tenant-specific.
 *   **CLI-Agnostic Skill Injection:** Decoupled from any specific CLI. Tool parsing is modularized via the `aim-skill-library`.
 *   **GitOps Enforcement:** Agents must create issues, branch out, and deploy atomically.
 *   **Ephemeral Context Handoffs:** When the context window fills up, the `aim-handoff` skill automatically captures tactical state and teleports the context to a fresh vessel via `tmux`.
