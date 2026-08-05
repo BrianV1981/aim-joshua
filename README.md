@@ -1,67 +1,81 @@
-# J.O.S.H.U.A. (Universal Agentic OS)
+# J.O.S.H.U.A.
+**Joint Operational Systems for Heuristic User Automation**
 
-J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve as the foundational brain, memory, and infrastructure for autonomous AI coding agents. 
-
-It solves context amnesia, token bloat, state loss, and drift in long-running sessions by providing a persistent, isolated, and highly-structured environment that **any agent** can plug into.
-
-**This repository represents the culmination of the A.I.M. ecosystem.** 
-It officially deprecates and consolidates the previous fragmented architecture (`aim-agy`, `aim-opencode`, `aim-grok`, and `aim-codex`) into a single, unified, universal foundation.
-
-> **The Vision:** "One OS, Any Harness." Install J.O.S.H.U.A. into a project directory. You can boot up OpenCode, switch to Antigravity 20 minutes later, and finish your session in Grok. They all share the same memory, the same rules, the same Git ledger, and the same toolset natively.
+J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve as the foundational brain, memory, and infrastructure for autonomous AI coding agents. External LanceDB (RAG) memory, GitOps guardrails, Parquet "Datajack" knowledge cartridges. Alpha, trenches-first.
 
 ## 🚀 Quickstart & Installation
 
-J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)** and Python 3.10+.
+J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Node.js v20+, and your preferred underlying LLM CLI.
 
-### Spawn a Universal Sandbox
-The safest way to spawn a fresh, isolated project from the OS blueprint is to use the clean installer. This pulls the immutable `joshua_os` engine and configures a pristine, CLI-agnostic workspace without polluting your global git history.
+### Option A: The Universal Sandbox (Recommended)
+Installs the universal engine, sets up the Git sandbox, and provides the AI with a clean, lightweight shell.
 
 ```bash
-mkdir my-new-idea && cd my-new-idea
-curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-clean.sh | bash
-source ~/.bashrc
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/setup.sh | bash
 ```
 
-### Interact with the OS
-Once installed, your directory becomes a JOSHUA node. You can interact with the OS layer directly via the injected alias:
+### Option B: The Core Contributor
+Preserves the GitHub connection and all internal testing folders for developing the OS itself.
+
 ```bash
-aim-my-new-idea status
-aim-my-new-idea doctor
-aim-my-new-idea tui
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/setup-core.sh | bash
 ```
-
-### Plug in Your Agent
-Simply navigate into your JOSHUA-powered folder and launch your favorite CLI harness (Antigravity, OpenCode, Grok, etc.). The agent will natively read the universal `AGENTS.md` and immediately inherit the project's LanceDB memory, GitOps rules, and customized toolkit.
 
 ---
 
 ## 🔥 Core Capabilities
 
-J.O.S.H.U.A. provides an enterprise-grade suite of tools to control, manage, and scale your AI agents regardless of the CLI they use:
+J.O.S.H.U.A. provides a massive suite of tools to control, manage, and scale your AI agents:
 
-*   **Universal Sandbox Protocol:** Every session gets its own local `.git` ledger. When the agent completes a task, the OS automatically fires a teardown hook that commits the vector memory state to the local git ledger, creating an immutable time-machine of the agent's brain.
-*   **Opt-In Bubblewrap (bwrap) Jails:** Hardened enterprise isolation for SaaS integration (e.g., LeadDeeds). Agents can be spawned inside an impenetrable read-only jail, completely protecting the host PC while retaining access to their specific sandbox.
-*   **Embedded LanceDB Memory (RAG 5.21):** Replaces standard sliding-window context with a high-fidelity, columnar vector database strictly localized to the tenant's sandbox. Features Native Hybrid Search (Ollama semantics + Tantivy FTS).
-*   **Decentralized Git-Less Updates:** Independent nodes can pull core OS engine updates directly via ZIP extraction, bypassing Git entirely so it never conflicts with the tenant's local ledgers.
-*   **GitOps Enforcement:** AI agents are forbidden from coding on `main`. They must create GitHub issues (`aim bug`), branch out into isolated worktrees (`aim fix`), use TDD, and deploy atomically (`aim push`).
-*   **Interactive TUI Cockpit:** A visual terminal interface (`aim tui`) to configure guardrails and project context without editing JSON files.
-*   **Background Markdown Generation:** A deterministic Python script strips terminal noise, reducing context weight by 85%. A background daemon then weaves this into a human-readable Markdown wiki (`memory-wiki/`).
-*   **P2P Knowledge Cartridges:** Package thousands of pages of documentation into pre-vectorized native Apache Arrow `.parquet` files. Share and download them peer-to-peer to give agents instant recall of entire frameworks without burning API tokens.
-*   **Universal IDE Support (MCP):** A built-in FastMCP server exposes the memory databases to any connected IDE (Cursor, VS Code, Claude Desktop) without requiring platform-specific adapters.
+*   **Universal Sandbox Protocol:** Every agent gets a localized, bubble-wrapped environment. 
+*   **Decentralized Updates:** Independent nodes can pull core OS updates without conflicting with their local `.git` histories.
+*   **Embedded Local Memory:** Tenant data remains strictly localized. The RAG database is instantiated inside the sandbox, not the global OS root.
+*   **CLI-Agnostic Skill Injection:** Decoupled from any specific CLI. Tool parsing is modularized via the `aim-skill-library`.
+*   **GitOps Enforcement:** Agents must create issues, branch out, and deploy atomically.
+*   **Ephemeral Context Handoffs:** When the context window fills up, the `aim-handoff` skill automatically captures tactical state and teleports the context to a fresh vessel via `tmux`.
+*   **Anti-Drift Shield:** A background hook continuously tracks autonomous tool calls.
 
 ---
 
-## 📖 The Great Consolidation
+## 🧬 The A.I.M. Ecosystem (The Daily Driver Stack)
 
-In mid-2026, the A.I.M. ecosystem suffered from severe repository bloat. Every time a new CLI was released, a new OS repository was forked (`aim-agy`, `aim-opencode`, `aim-grok`, `aim-codex`), creating massive technical debt and conflicting tool configurations.
+Modular A.I.M. (Actual Intelligent Memory) repositories. While the original architecture relied on separate CLI harnesses, **J.O.S.H.U.A.** is the convergence point that will soon unify the active vessels under a single, agnostic operating system.
 
-J.O.S.H.U.A. represents the "Great Consolidation." 
-By abstracting the OS layer completely away from the CLI layer, we achieved a true Universal OS. All legacy vessel repositories are now deprecated.
+**Active vessels (CLI hosts):**
+- **[aim-joshua](https://github.com/BrianV1981/aim-joshua)** — The Universal Operating System convergence point.
+- **[aim-agy](https://github.com/BrianV1981/aim-agy)** — Core engine / soul (Antigravity CLI). Flagship. Shared nested `aim-agy_os/` ships here first.
+- **[aim-grok](https://github.com/BrianV1981/aim-grok)** — Grok CLI vessel (hybrid memory, GitOps, wiki, fleet orchestration tooling).
+- **[aim-opencode](https://github.com/BrianV1981/aim-opencode)** — OpenCode CLI vessel.
+- **[aim-codex](https://github.com/BrianV1981/aim-codex)** — OpenAI Codex CLI vessel (greenfield nested soul + Codex overlays; primary main).
 
-**The Current Architecture:**
-* **`aim-joshua`**: The single, flagship repository. It contains the universal `joshua_os` engine.
-* **`aim-skills`**: The modular library where CLI-specific syntaxes, custom tools, and agent behaviors can be optionally injected into JOSHUA via the `AGENTS.md` blueprint.
-* **`aim-connect`**: The Web UI and WebSocket gateway for managing remote JOSHUA sandboxes.
+**Tools & workspaces:**
+- **[aim-dash](https://github.com/BrianV1981/aim-dash)** — Terminal multi-session monitor and daily cockpit.
+- **[aim-connect](https://github.com/BrianV1981/aim-connect)** — Self-hosted remote workspace web UI.
+- **[aim-skill-library](https://github.com/BrianV1981/aim-skill-library)** — Skills index / multi-CLI install registry. Home of the sleeper powerhouse: **`aim-communicate`**.
+- **[aim-browser](https://github.com/BrianV1981/aim-browser)** — Headed Chromium CDP engine + browser skill suite.
+- **[aim-google](https://github.com/BrianV1981/aim-google)** — Google Workspace CLI (Gmail, Drive, Calendar, …).
+- **[aim-flight-recorder](https://github.com/BrianV1981/aim-flight-recorder)** — Forensic Markdown session extractor.
+- **[aim-boardroom](https://github.com/BrianV1981/aim-boardroom)** — Multi-agent orchestration room (OS multiplexing + artifacts).
+
+**DNA, comms & lore:**
+- **[aim-coagents](https://github.com/BrianV1981/aim-coagents)** — DNA bank for sovereign co-agent blueprints.
+- **[aim-knowledge](https://github.com/BrianV1981/aim-knowledge)** — Public Obsidian vault / deep-lore archive.
+- **[aim-chalkboard](https://github.com/BrianV1981/aim-chalkboard)** — Optional cross-host async git mailbox (PoC; default same-host comms = aim-communicate skill).
+
+**Deprecated / not maintained:**
+- **aim-skills** — Deprecated private repository. Replaced by `aim-skill-library`.
+- **aim-tmux-dashboard** — Replaced by `aim-dash`.
+- **aim** — Original Gemini CLI framework. Deprecated after loss of practical subscription access; Great Migration → aim-agy.
+- **aim-swarm** — Legacy Python swarm factory → use aim-coagents + aim-agy spawn.
+- **aim-claude / Anthropic-line vessels** — Done. Operator does not develop against Anthropic. Use aim-agy / aim-grok / aim-opencode / aim-codex.
+
+---
+
+## 📖 Documentation & Philosophy
+
+- **[The Official J.O.S.H.U.A. Wiki](https://github.com/BrianV1981/aim-joshua/wiki)**: The primary onboarding ramp. Includes step-by-step user guides, configuration variables, and tutorials.
+
+---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ☕ **Support the project:** [Buy Me a Coffee](https://buymeacoffee.com/brianv1981)
