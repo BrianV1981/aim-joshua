@@ -57,9 +57,9 @@ export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=8192}"
 "$ROOT/joshua_os/venv/bin/python3" "$ROOT/joshua_os/.aim_core/aim_cli.py" "$@"
 EXIT_CODE=$?
 
-# 2. Teardown Hook: Commit memory state to sandbox ledger
-if [[ "$PWD" == *"sandboxes"* ]] && [ -d ".git" ]; then
-    echo "[*] Session complete. Committing state to local sandbox ledger..."
+# 2. Teardown Hook: Commit memory state to local ledger (Issue 15)
+if [ "$PWD" != "$ROOT" ] && [ -d ".git" ]; then
+    echo "[*] Session complete. Committing state to local ledger..."
     git add memory_lance/ 2>/dev/null || true
     git add AGENTS.md 2>/dev/null || true
     git commit -m "Auto-commit: Agent session complete" > /dev/null 2>&1 || true
