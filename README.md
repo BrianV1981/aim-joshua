@@ -23,6 +23,17 @@ Sets up a strict, bubble-wrapped sandbox environment. Ideal for running untruste
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash
 ```
 
+### Universal Skill Injection (Required)
+Because J.O.S.H.U.A. is CLI-agnostic, skills are not hardcoded into the OS. You must clone the central skill library and inject them universally into your preferred CLI vessel:
+
+```bash
+git clone https://github.com/BrianV1981/aim-skill-library.git
+cd aim-skill-library
+
+# Example: Install globally for the 'agy' vessel
+./scripts/install.sh --vessel agy --dest ~/.gemini/antigravity-cli/builtin/skills --mode symlink
+```
+
 ---
 
 ## 🔥 Core Capabilities
