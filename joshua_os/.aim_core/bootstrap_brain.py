@@ -32,8 +32,7 @@ def bootstrap_foundation():
     foundation_targets = [
         os.path.join(PROJECT_ROOT, "AGENTS.md"),
         os.path.join(AIM_ROOT, "joshua_os_docs/*.md"),
-        os.path.join(AIM_ROOT, "memory-wiki/*.md"),
-        os.path.join(AIM_ROOT, "memory-wiki/_ingest/*.md")
+        os.path.join(AIM_ROOT, "memory-wiki/*.md")
     ]
     
     foundry_dir = os.path.join(AIM_ROOT, "foundry")

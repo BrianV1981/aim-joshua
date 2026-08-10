@@ -687,10 +687,6 @@ def cmd_scrape(args):
     if args.outdir: scrape_args += ["--outdir", args.outdir]
     run_script(os.path.join(AIM_CORE_DIR, "aim_scraper.py"), scrape_args)
 
-def cmd_ingest(args):
-    """Pulls newer manual edits from the Obsidian Vault into A.I.M.'s workspace."""
-    run_script(os.path.join(AIM_CORE_DIR, "obsidian_pull.py"), [])
-
 def cmd_config(args):
     """Dispatches to aim_config.py (TUI Cockpit)."""
     try:
@@ -995,7 +991,7 @@ def main():
     scrape_parser.add_argument("--limit", type=int, default=10, help="Number of threads to fetch")
     scrape_parser.add_argument("--outdir", default="synapse", help="Output directory")
 
-    subparsers.add_parser("ingest", help="Pull newer manual edits from the Obsidian Vault into A.I.M.'s workspace")
+
     subparsers.add_parser("handoff", aliases=["pulse"])
     subparsers.add_parser("sync")
     subparsers.add_parser("sync-issues", help="Synchronize remote GitHub issues to local ledger")
@@ -1106,7 +1102,6 @@ def main():
     wiki_subparsers = wiki_parser.add_subparsers(dest="wiki_command")
     wiki_search = wiki_subparsers.add_parser("search", help="Search the Wiki using local lookup")
     wiki_search.add_argument("query", nargs="+", help="The search query")
-    wiki_subparsers.add_parser("process", help="[DEPRECATED] Process the memory-wiki/_ingest folder")
     wiki_subparsers.add_parser(
         "schema-upgrade",
         help="Install packaged memory-wiki/AGENTS.md schema (Schema-Version 2+)",
@@ -1115,7 +1110,6 @@ def main():
     wiki_alias_sub = wiki_alias.add_subparsers(dest="wiki_command")
     _ws = wiki_alias_sub.add_parser("search", help="Search the Wiki using local lookup")
     _ws.add_argument("query", nargs="+", help="The search query")
-    wiki_alias_sub.add_parser("process", help="[DEPRECATED] Process the memory-wiki/_ingest folder")
     wiki_alias_sub.add_parser(
         "schema-upgrade",
         help="Install packaged memory-wiki/AGENTS.md schema (Schema-Version 2+)",
@@ -1186,7 +1180,6 @@ def main():
     elif args.command in ["config", "tui"]: cmd_config(args)
     elif args.command == "index": cmd_index(args)
     elif args.command == "scrape": cmd_scrape(args)
-    elif args.command == "ingest": cmd_ingest(args)
     elif args.command in ["handoff", "pulse"]: cmd_handoff(args)
     elif args.command == "push": cmd_push(args)
     elif args.command == "sync": cmd_sync(args)

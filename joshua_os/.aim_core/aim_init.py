@@ -38,7 +38,7 @@ def _load_wiki_agents_template() -> str:
     return (
         "<!-- Schema-Version: 1-interim -->\n"
         "# 🧠 SUB-AGENT DIRECTIVE: WIKI MAINTAINER\n\n"
-        "Process `_ingest/` into the wiki. Read this schema and index.md first.\n"
+        "Read this schema and index.md first.\n"
     )
 
 
@@ -213,7 +213,7 @@ def init_workspace(args=None):
     
     # 1. Mechanical Provisioning (Folders & Settings)
     dirs = ["archive/raw", "archive/history", "archive/sync", "archive/cartridges",
-            "continuity/private", "continuity", "workstreams", "hooks", "scripts", "projects", "foundry", ".aim_core", "memory-wiki", "memory-wiki/_ingest", "planning-artifacts", "workspace"]
+            "continuity/private", "continuity", "workstreams", "hooks", "scripts", "projects", "foundry", ".aim_core", "memory-wiki", "planning-artifacts", "workspace"]
     for d in dirs: os.makedirs(os.path.join(OS_DIR, d), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, ".gemini"), exist_ok=True)
 
