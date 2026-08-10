@@ -9,14 +9,21 @@ J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Node.js v20+, and your pref
 
 J.O.S.H.U.A. can be installed as a native, globally accessible operating framework, or in an isolated `bwrap` sandbox for secure, multi-tenant execution.
 
-### Option A: Native OS Installation (Default)
-Installs the universal engine natively. This is the recommended approach for standard development and daily driver use.
+### Option A: Clean Installation (Default)
+Installs the universal engine natively with a completely fresh footprint (purges Git history and developer files). This is the recommended approach for standard users and daily driver use.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install.sh | bash
+```
+
+### Option B: Core Contributor Installation
+Installs the universal engine but preserves the `.git` directory, test suites, and benchmarks for those looking to develop or contribute to J.O.S.H.U.A.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.sh | bash
 ```
 
-### Option B: Isolated Sandbox (bwrap)
+### Option C: Isolated Sandbox (bwrap)
 Sets up a strict, bubble-wrapped sandbox environment. Ideal for running untrusted code or maintaining strict tenant isolation.
 
 ```bash
