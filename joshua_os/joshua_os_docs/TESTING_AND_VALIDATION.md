@@ -16,4 +16,4 @@ A.I.M. agents must operate with a mandatory "TDD Reflex." Every architectural ch
 ## 3. The 30% Rule & Context Collapse
 Long-horizon agents degrade mathematically as their context window fills. Past 30% utilization, agents lose epistemic certainty, forget instructions, and begin to hallucinate (Vibe Code).
 *   **The Golden Rule:** Always spin up a new agent BEFORE compression is necessary.
-*   **The Sprint:** Treat terminal sessions like sprint cycles, not marathons. When an agent has completed a distinct logical phase (or begins to thrash), it must execute `/reincarnate` to teleport its specific "Will" (via the Gameplan) to a fresh, unburdened agent vessel. This ensures Senior-level precision is maintained indefinitely.
+*   **The Sprint:** Treat terminal sessions like sprint cycles, not marathons. When an agent has completed a distinct logical phase (or begins to thrash), it must execute `/reincarnate` to teleport its specific "Will" (via the Gameplan) to a fresh, unburdened agent session. This ensures Senior-level precision is maintained indefinitely.

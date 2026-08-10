@@ -33,7 +33,7 @@ This document is the literal map of every internal script running the A.I.M. OS.
 ## 3. Lifecycle, Memory & Continuity
 *Scripts that manage the agent's context, history, and autonomous operations.*
 
-*   **`aim_reincarnate.py`**: The Context Pruning teleport script for spawning a fresh agent vessel.
+*   **`aim_reincarnate.py`**: The Context Pruning teleport script for spawning a fresh agent session.
 *   **`handoff_pulse_generator.py`**: Generates the `CURRENT_PULSE.md` and `LAST_SESSION_FLIGHT_RECORDER.md`, and triggers vector ingestion.
 *   **`extract_signal.py`**: The Zero-Token Scribe. Uses pure Python to strip 85% of JSON noise from native CLI transcripts.
 *   **`session_porter.py`**: Fast mirroring of global CLI transcripts to the local raw archive.
@@ -59,7 +59,7 @@ This document is the literal map of every internal script running the A.I.M. OS.
 *   **`sovereign_sync.py`**: Converts LanceDB tables into `.jsonl` files in `archive/sync/`.
 *   **`back-populator.py`**: Rebuilds LanceDB from `.jsonl` sync files.
 *   **`obsidian_sync.py`**: Outbound Obsidian Bridge. Mirrors memory to a local Obsidian Vault.
-*   **`obsidian_pull.py`**: Inbound Obsidian Bridge (`aim ingest`). Pulls manual Obsidian edits back.
+
 *   **`sync_issue_tracker.py`**: Synchronizes remote GitHub issues to `ISSUE_TRACKER.md`.
 *   **`sync_mail.py`**: Synchronizer for Swarm Post Office / Unread Mail.
 

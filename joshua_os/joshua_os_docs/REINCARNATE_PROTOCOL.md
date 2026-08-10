@@ -32,6 +32,6 @@ The tiny summary files sitting in `_ingest/` must be integrated into the permane
 ### Phase 5: The Teleport (`aim_reincarnate.py`)
 While Phases 3 and 4 handle long-term memory in the background, Phase 5 handles the immediate tactical handoff.
 - **Sync:** The script synchronizes remote GitHub issues into `continuity/ISSUE_TRACKER.md`.
-- **The Spawn:** It creates a brand-new, clean `tmux` session (`agy_reincarnation_[TIMESTAMP]` on aim-joshua; prefix follows `AIM_VESSEL_CLI`, e.g. `grok_` / `opencode_` on sibling vessels).
+- **The Spawn:** It creates a brand-new, clean `tmux` session (e.g., `agy_reincarnation_[TIMESTAMP]`).
 - **The Injection:** It pipes a strict wake-up prompt into the new agent's shell, commanding it to immediately read the `AGENTS.md` core constraints, the `REINCARNATION_GAMEPLAN.md`, and the `ISSUE_TRACKER.md`.
 - **Termination:** The script prompts the operator to press Enter, which gracefully kills the bloated, outgoing agent, leaving only the fresh agent running with perfect Epistemic Certainty.

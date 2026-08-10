@@ -11,9 +11,9 @@ A.I.M. strictly forbids raw `git commit` and `git push` commands.
 *   **`aim fix <Issue_ID>`**
     *   *Usage:* Checks out an isolated Git worktree (e.g., `workspace/issue-42`).
     *   *Rule:* You must `cd` into this isolated workspace to do your development.
-*   **`aim push "Prefix: <Message> (Closes #ID)"`**
-    *   *Usage:* Validates the code, commits, and pushes to GitHub. The Prefix must be semantic (e.g., `Fix:`, `Feature:`, `Docs:`).
-    *   *Rule:* Use this to deploy your work atomically once TDD validation passes.
+*   **`aim promote`**
+    *   *Usage:* Automates the Phase Protocol from inside a worktree. Archives main, merges the worktree branch, pushes to GitHub, and cleans up the worktree.
+    *   *Rule:* Use this to deploy your work atomically once TDD validation passes on your isolated branch.
 
 ## 2. RAG Memory & Knowledge Retrieval
 A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21).
@@ -30,7 +30,7 @@ A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21).
 Long-running sessions experience context collapse (hallucinations) past 30% utilization.
 
 *   **`aim reincarnate`**
-    *   *Usage:* Teleports your active context, current intent, and task list to a fresh, unburdened terminal vessel.
+    *   *Usage:* Teleports your active context, current intent, and task list to a fresh, unburdened agent session.
     *   *Rule:* Execute this command the moment you feel lost, have completed a major task, or start thrashing. Do not overstay your welcome in a single terminal session.
 
 ## 4. The DataJack Swarm (Skill Injection)
