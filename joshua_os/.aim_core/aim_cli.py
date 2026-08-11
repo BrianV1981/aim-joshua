@@ -127,6 +127,52 @@ def cmd_health(args):
     """Dispatches to heartbeat.py."""
     run_script(os.path.join(AIM_CORE_DIR, "heartbeat.py"), [])
 
+def cmd_projects(args):
+    """GitHub Projects (kanban) GitOps — thin wrapper over aim_projects.py / gh project."""
+    from aim_projects import main as projects_main
+
+    # Rebuild argv for aim_projects: drop 'projects' and global aim flags already parsed
+    # subcommand lives on args.projects_command; forward remaining via namespace → list
+    fwd = []
+    # Global project targeting flags (optional overrides)
+    if getattr(args, "projects_owner", None):
+        fwd += ["--owner", args.projects_owner]
+    if getattr(args, "projects_number", None) is not None:
+        fwd += ["--number", str(args.projects_number)]
+    if getattr(args, "projects_status_field", None):
+        fwd += ["--status-field", args.projects_status_field]
+    if getattr(args, "projects_repo", None):
+        fwd += ["--repo", args.projects_repo]
+
+    action = getattr(args, "projects_command", None)
+    if not action:
+        projects_main([])
+        return
+
+    fwd.append(action)
+
+    if action == "board":
+        if getattr(args, "board_status", None):
+            fwd += ["--status", args.board_status]
+        if getattr(args, "board_limit", None) is not None:
+            fwd += ["--limit", str(args.board_limit)]
+        if getattr(args, "board_json", False):
+            fwd.append("--json")
+    elif action in ("in-progress", "done", "ready", "todo", "blocked", "view"):
+        if getattr(args, "issue", None) is None:
+            print(f"Usage: {CLI_NAME} projects {action} <issue_number>", file=sys.stderr)
+            sys.exit(1)
+        fwd.append(str(args.issue))
+    elif action == "set":
+        if getattr(args, "issue", None) is None or not getattr(args, "set_status", None):
+            print(f"Usage: {CLI_NAME} projects set <issue_number> <status>", file=sys.stderr)
+            sys.exit(1)
+        fwd += [str(args.issue), args.set_status]
+    # list / fields / doctor need no extra args
+
+    projects_main(fwd)
+
+
 def cmd_bug(args):
     """Creates a highly-structured GitHub Issue using the gh CLI. Strict agent-driven version."""
     print("--- A.I.M. ISSUE TRACKER ---")
@@ -1145,6 +1191,48 @@ def main():
     fix_parser = subparsers.add_parser("fix", help="Checkout a branch to fix a specific GitHub Issue")
     fix_parser.add_argument("id", help="The GitHub Issue ID")
 
+    # --- GitHub Projects (kanban) GitOps ---
+    projects_parser = subparsers.add_parser(
+        "projects",
+        aliases=["project"],
+        help="GitHub Projects kanban GitOps (board / in-progress / done / …)",
+    )
+    projects_parser.add_argument("--owner", dest="projects_owner", default=None, help="Project owner (@me or login)")
+    projects_parser.add_argument("--number", dest="projects_number", type=int, default=None, help="Project number")
+    projects_parser.add_argument(
+        "--status-field",
+        dest="projects_status_field",
+        default=None,
+        help="Status single-select field name (default: Status)",
+    )
+    projects_parser.add_argument(
+        "--repo",
+        dest="projects_repo",
+        default=None,
+        help="nameWithOwner for auto-adding issues (e.g. BrianV1981/aim-ld)",
+    )
+    projects_sub = projects_parser.add_subparsers(dest="projects_command")
+
+    p_board = projects_sub.add_parser("board", help="Kanban snapshot grouped by Status")
+    p_board.add_argument("--status", dest="board_status", default=None, help='Filter e.g. "In Progress"')
+    p_board.add_argument("-L", "--limit", dest="board_limit", type=int, default=100)
+    p_board.add_argument("--json", dest="board_json", action="store_true")
+
+    projects_sub.add_parser("list", help="List projects for owner")
+    projects_sub.add_parser("fields", help="List fields / Status options")
+    projects_sub.add_parser("doctor", help="Validate gh project scopes + config")
+
+    for _name in ("in-progress", "done", "ready", "todo", "blocked"):
+        _p = projects_sub.add_parser(_name, help=f"Set issue Status ({_name})")
+        _p.add_argument("issue", type=int, help="GitHub issue number")
+
+    p_set = projects_sub.add_parser("set", help="Set issue Status to a name/alias")
+    p_set.add_argument("issue", type=int)
+    p_set.add_argument("set_status", help='Status e.g. "In Progress" or done')
+
+    p_view = projects_sub.add_parser("view", help="Show board row + issue detail")
+    p_view.add_argument("issue", type=int)
+
     subparsers.add_parser("promote", help="Automate the Phase Protocol: Archive main, merge current dev branch, and cleanup")
 
     merge_batch_parser = subparsers.add_parser("merge-batch", help="Automate the Phase Protocol: Merge all open fix branches into main")
@@ -1206,6 +1294,7 @@ def main():
     elif args.command == "swarm": cmd_swarm(args)
     elif args.command == "bug": cmd_bug(args)
     elif args.command == "bug-operator": cmd_bug_operator(args)
+    elif args.command in ("projects", "project"): cmd_projects(args)
     elif args.command == "fix": cmd_fix(args)
     elif args.command == "promote": cmd_promote(args)
     elif args.command == "merge-batch": cmd_merge_batch(args)

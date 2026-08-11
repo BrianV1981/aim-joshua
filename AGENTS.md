@@ -47,3 +47,14 @@ You operate in a highly parallel, multi-agent environment. To prevent collisions
 1. **Spawning the Sandbox (`aim fix`):** When assigned a task or issue, you must run `aim fix <issue_id>`. This commands the OS to spawn a physically isolated `git worktree` under the `workspace/` directory (e.g., `workspace/issue-42`). You will execute all your coding, testing, and staging exclusively inside this worktree folder.
 2. **Surgical Staging:** Even within your worktree, never use `git add .` blindly. Stage specific files to avoid committing localized test artifacts.
 3. **The Teardown (`aim promote`):** Once your code is empirically proven to work, you must run `aim promote` from inside your worktree. This will automatically archive the main branch, safely merge your worktree's branch into main, and cleanly delete your isolated workspace directory.
+
+## 8b. THE BOARD PROTOCOL (GITHUB PROJECTS)
+GitHub Projects is the shared kanban SoT for multi-agent work. Issues are the work units; the Project board is where status lives.
+
+1. **See the board:** `aim projects board` (or `aim projects board --status "In Progress"` / `--json`).
+2. **Claim work:** Before coding, `aim projects in-progress <issue_id>` so other agents share the same page.
+3. **Ship:** After PR / promote path, `aim projects done <issue_id>`.
+4. **Blocked:** `aim projects blocked <issue_id>` when waiting on Operator/DNS/external.
+5. **Never invent board state offline** — Status changes go through `aim projects` / `gh project`.
+
+Config: `AIM_PROJECTS_NUMBER`, `AIM_PROJECTS_OWNER`, optional `AIM_PROJECTS_REPO`. Run `aim projects doctor` if commands fail (usually missing `project` OAuth scope).

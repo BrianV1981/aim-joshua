@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Standalone alias: aim-projects <args...>  →  same as  aim projects <args...>
+# Install: ln -sf "$(pwd)/joshua_os/.aim_core/aim-projects" ~/.local/bin/aim-projects
+set -euo pipefail
+ROOT="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
+if [[ -x "$ROOT/aim" ]]; then
+  exec "$ROOT/aim" projects "$@"
+fi
+# Fallback: direct python entry
+PY="$ROOT/joshua_os/venv/bin/python3"
+if [[ ! -x "$PY" ]]; then PY=python3; fi
+exec "$PY" "$ROOT/joshua_os/.aim_core/aim_projects.py" "$@"
