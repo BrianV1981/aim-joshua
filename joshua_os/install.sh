@@ -26,6 +26,10 @@ rm -rf tests/
 rm -rf benchmarks/
 rm -rf joshua_os/tests/
 rm -rf joshua_os/benchmarks/
+rm -rf memory-wiki/
+rm -rf joshua_os/memory-wiki/
+rm -rf workspace/
+rm -f HANDOFF.md
 
 shopt -s dotglob
 cp -a * ../

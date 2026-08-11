@@ -19,7 +19,8 @@ echo "    [*] Building Engine Virtual Environment..."
 echo "[*] Step 2: Scaffolding Sovereign Environment..."
 
 # Clean Sweep (sever OS identity / product dirt before merge)
-rm -rf .git/ .github/ .vscode/
+rm -rf .git/ .github/ .vscode/ memory-wiki/ joshua_os/memory-wiki/ workspace/
+rm -f HANDOFF.md
 rm -rf joshua_os/tests/ joshua_os/benchmarks/ joshua_os/docs/ joshua_os/skills/
 # Keep scripts/ for agy trust wrapper installer; strip bulk only if present
 # (link_cli_alias + install_agy_trust_wrapper are required for folder-trust)
