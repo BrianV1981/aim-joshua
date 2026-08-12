@@ -21,3 +21,7 @@
 - Formally injected `aim projects` and `aim agy-blackbox` into the `AIM_CLI_TOOLS.md` cartidge documentation.
 - Extracted the human-facing "Operator Guide" away from the OS protocols into the external GitHub Wiki.
 - Appended a strict `aim-memory-wiki` prerequisite to the `aim-handoff` skill in the `aim-skill-library`.
+
+## [2026-08-12] ingest | Blackbox Vault Forensic Protocol
+- Created `BLACKBOX_VAULT.md` in `joshua_os_docs/` to formally document the Vault as an Operator-locked, anti-tampering forensic archive (Issue #28).
+- Synced the documentation into `memory-wiki/pages/blackbox-vault.md` to establish the intent that agents cannot edit their own history to cover up mistakes.
