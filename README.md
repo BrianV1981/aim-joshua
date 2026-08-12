@@ -7,7 +7,7 @@ J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve 
 
 J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Node.js v20+, and your preferred underlying LLM CLI.
 
-J.O.S.H.U.A. can be installed as a native, globally accessible operating framework, or in an isolated `bwrap` sandbox for secure, multi-tenant execution.
+J.O.S.H.U.A. can be installed as a native, globally accessible operating framework, or deployed as a headless Sovereign Co-Agent within individual project directories for multi-tenant isolation.
 
 ### Option A: Clean Installation (Default)
 Installs the universal engine natively with a completely fresh footprint (purges Git history and developer files). This is the recommended approach for standard users and daily driver use.
@@ -23,8 +23,8 @@ Installs the universal engine but preserves the `.git` directory, test suites, a
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.sh | bash
 ```
 
-### Option C: Isolated Sandbox (bwrap)
-Sets up a strict, bubble-wrapped sandbox environment. Ideal for running untrusted code or maintaining strict tenant isolation.
+### Option C: Headless Co-Agent (Sovereign Node)
+Sets up a stripped-down, headless environment for autonomous co-agents. Ideal for deploying J.O.S.H.U.A. directly into individual project repositories without global OS footprint overhead.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash
@@ -48,7 +48,7 @@ cd aim-skill-library
 J.O.S.H.U.A. provides a massive suite of tools to control, manage, and scale your AI agents:
 
 *   **Universal OS Framework:** J.O.S.H.U.A. runs natively as the foundational brain for autonomous coding agents.
-*   **Optional Sandbox Protocol:** For secure workloads, agents can be deployed into a localized, bubble-wrapped environment via `bwrap`.
+*   **Headless Deployment:** Co-agents can be deployed securely into localized project repositories via the `install-agent.sh` Sovereign Node installer.
 *   **Embedded Local Memory:** The RAG database (LanceDB) is stored locally. In sandboxed mode, memory is strictly tenant-specific.
 *   **CLI-Agnostic Skill Injection:** Decoupled from any specific CLI. Tool parsing is modularized via the `aim-skill-library`.
 *   **GitOps Enforcement:** Agents must create issues, branch out, and deploy atomically.
