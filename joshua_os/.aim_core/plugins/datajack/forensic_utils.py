@@ -114,6 +114,11 @@ def get_embedding(text, task_type='RETRIEVAL_DOCUMENT'):
                 response.raise_for_status()
                 return response.json().get('embedding')
             except Exception as e:
+                # Fail-fast if the local server is down
+                if isinstance(e, requests.exceptions.ConnectionError):
+                    sys.stderr.write(f"Ollama server unreachable: {e}\n")
+                    return None
+                
                 if attempt == max_retries - 1:
                     sys.stderr.write(f"Ollama Embedding Error after {max_retries} attempts: {e}\n")
                     return None
