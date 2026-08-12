@@ -1,0 +1,32 @@
+name: Minimal Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/*'
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup environment and install dependencies
+        run: |
+          cd joshua_os
+          ./setup.sh
+
+      - name: Verify CLI executes
+        run: |
+          ./aim --help
