@@ -290,6 +290,8 @@ def main():
     parser.add_argument("--full", action="store_true", help="Retrieve full fragments")
     parser.add_argument("--session", help="Filter by specific session ID")
     parser.add_argument("--map", action="store_true", help="Print the knowledge map")
+    parser.add_argument("--top-k", type=int, default=10, help="Number of results to retrieve")
+    parser.add_argument("--context", type=int, help="Context window size (ignored, for CLI parity)")
     
     args = parser.parse_args()
     
@@ -302,7 +304,7 @@ def main():
         print("[ERROR] No query provided.")
         sys.exit(1)
         
-    results = perform_search_internal(query, session_filter=args.session)
+    results = perform_search_internal(query, top_k=args.top_k, session_filter=args.session)
     print(json.dumps(results, indent=2))
 
 if __name__ == "__main__":
