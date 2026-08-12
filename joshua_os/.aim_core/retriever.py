@@ -292,6 +292,7 @@ def main():
     parser.add_argument("--map", action="store_true", help="Print the knowledge map")
     parser.add_argument("--top-k", type=int, default=10, help="Number of results to retrieve")
     parser.add_argument("--context", type=int, help="Context window size (ignored, for CLI parity)")
+    parser.add_argument("--json", action="store_true", help="Output raw JSON array")
     
     args = parser.parse_args()
     
@@ -305,7 +306,20 @@ def main():
         sys.exit(1)
         
     results = perform_search_internal(query, top_k=args.top_k, session_filter=args.session)
-    print(json.dumps(results, indent=2))
+    
+    if args.json:
+        print(json.dumps(results, indent=2))
+    else:
+        print(f"\n--- SEARCH RESULTS: {' '.join(args.query)} ---\n")
+        if not results:
+            print("No matches found.")
+        for i, r in enumerate(results):
+            score = r.get('score', 0)
+            score_str = f"{score:.4f}" if isinstance(score, float) else str(score)
+            source = r.get('filename') or r.get('source_db') or r.get('session_id')
+            print(f"[{i+1}] Source: {source} | Score: {score_str}")
+            print(f"{r.get('content', '').strip()}\n")
+            print("-" * 40 + "\n")
 
 if __name__ == "__main__":
     main()

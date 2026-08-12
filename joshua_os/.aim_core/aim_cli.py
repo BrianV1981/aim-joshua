@@ -95,6 +95,7 @@ def cmd_search(args):
     if args.full: retriever_args += ["--full"]
     if args.context is not None: retriever_args += ["--context", str(args.context)]
     if args.session: retriever_args += ["--session", args.session]
+    if getattr(args, "json", False): retriever_args += ["--json"]
     run_script(os.path.join(AIM_CORE_DIR, "retriever.py"), retriever_args)
 
 
@@ -1333,6 +1334,7 @@ def main():
     search_parser.add_argument("--full", action="store_true")
     search_parser.add_argument("--context", type=int, nargs='?', const=2000)
     search_parser.add_argument("--session", type=str)
+    search_parser.add_argument("--json", action="store_true")
 
     push_parser = subparsers.add_parser("push")
     push_parser.add_argument("message")
