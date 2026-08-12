@@ -1003,6 +1003,105 @@ def ensure_hooks_mapped():
     except:
         pass
 
+def cmd_agy_blackbox(args):
+    import os
+    from pathlib import Path
+    try:
+        from blackbox_vault import vault_session
+    except ImportError:
+        import sys
+        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
+        from blackbox_vault import vault_session
+
+    sid = args.session_id
+    agy_log = Path.home() / ".gemini" / "antigravity-cli" / "brain" / sid / ".system_generated" / "logs" / "transcript.jsonl"
+    if agy_log.is_file():
+        if vault_session(str(agy_log), session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
+            print(f"Sealed AGY session {sid} into blackbox.")
+        else:
+            print(f"WARN: Failed to seal AGY session {sid}.")
+    else:
+        print(f"ERROR: AGY transcript not found for {sid} at {agy_log}")
+
+def cmd_grok_blackbox(args):
+    import os
+    try:
+        from blackbox_vault import seal_for_reincarnate
+    except ImportError:
+        import sys
+        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
+        from blackbox_vault import seal_for_reincarnate
+
+    sid = args.session_id
+    if seal_for_reincarnate(os.getcwd(), session_id=sid):
+        print(f"Sealed Grok session {sid} into blackbox.")
+    else:
+        print(f"WARN: Failed to seal Grok session {sid}.")
+
+def cmd_codex_blackbox(args):
+    import os
+    try:
+        from blackbox_vault import seal_for_reincarnate
+    except ImportError:
+        import sys
+        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
+        from blackbox_vault import seal_for_reincarnate
+
+    sid = args.session_id
+    if seal_for_reincarnate(os.getcwd(), session_id=sid):
+        print(f"Sealed Codex session {sid} into blackbox.")
+    else:
+        print(f"WARN: Failed to seal Codex session {sid}.")
+
+def cmd_opencode_blackbox(args):
+    import os, json, tempfile, sqlite3
+    try:
+        from blackbox_vault import vault_session
+    except ImportError:
+        import sys
+        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
+        from blackbox_vault import vault_session
+
+    sid = args.session_id
+    db_path = os.path.join(os.getcwd(), "opencode_data", "opencode.db")
+    if not os.path.exists(db_path):
+        print(f"ERROR: opencode.db not found at {db_path}")
+        return
+        
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        query = '''
+        SELECT m.data as m_data, p.data as p_data, m.time_created
+        FROM message m
+        JOIN part p ON m.id = p.message_id
+        ORDER BY m.time_created ASC, p.time_created ASC
+        '''
+        rows = cursor.execute(query).fetchall()
+        
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".jsonl", encoding="utf-8") as tmp:
+            for r in rows:
+                obj = {
+                    "message": json.loads(r["m_data"]),
+                    "part": json.loads(r["p_data"]),
+                    "time_created": r["time_created"]
+                }
+                tmp.write(json.dumps(obj) + "\\n")
+            tmp_path = tmp.name
+        conn.close()
+        
+        if vault_session(tmp_path, session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
+            print(f"Sealed OpenCode session {sid} into blackbox.")
+        else:
+            print(f"WARN: Failed to seal OpenCode session {sid}.")
+            
+    except Exception as e:
+        print(f"ERROR extracting opencode session: {e}")
+    finally:
+        if 'tmp_path' in locals() and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
 def main():
     ensure_hooks_mapped()
     parser = argparse.ArgumentParser(description="A.I.M. CLI")
@@ -1077,6 +1176,18 @@ def main():
         action="store_true",
         help="Pulse + vault + wake prompt only; skip tmux spawn/teleport (E2E/CI safe)",
     )
+
+    agy_bb_parser = subparsers.add_parser("agy-blackbox", help="Seal AGY transcript to vault")
+    agy_bb_parser.add_argument("--session-id", required=True)
+
+    grok_bb_parser = subparsers.add_parser("grok-blackbox", help="Seal Grok transcript to vault")
+    grok_bb_parser.add_argument("--session-id", required=True)
+
+    codex_bb_parser = subparsers.add_parser("codex-blackbox", help="Seal Codex transcript to vault")
+    codex_bb_parser.add_argument("--session-id", required=True)
+
+    oc_bb_parser = subparsers.add_parser("opencode-blackbox", help="Seal OpenCode SQLite db to vault")
+    oc_bb_parser.add_argument("--session-id", required=True)
 
     hv_parser = subparsers.add_parser(
         "handoff-vnext",
@@ -1283,6 +1394,11 @@ def main():
     elif args.command == "import": cmd_import(args)
     elif args.command == "jack-in": cmd_jack_in(args)
     elif args.command == "unplug": cmd_unplug(args)
+
+    elif args.command == "agy-blackbox": cmd_agy_blackbox(args)
+    elif args.command == "grok-blackbox": cmd_grok_blackbox(args)
+    elif args.command == "codex-blackbox": cmd_codex_blackbox(args)
+    elif args.command == "opencode-blackbox": cmd_opencode_blackbox(args)
 
     elif args.command == "audit": cmd_audit(args)
     elif args.command == "recall": cmd_recall(args)
