@@ -1,3 +1,49 @@
+# Secrets & local config
+.env
+joshua_os/.aim_core/CONFIG.json
+**/CONFIG.json
+
+# Python / venv
 venv/
 joshua_os/venv/
-sandboxes/
+**/venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.log
+.DS_Store
+
+# Live memory (seed stays in assets/)
+joshua_os/memory/
+joshua_os/memory_lance/
+joshua_os/memory_lance.bak/
+memory_lance/
+*.engram
+
+# Worktrees & runtime
+workspace/
+joshua_os/workspace/
+joshua_os/archive/
+
+# Vessel black box (encrypted raw sessions) + host key material
+archive/.raw_jsonl_blackbox/
+**/.raw_jsonl_blackbox/
+**/*.enc
+.aim/blackbox.key
+**/blackbox.key
+joshua_os/continuity/
+joshua_os/.aim_core/temp/
+hooks/.state/
+tmp/
+
+# OS junk
+*:Zone.Identifier
+.directory
+
+# Local only
+patch.diff
+joshua_os/memory-wiki/_raw_logs/
+
+# Caches / local
+.pytest_cache/
+joshua_os/memory-wiki/daemon.log
