@@ -376,9 +376,13 @@ def cmd_promote(args):
         current_dir = os.getcwd()
         in_worktree = "workspace/issue-" in current_dir
         
-        # The main repo root is always two levels up from BASE_DIR (which is joshua_os/.aim_core)
-        repo_root = os.path.dirname(os.path.dirname(BASE_DIR))
+        # Determine the main repository root dynamically by finding the common .git directory
+        common_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=current_dir, capture_output=True, text=True, check=True).stdout.strip()
+        repo_root = os.path.dirname(os.path.abspath(os.path.join(current_dir, common_dir)))
         
+        if not os.path.isdir(os.path.join(repo_root, ".git")):
+            print(f"[ERROR] CRITICAL: Computed repo_root '{repo_root}' does not contain a .git directory. Aborting promote.")
+            return
         # Determine default branch (main or master)
         branches = subprocess.run(["git", "branch", "--list"], cwd=repo_root, capture_output=True, text=True).stdout
         default_branch = "master" if "master" in branches and "main" not in branches else "main"
