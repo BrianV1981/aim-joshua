@@ -97,19 +97,7 @@ def cmd_search(args):
     if args.session: retriever_args += ["--session", args.session]
     run_script(os.path.join(AIM_CORE_DIR, "retriever.py"), retriever_args)
 
-def cmd_wiki(args):
-    """Manages the Persistent LLM Wiki."""
-    from wiki_tools import search_wiki, process_wiki
-    if args.wiki_command == "search":
-        query = " ".join(args.query)
-        search_wiki(query)
-    elif args.wiki_command == "process":
-        process_wiki()
-    elif args.wiki_command in ("schema-upgrade", "schema_upgrade"):
-        from wiki_compiler import upgrade_wiki_schema
-        print(upgrade_wiki_schema())
-    else:
-        print("Usage: aim wiki {search|process|schema-upgrade}")
+
 
 def cmd_map(args):
     """Prints the surgical Index of Keys."""
@@ -1263,24 +1251,6 @@ def main():
 
 
 
-    wiki_parser = subparsers.add_parser("memory-wiki", help="Manage the Persistent LLM Wiki")
-    wiki_subparsers = wiki_parser.add_subparsers(dest="wiki_command")
-    wiki_search = wiki_subparsers.add_parser("search", help="Search the Wiki using local lookup")
-    wiki_search.add_argument("query", nargs="+", help="The search query")
-    wiki_subparsers.add_parser(
-        "schema-upgrade",
-        help="Install packaged memory-wiki/AGENTS.md schema (Schema-Version 2+)",
-    )
-    wiki_alias = subparsers.add_parser("wiki", help="Alias for memory-wiki")
-    wiki_alias_sub = wiki_alias.add_subparsers(dest="wiki_command")
-    _ws = wiki_alias_sub.add_parser("search", help="Search the Wiki using local lookup")
-    _ws.add_argument("query", nargs="+", help="The search query")
-    wiki_alias_sub.add_parser(
-        "schema-upgrade",
-        help="Install packaged memory-wiki/AGENTS.md schema (Schema-Version 2+)",
-    )
-
-
     subparsers.add_parser("map", help="Print the Index of Keys (Knowledge Map)")
 
     audit_parser = subparsers.add_parser("audit", help="Generate a strategic synthesis report from recent sessions")
@@ -1381,7 +1351,6 @@ def main():
     elif args.command == "status": cmd_status(args)
     elif args.command == "core-memory": cmd_core_memory(args)
     elif args.command == "search": cmd_search(args)
-    elif args.command in ("memory-wiki", "wiki"): cmd_wiki(args)
     elif args.command == "map": cmd_map(args)
     elif args.command == "update": cmd_update(args)
     elif args.command in ["config", "tui"]: cmd_config(args)
