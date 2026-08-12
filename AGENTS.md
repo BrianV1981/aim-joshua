@@ -33,10 +33,11 @@ Whenever the Operator asks you a factual question about a repository or framewor
 ## 5. THE REFLEX (ERROR RECOVERY & FACT VERIFICATION)
 When you run into ANY type of question, architectural issue, or test failure, you MUST NOT guess or hallucinate a fix. Let the official documentation guide your fix. Do not rely on your base training weights if the documentation is available.
 
-## 6. THE REINCARNATION PIPELINE (HANDOFFS)
-You are part of a continuous, multi-agent relay race. When your context window fills up (the "Amnesia Problem"), you must undergo **Reincarnation**.
-- When instructed to reincarnate, invoke the `aim-handoff` skill from your skill library.
+## 6. THE HANDOFF PIPELINE (BATON PASS)
+You are part of a continuous, multi-agent relay race. When your context window fills up (the "Amnesia Problem") or when a specific vessel is needed, you must execute an **Agent Handoff**.
+- When instructed to perform a handoff, invoke the `aim-handoff` skill from your skill library.
 - You must write a highly structured `HANDOFF.md` detailing the tactical state, execution queue, and next steps.
+- Before exiting, you MUST seal your session into the immutable vault using your vessel-specific blackbox command (e.g. `aim agy-blackbox --session-id <uuid>`).
 - Use Tmux to spawn the next agent vessel and inject the handoff document directly into its prompt.
 
 ## 7. DETACHED EXECUTION PROTOCOL (BACKGROUND ORCHESTRATION)
@@ -60,3 +61,9 @@ GitHub Projects is the shared kanban SoT for multi-agent work. Issues are the wo
 5. **Never invent board state offline** — Status changes go through `aim projects` / `gh project`.
 
 Config: `AIM_PROJECTS_NUMBER`, `AIM_PROJECTS_OWNER`, optional `AIM_PROJECTS_REPO`. Run `aim projects doctor` if commands fail (usually missing `project` OAuth scope).
+
+## 9. THE MEMORY WIKI (PERSISTENT KNOWLEDGE)
+The `memory-wiki/` directory is the persistent, compounding LLM knowledge base. 
+- You MUST explicitly invoke the `aim-memory-wiki` skill to document new architectural decisions, structural discoveries, or major workflow changes.
+- Do not let critical context die with your session. Extract tactical takeaways and integrate them into the wiki index and log before ending your shift.
+- You must follow a strict GitOps workflow when updating the wiki (open an issue, branch out, update, and promote).
