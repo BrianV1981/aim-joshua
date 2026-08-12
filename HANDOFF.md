@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-08-12T02:20:00-04:00
-> **Updated by:** Antigravity (Session ID: 7af6372e-359d-40fa-aac9-f9c3be36b122)
-> **Priority Mission:** System Clean & Standby (All legacy decoupling complete)
+> **Updated:** 2026-08-12T17:35:00-04:00
+> **Updated by:** Antigravity (Session ID: 20ea24cb-e71f-419b-a8b7-0b256c75850c)
+> **Priority Mission:** Audit #3 Polish Sprint Continuation (Issues #52-54)
 > **Operator:** Brian
 
 ---
@@ -10,18 +10,13 @@
 ## 0. COMPLETED WORK (DO NOT REVISIT)
 | Session | Work | Status |
 |---------|------|--------|
-| [702211e6] | Scrub legacy CLI files & rewrote `README.md` | ✅ RESOLVED |
-| [702211e6] | Overhauled `AGENTS.md` to strictly enforce `git worktree` | ✅ RESOLVED |
-| [8f6251ff] | Refactored `_ingest/` pipeline (Issue #16) | ✅ RESOLVED |
-| [8f6251ff] | Purged `agent-guide.md` & synced `PERSISTENT_WIKI.md` (Issue #18) | ✅ RESOLVED |
-| [8f6251ff] | Added `install.sh` for Clean Installation footprint (Issue #19) | ✅ RESOLVED |
 | [8f6251ff] | Bootstrapped and consolidated `memory-wiki/` architecture (Issue #20 & #23) | ✅ RESOLVED |
 | [8f6251ff] | Implemented `aim projects` GitHub Kanban CLI wrapper (Issue #21) | ✅ RESOLVED |
 | [db0942ed] | Promoted Issue #24 (Blackbox Vault CLI extraction) | ✅ RESOLVED |
 | [7af6372e] | System end-to-end audit, wiped dummy `scratch/` artifacts | ✅ RESOLVED |
-| [7af6372e] | Synced `joshua_os_docs/` to `memory-wiki/` reality (Issue #26) | ✅ RESOLVED |
-| [7af6372e] | Drafted Operator Guide and injected `aim-memory-wiki` prerequisite into `aim-skill-library` | ✅ RESOLVED |
 | [7af6372e] | Documented Blackbox Vault as an Operator-locked Forensic Archive (Issue #28) | ✅ RESOLVED |
+| [3c7e001f] | Audit #3 Resolution Sprint: Fixed `aim promote`, added CI, wiped `wiki_tools.py` (Issues #36-45) | ✅ RESOLVED |
+| [20ea24cb] | Audit #3 Polish Sprint: Resolved SOURCE.md, doc sync, LanceDB seed, search output, CI tests (Issues #46-50) | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -37,27 +32,33 @@ J.O.S.H.U.A. is the foundational, CLI-agnostic Operating System brain for autono
 
 ---
 
-## 2. YOUR MISSION: SYSTEM CLEAN & STANDBY
-Your overarching goal is to wait for the Operator's next directive. The OS has been completely audited, refactored, and purged of all legacy daemon logic. 
+## 2. YOUR MISSION: AUDIT #3 POLISH SPRINT (CONTINUED)
+We are in the middle of resolving the remaining tickets opened during the Audit #3 review (Issues #46 through #54).
 
 ### Execution Queue (in order)
-#### 1️⃣ Standby / New Orders
-**Problem:** The OS is clean.
-**Fix:** Await the Operator to assign a new `aim projects` issue or engineering task.
+#### 1️⃣ Resolve Remaining Polish Tickets
+**Problem:** A few polish tickets remain (#52 Vault Keyring Fallback, #53 CLI Parser Strictness, #54 CONTRIBUTING.md).
+**Fix:** Iterate through the active GitHub Projects board using the strict GitOps pipeline.
 **Key files:** N/A
 
 ---
 
 ## 3. DETAILED ANALYSIS / BREAKDOWN
-- The `_ingest/` asynchronous background daemon has been permanently abolished. Memory is now managed synchronously via the JIT `aim-memory-wiki` skill.
-- Agent session extraction is handled natively via the Blackbox vault (e.g., `aim agy-blackbox --session-id <uuid>`) instead of background daemons.
-- The `joshua_os_docs/` have been perfectly synced with the `memory-wiki/` to ensure the next `aim bake` produces a pristine knowledge cartridge.
-- The Blackbox Vault has been formally documented as an **Operator-locked, password-protected forensic archive** to prevent rogue agents from tampering with session history.
+- The `wiki_tools.py` Tantivy engine is dead. Do not look for it. All search is handled by `aim search` (LanceDB hybrid search).
+- `aim promote` is now hardened and dynamically resolves the git root.
+- Issues #46 through #50 have been resolved, including refreshing the `SOURCE.md` pin, syncing docs, shipping the LanceDB seed, formatting `aim search` output, and deepening the CI smoke tests.
+- Remaining work includes Vault keyring fallback (#52), parser strictness (#53), and `CONTRIBUTING.md` (#54).
 
 ---
 
 ## 4. IMPLEMENTATION STRATEGY
-Maintain extreme GitOps discipline for any new tasks. Do not act on `main`.
+Maintain extreme GitOps discipline for any new tasks. Do not act on `main`. Follow the exact lifecycle:
+1. `aim projects board`
+2. `aim projects in-progress <id>`
+3. `aim fix <id>`
+4. *Code & Test*
+5. `aim promote`
+6. `aim projects done <id>`
 
 ---
 
@@ -65,7 +66,7 @@ Maintain extreme GitOps discipline for any new tasks. Do not act on `main`.
 > **⚠️ EPISTEMIC / OPERATIONAL WARNINGS**
 - **The Worktree Mandate:** NEVER perform development directly on `main`. You must use `aim fix <id>`. 
 - **The `aim-memory-wiki` Prerequisite:** You MUST run `/aim-memory-wiki` to synthesize new architecture changes *before* executing `/aim-handoff`.
-- **The Blackbox Mandate:** Before an agent vessel dies, it MUST execute its vessel-specific vault command (e.g. `aim agy-blackbox --session-id <uuid>`) to extract raw session logs. Agents cannot decrypt the vault; it is strictly an append-only operation for forensic auditing by the Operator.
+- **The Blackbox Mandate:** Before an agent vessel dies, it MUST execute its vessel-specific vault command (e.g. `aim agy-blackbox --session-id <uuid>`) to extract raw session logs. 
 
 ---
 
@@ -77,7 +78,7 @@ Maintain extreme GitOps discipline for any new tasks. Do not act on `main`.
 ---
 
 ## 7. THE FULL PICTURE / WHAT COMES AFTER
-J.O.S.H.U.A. is 100% decoupled from its legacy architectures. The final output is a pristine, universal OS blueprint ready for public deployment and scaling. The swarm is ready to tackle external engineering goals.
+Once Issues 52-54 are resolved, J.O.S.H.U.A. will be ready for a public OSS drop and the OS will be fully hardened against hallucination traps caused by stale documentation.
 
 ---
 
@@ -88,5 +89,6 @@ J.O.S.H.U.A. is 100% decoupled from its legacy architectures. The final output i
 ---
 
 ## 9. IMMEDIATE NEXT STEPS
-1. Acknowledge your awakening to the Operator.
-2. Ask the Operator for the next priority mission, or if they would like you to claim an issue from `aim projects board`.
+1. Run `./aim projects board` to view the active tickets.
+2. Select one of the issues (e.g. 52, 53, or 54) and claim it (`./aim projects in-progress <id>`).
+3. Spawn your isolated workspace using `./aim fix <id>`.
