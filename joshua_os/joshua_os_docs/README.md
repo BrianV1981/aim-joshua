@@ -17,7 +17,8 @@ Once baked, you MUST move the resulting `joshua_os_docs.parquet` file into `asse
 
 ## Index of Protocol Files
 
-*   **`AIM_CLI_TOOLS.md`**: Maps the core command-line tools (`aim bug`, `aim push`, `aim search`, `aim reincarnate`) that agents must use instead of raw bash commands.
+*   **`AIM_CLI_TOOLS.md`**: Maps the core command-line tools (`aim bug`, `aim push`, `aim search`, `aim projects`) that agents must use instead of raw bash commands.
+*   **`BLACKBOX_VAULT.md`**: Details the forensic, Operator-locked anti-tampering archive designed to prevent agents from editing their own session histories.
 *   **`COGNITIVE_ARCHITECTURE.md`**: Maps the flow of data through the system, identifying the Failsafe Layer, Continuity Pulse, LanceDB RAM/ROM, and Sovereign Sync mechanisms.
 *   **`DATAJACK_SWARM.md`**: Outlines the P2P knowledge sharing network, detailing how Parquet cartridges are exported and mounted as Zero-Copy ROM.
 *   **`EUREKA_FARMING.md`**: Defines the self-optimization cycle, instructing agents on hindsight pruning and forging "sweat equity" into exportable skill cartridges.

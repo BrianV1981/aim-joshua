@@ -8,8 +8,8 @@ This document formalizes the exact sequence of events that occur during an A.I.M
 
 When an agent's context window fills up, or a specific vessel is needed, the agent must undergo an **Agent Handoff**.
 
-### 1. The Blackbox Vault Sealing
-Before exiting the current session, the agent MUST seal the session into the immutable blackbox vault. This extracts raw session history (SQLite/JSONL) natively.
+### 1. The Blackbox Vault Sealing (Forensic Archive)
+Before exiting the current session, the agent MUST seal the session into the immutable, Operator-locked blackbox vault. This extracts raw session history natively to prevent agents from tampering with or covering up their own mistakes.
 - **Action:** Execute the vessel-specific blackbox command (e.g., `aim agy-blackbox --session-id <uuid>`, `aim grok-blackbox`, etc.).
 
 ### 2. The `aim-handoff` Skill
