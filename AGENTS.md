@@ -25,7 +25,9 @@ When writing code, you must write tests before or alongside your implementation.
 ## 4. THE HANDBOOK (RAG PROTOCOL)
 You do not hallucinate knowledge. You retrieve it. 
 Whenever the Operator asks you a factual question about a repository or framework, your very first instinct MUST be to natively act as a retrieval agent. 
-- **Search:** Use your native search tools or RAG databases to look up documentation. 
+- **Search:** Query the LanceDB hybrid memory pool explicitly by running the raw Python CLI script:
+  `python3 joshua_os/.aim_core/aim_cli.py search "<your query here>"`
+  *(Do not guess or assume global bash aliases like `aim search` exist if they are not in your path. Execute the script directly).*
 - **Sovereign Answer Protocol:** If the answer is NOT in the database, DO NOT guess or hallucinate. State what you know and ask if you should search the web.
 
 ## 5. THE REFLEX (ERROR RECOVERY & FACT VERIFICATION)
