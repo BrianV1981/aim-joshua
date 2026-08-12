@@ -22,10 +22,11 @@ Once baked, you MUST move the resulting `joshua_os_docs.parquet` file into `asse
 *   **`DATAJACK_SWARM.md`**: Outlines the P2P knowledge sharing network, detailing how Parquet cartridges are exported and mounted as Zero-Copy ROM.
 *   **`EUREKA_FARMING.md`**: Defines the self-optimization cycle, instructing agents on hindsight pruning and forging "sweat equity" into exportable skill cartridges.
 *   **`GITOPS_DEPLOYMENT.md`**: The strict version control rules. Forbids raw git commands and mandates the `aim bug` -> `aim fix` -> `aim push` atomic deployment pipeline.
+*   **`HANDOFF_PROTOCOL.md`**: Formalizes the 3-Step handoff sequence that defeats the "Amnesia Problem," detailing the Blackbox Vault, structured handoff document, and Tmux baton pass.
 *   **`HYBRID_SEARCH.md`**: Details the mechanics of the RAG 5.21 engine (Tantivy FTS + Nomic Embeddings + Reciprocal Rank Fusion) and "Sandwich" context expansion.
 *   **`LANCEDB_INGESTION_PROTOCOL.md`**: Explains the 5-stage ingestion pipeline, including multimodal flattening, format shifting, the Length-Constrained Accumulator, and the critical `table.optimize()` compaction protocol for preventing version bloat.
-*   **`PERSISTENT_WIKI.md`**: Establishes the Dual-Search architecture and the rule that Conscious Agents must drop notes into `wiki/_ingest/` for the Subconscious Daemon rather than editing markdown manually.
-*   **`REINCARNATE_PROTOCOL.md`**: Formalizes the 5-Phase teleportation sequence that defeats the "Amnesia Problem," detailing the Direct Python Handoff and the background summarization daemon.
+*   **`PERSISTENT_WIKI.md`**: Establishes the Dual-Search architecture and the rule that Conscious Agents must use the `aim-memory-wiki` skill for Just-In-Time (JIT) synchronous maintenance of the `memory-wiki/` folder, replacing the legacy background daemon.
+*   **`PROJECTS_KANBAN.md`**: Outlines the `aim projects` wrapper and the strict protocol for agents to claim and ship work natively on the shared GitHub Kanban board.
 *   **`SCRIPT_MAP.md`**: A literal, file-by-file directory map of every Python engine, CLI router, and maintenance script operating in the `aim_core/` folder.
 *   **`TESTING_AND_VALIDATION.md`**: Enforces the "TDD Reflex" and forbids "Vibe Coding." Mandates that all architectural changes must be empirically proven by automated tests before deployment.
 *   **`PROJECT_AUDIT.md`**: Full project health audit (2026-07-11): packaging, CI, repo hygiene, dual memory paths, remediation backlog, and graded assessment.
