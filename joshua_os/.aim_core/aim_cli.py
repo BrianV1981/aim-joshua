@@ -373,31 +373,35 @@ def cmd_promote(args):
     """Automates the Phase Protocol: Archives main, merges current dev branch, and cleans up the worktree."""
     print("--- A.I.M. PHASE PROMOTION ---")
     try:
-        # Determine if we are in a worktree
         current_dir = os.getcwd()
         in_worktree = "workspace/issue-" in current_dir
         
-        # The dev branch is where the worktree is (or the current dir if no worktree)
-        result = subprocess.run(["git", "branch", "--show-current"], cwd=BASE_DIR, capture_output=True, text=True, check=True)
+        # The main repo root is always two levels up from BASE_DIR (which is joshua_os/.aim_core)
+        repo_root = os.path.dirname(os.path.dirname(BASE_DIR))
+        
+        # Determine default branch (main or master)
+        branches = subprocess.run(["git", "branch", "--list"], cwd=repo_root, capture_output=True, text=True).stdout
+        default_branch = "master" if "master" in branches and "main" not in branches else "main"
+        
+        # The dev branch is where the command is run (the worktree)
+        result = subprocess.run(["git", "branch", "--show-current"], cwd=current_dir, capture_output=True, text=True, check=True)
         current_branch = result.stdout.strip()
         
-        if current_branch == "main":
-            print("[ERROR] You are already on 'main'. Please run 'aim promote' from your dev branch.")
+        if current_branch == default_branch:
+            print(f"[ERROR] You are already on '{default_branch}'. Please run 'aim promote' from your dev branch.")
             return
             
-        print(f"[1/5] Preparing to promote '{current_branch}' to main...")
+        print(f"[1/5] Preparing to promote '{current_branch}' to {default_branch}...")
         
         print('\n[CRITICAL INTERVENTION REQUIRED]')
         print('[WARNING TO AGENT] You are strictly forbidden from guessing this answer.')
         print('[WARNING TO AGENT] You MUST use your ask_question / UI modal tool to prompt the Operator.')
         print('[WARNING TO AGENT] Once the Operator confirms, stream their answer to stdin (yes/no).')
 
-        confirm = input(f"\nMerge branch '{current_branch}' to main? (yes/no): ").strip().lower()
+        confirm = input(f"\nMerge branch '{current_branch}' to {default_branch}? (yes/no): ").strip().lower()
         if confirm not in ['yes', 'y']:
             print('\n[ABORTED] Promotion cancelled. Branch remains isolated.')
             return
-        
-        repo_root = os.path.dirname(os.path.dirname(BASE_DIR)) if in_worktree else BASE_DIR
         
         # 1. Fetch latest (run in repo_root)
         subprocess.run(["git", "fetch", "origin"], cwd=repo_root, check=True, capture_output=True, text=True)
@@ -405,19 +409,19 @@ def cmd_promote(args):
         # 2. Archive current main
         date_str = datetime.now().strftime("%Y%m%d-%H%M")
         archive_branch = f"archive-{current_branch}-{date_str}"
-        print(f"[2/5] Backing up current 'main' to '{archive_branch}'...")
-        subprocess.run(["git", "checkout", "main"], cwd=repo_root, check=True, capture_output=True, text=True)
+        print(f"[2/5] Backing up current '{default_branch}' to '{archive_branch}'...")
+        subprocess.run(["git", "checkout", default_branch], cwd=repo_root, check=True, capture_output=True, text=True)
         subprocess.run(["git", "checkout", "-b", archive_branch], cwd=repo_root, check=True, capture_output=True, text=True)
         subprocess.run(["git", "push", "-u", "origin", archive_branch], cwd=repo_root, check=True, capture_output=True, text=True)
         
         # 3. Merge dev branch into main
-        print(f"[3/5] Merging '{current_branch}' into main...")
-        subprocess.run(["git", "checkout", "main"], cwd=repo_root, check=True, capture_output=True, text=True)
+        print(f"[3/5] Merging '{current_branch}' into {default_branch}...")
+        subprocess.run(["git", "checkout", default_branch], cwd=repo_root, check=True, capture_output=True, text=True)
         subprocess.run(["git", "merge", current_branch, "--no-edit"], cwd=repo_root, check=True, capture_output=True, text=True)
         
         # 4. Push main
         print(f"[4/5] Deploying new baseline to GitHub...")
-        subprocess.run(["git", "push", "origin", "main"], cwd=repo_root, check=True, capture_output=True, text=True)
+        subprocess.run(["git", "push", "origin", default_branch], cwd=repo_root, check=True, capture_output=True, text=True)
         
         # 5. Cleanup
         print(f"[5/5] Cleaning up local workspace...")
@@ -427,7 +431,7 @@ def cmd_promote(args):
             subprocess.run(["git", "worktree", "remove", current_dir, "--force"], cwd=repo_root, check=True, capture_output=True, text=True)
         subprocess.run(["git", "branch", "-D", current_branch], cwd=repo_root, check=True, capture_output=True, text=True)
         
-        print("\n[SUCCESS] Promotion complete. You are now on a clean 'main' branch in the root repository.")
+        print(f"\n[SUCCESS] Promotion complete. You are now on a clean '{default_branch}' branch in the root repository.")
     except subprocess.CalledProcessError as e:
         print(f"\n[ERROR] Git operation failed. Promotion aborted. Please check your git status.")
         print(f"Command: {e.cmd}")
