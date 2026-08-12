@@ -30,3 +30,6 @@ jobs:
       - name: Verify CLI executes
         run: |
           ./aim --help
+          ./aim doctor
+          ./aim map
+          ./aim search worktree --top-k 1
