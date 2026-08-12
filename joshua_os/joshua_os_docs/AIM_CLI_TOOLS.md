@@ -27,8 +27,6 @@ A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21).
     *   *Rule:* Use this instead of reading massive codebases.
 *   **`aim map`**
     *   *Usage:* Prints an index map of available knowledge within the database.
-*   **`aim wiki search "<Keyword>"`**
-    *   *Usage:* Performs instantaneous, 0ms exact-keyword search across the `wiki/` directory.
 
 ## 3. Cognitive Teleportation & Checkpoints
 Long-running sessions experience context collapse (hallucinations) past 30% utilization.

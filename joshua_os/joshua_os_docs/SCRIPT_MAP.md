@@ -37,7 +37,6 @@ This document is the literal map of every internal script running the A.I.M. OS.
 *   **`handoff_pulse_generator.py`**: Generates the `CURRENT_PULSE.md` and `LAST_SESSION_FLIGHT_RECORDER.md`, and triggers vector ingestion.
 *   **`extract_signal.py`**: The Zero-Token Scribe. Uses pure Python to strip 85% of JSON noise from native CLI transcripts.
 *   **`session_porter.py`**: Fast mirroring of global CLI transcripts to the local raw archive.
-*   **`wiki_tools.py`**: The Persistent LLM Wiki engine managing lexical search and Subconscious Daemon execution.
 
 *   **`maintenance.py`**: Automated janitor for purging logs and maintaining retention policies.
 *   **`heartbeat.py`**: Zero-token diagnostic tool verifying system integrity.
