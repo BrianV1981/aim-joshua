@@ -27,7 +27,7 @@ git log HEAD..upstream/main --oneline   # review
 
 | Field | Value |
 |-------|--------|
-| **Soul lineage** | aim-agy via nested `aim-agy_os/` (same as aim-opencode) |
+| **Soul lineage** | aim-agy via nested `joshua_os/` (same as aim-opencode) |
 | **Upgrade** | Prefer soul lockstep policies from the fleet; then re-test free Gemini via OpenCode |
 
 ## Intentional product overlays (protect when merging upstream)
