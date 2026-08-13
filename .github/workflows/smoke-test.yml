@@ -33,3 +33,8 @@ jobs:
           ./aim doctor
           ./aim map
           ./aim search worktree --top-k 1
+
+      - name: Run Pytest
+        run: |
+          pip install pytest
+          pytest tests/
