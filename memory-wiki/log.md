@@ -34,3 +34,13 @@
 - CLI Parser strictness increased: removed silent search fallbacks and purged legacy `--context` parameters.
 - `CONTRIBUTING.md` formalized to mandate the 3-step GitOps workflow (`aim bug` -> `aim fix` -> `aim promote`).
 - Discovered and logged bug (#57) for `aim_batch_merge.py` hardcoding `main` instead of using dynamic branch resolution.
+
+## [2026-08-12] ingest | Final Audit #3 Polish & Testing CI/CD
+- Fixed the hardcoded branch parsing in `aim_batch_merge.py` via dynamic `git branch --list` checks (Issue #57).
+- Wired the `aim vault doctor` explicitly under the `aim vault` parser (Issue #59).
+- Abstracted the `SOURCE.md` Runtime to strictly `CLI-agnostic` (Issue #60).
+- Purged stale `wiki_tools` imports causing ModuleNotFound errors in core files (Issue #61).
+- Discovered and documented architectural bug: `aim_push.sh` strictly relies on `git add -u`, explicitly ignoring newly created untracked files unless manually staged prior.
+- Built a localized robust `pytest` harness containing E2E simulated git repository mocking to validate `aim promote` dynamically without disrupting the Operator's host system (Issues #63-64).
+- Hardened CI environment using the `gitleaks` GitHub action for rigid secrets scanning (Issue #65).
+- Created a new wiki page `pages/ci-testing.md` to catalog the test scaffolding.
