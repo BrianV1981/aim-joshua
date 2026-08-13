@@ -1,7 +1,7 @@
 # Operations
 
 ## Parallel Execution & GitOps
-J.O.S.H.U.A. enforces a highly parallel GitOps execution model:
+J.O.S.H.U.A. enforces a highly parallel GitOps execution model, heavily formalized in `CONTRIBUTING.md`:
 - Agents must NOT code on the `main` branch. They use `aim fix <issue_id>` to spawn physically isolated `git worktree` sandboxes.
 - The atomic release process utilizes `aim promote` (replacing the legacy `aim push`) to safely archive `main`, merge the active worktree branch, deploy to GitHub, and destroy the sandbox.
 - System-level isolation can be optionally added using `bwrap` if network or filesystem restrictions are required.

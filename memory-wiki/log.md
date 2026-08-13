@@ -25,3 +25,12 @@
 ## [2026-08-12] ingest | Blackbox Vault Forensic Protocol
 - Created `BLACKBOX_VAULT.md` in `joshua_os_docs/` to formally document the Vault as an Operator-locked, anti-tampering forensic archive (Issue #28).
 - Synced the documentation into `memory-wiki/pages/blackbox-vault.md` to establish the intent that agents cannot edit their own history to cover up mistakes.
+
+## [2026-08-12] ingest | Audit #3 Polish Sprint Resolution
+- Resolved issues #49-54 for the Audit #3 Polish Sprint.
+- `aim search` upgraded to provide human-readable text by default, with `--json` for machine dumps.
+- CI pipeline deepened to test `aim doctor`, `aim map`, and `aim search`.
+- `aim vault doctor` implemented for diagnosing Blackbox file-key backups.
+- CLI Parser strictness increased: removed silent search fallbacks and purged legacy `--context` parameters.
+- `CONTRIBUTING.md` formalized to mandate the 3-step GitOps workflow (`aim bug` -> `aim fix` -> `aim promote`).
+- Discovered and logged bug (#57) for `aim_batch_merge.py` hardcoding `main` instead of using dynamic branch resolution.
