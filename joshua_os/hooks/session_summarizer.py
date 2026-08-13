@@ -21,7 +21,6 @@ sys.path.append(AIM_ROOT)
 sys.path.append(os.path.join(AIM_ROOT, ".aim_core"))
 
 from plugins.datajack.forensic_utils import chunk_text, get_embedding
-from wiki_tools import process_wiki
 # Black box seal runs only from reincarnation (background_tasks / aim reincarnate),
 # not from generic wiki summarizer — see issue #12 / docs/BLACKBOX_VAULT.md.
 
