@@ -291,7 +291,6 @@ def main():
     parser.add_argument("--session", help="Filter by specific session ID")
     parser.add_argument("--map", action="store_true", help="Print the knowledge map")
     parser.add_argument("--top-k", type=int, default=10, help="Number of results to retrieve")
-    parser.add_argument("--context", type=int, help="Context window size (ignored, for CLI parity)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON array")
     
     args = parser.parse_args()

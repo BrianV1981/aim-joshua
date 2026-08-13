@@ -93,7 +93,6 @@ def cmd_search(args):
     retriever_args = [query]
     if args.top_k: retriever_args += ["--top-k", str(args.top_k)]
     if args.full: retriever_args += ["--full"]
-    if args.context is not None: retriever_args += ["--context", str(args.context)]
     if args.session: retriever_args += ["--session", args.session]
     if getattr(args, "json", False): retriever_args += ["--json"]
     run_script(os.path.join(AIM_CORE_DIR, "retriever.py"), retriever_args)
@@ -1332,7 +1331,6 @@ def main():
     search_parser.add_argument("query", nargs="+")
     search_parser.add_argument("--top-k", type=int)
     search_parser.add_argument("--full", action="store_true")
-    search_parser.add_argument("--context", type=int, nargs='?', const=2000)
     search_parser.add_argument("--session", type=str)
     search_parser.add_argument("--json", action="store_true")
 
@@ -1343,11 +1341,7 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    known = list(subparsers.choices.keys())
-    if sys.argv[1] not in known and sys.argv[1] not in ["-h", "--help", "pulse", "tui"]:
-        args = parser.parse_args(["search"] + sys.argv[1:])
-    else:
-        args = parser.parse_args()
+    args = parser.parse_args()
 
     if args.command == "init": cmd_init(args)
     elif args.command == "status": cmd_status(args)
