@@ -1,11 +1,27 @@
-# Changelog — aim-joshua
+# Changelog
+
+## [v0.2.5] - 2026-08-12
+- Fix: Add CHANGELOG 0.2.1 and remove stale --context claim (Closes #62)
+
+
+## [0.2.4] - 2026-08-12
+- Fix: Remove deleted wiki_tools import from session_summarizer.py (Closes #61)
+
+## [0.2.3] - 2026-08-12
+- Fix: Change SOURCE.md Runtime from AGY to CLI-agnostic (Closes #60)
+
+## [0.2.2] - 2026-08-12
+- Fix: Wire doctor under aim vault (Closes #59)
+
+## [0.2.1] - 2026-08-12
+- Fix: Dynamic default branch in aim_batch_merge.py (Closes #57)
 
 ## 0.2.0 — 2026-08-12
 
 ### Fixed & Changed
 - **Engine Version Bump**: `joshua_os/VERSION` advanced to `v1.0.8`.
 - **Lexical Fallback (Issue 38)**: Upgraded LanceDB integration to fail-fast on vector embedding errors and cleanly degrade to pure Tantivy exact-keyword search.
-- **Argparse Alignment (Issue 39)**: Fixed `retriever.py` to correctly consume `--top-k` and `--context` flags during deep CLI invocations.
+- **Argparse Alignment (Issue 39)**: Fixed `retriever.py` to correctly consume `--top-k` flags during deep CLI invocations.
 - **GitOps Promote (Issue 37)**: Fixed a catastrophic path resolution bug in `cmd_promote` by leveraging `git rev-parse --git-common-dir` instead of hardcoded directory traversal. Added runtime `.git` safety assertion.
 - **Architectural Cleanup (Issue 40)**: Deprecated and deleted the obsolete `wiki_tools.py` SQLite engine. All wiki knowledge retrieval is now correctly routed through the unified `aim search` LanceDB engine.
 - **Repo Hygiene & Licensing (Issue 41)**: Added standard MIT License. Revamped `.gitignore`. Fully untracked raw `memory_lance` objects and bloated `__pycache__` artifacts from git history.
