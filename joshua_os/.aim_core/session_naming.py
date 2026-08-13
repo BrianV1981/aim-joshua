@@ -54,16 +54,3 @@ def is_agent_session_role(name: str, role: str, env: dict | None = None) -> bool
     return bool(re.fullmatch(r"[0-9]+", parts[-1]))
 
 
-def reincarnation_session_name(
-    workspace_dir: str | None = None,
-    env: dict | None = None,
-    *,
-    timestamp: int | None = None,
-) -> str:
-    """Build session name for reincarnation (legacy compat wrap)."""
-    return build_agent_session_name("reincarnate", workspace_dir, env, timestamp=timestamp)
-
-
-def is_reincarnation_session(name: str, env: dict | None = None) -> bool:
-    """True if *name* matches this vessel's reincarnation session pattern."""
-    return is_agent_session_role(name, "reincarnate", env)

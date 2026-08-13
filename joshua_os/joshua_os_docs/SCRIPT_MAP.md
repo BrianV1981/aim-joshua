@@ -33,7 +33,7 @@ This document is the literal map of every internal script running the A.I.M. OS.
 ## 3. Lifecycle, Memory & Continuity
 *Scripts that manage the agent's context, history, and autonomous operations.*
 
-*   **`aim_reincarnate.py`**: The Context Pruning teleport script for spawning a fresh agent session.
+
 *   **`handoff_pulse_generator.py`**: Generates the `CURRENT_PULSE.md` and `LAST_SESSION_FLIGHT_RECORDER.md`, and triggers vector ingestion.
 *   **`extract_signal.py`**: The Zero-Token Scribe. Uses pure Python to strip 85% of JSON noise from native CLI transcripts.
 *   **`session_porter.py`**: Fast mirroring of global CLI transcripts to the local raw archive.

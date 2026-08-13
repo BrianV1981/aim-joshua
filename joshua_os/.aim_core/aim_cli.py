@@ -527,16 +527,6 @@ def cmd_sync_issues(args):
 
 
 
-def cmd_reincarnate(args):
-    """Triggers the automated reincarnate handoff loop."""
-    rein_args = []
-    sid = getattr(args, "session_id", None)
-    if sid:
-        rein_args += ["--session-id", sid]
-    if getattr(args, "no_teleport", False):
-        rein_args += ["--no-teleport"]
-    run_script(os.path.join(AIM_CORE_DIR, "aim_reincarnate.py"), rein_args)
-
 
 def cmd_handoff_vnext(args):
     """Handoff vNext three pipelines (docs/HANDOFF_VNEXT_E2E.md / issue #32)."""
@@ -1163,22 +1153,6 @@ def main():
 
     vault_doctor = vault_sub.add_parser("doctor", help="Run vault diagnostics and key recovery info")
 
-    rein_parser = subparsers.add_parser(
-        "reincarnate",
-        help="Trigger the Reincarnation Protocol (Automated context handoff and terminal swap)",
-    )
-    rein_parser.add_argument(
-        "--session-id",
-        type=str,
-        default=None,
-        help="Explicit conversation UUID for pulse extraction",
-    )
-    rein_parser.add_argument(
-        "--no-teleport",
-        action="store_true",
-        help="Pulse + vault + wake prompt only; skip tmux spawn/teleport (E2E/CI safe)",
-    )
-
     agy_bb_parser = subparsers.add_parser("agy-blackbox", help="Seal AGY transcript to vault")
     agy_bb_parser.add_argument("--session-id", required=True)
 
@@ -1364,7 +1338,7 @@ def main():
     elif args.command == "sync-issues": cmd_sync_issues(args)
 
     elif args.command == "handoff-vnext": cmd_handoff_vnext(args)
-    elif args.command == "reincarnate": cmd_reincarnate(args)
+
     elif args.command == "vault": cmd_vault(args)
     elif args.command == "clean": cmd_clean(args)
     elif args.command == "bake": cmd_bake(args)
