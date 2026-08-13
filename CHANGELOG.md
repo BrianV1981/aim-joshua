@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.2.6] - 2026-08-12
+- Fix: JOSH-021 Case-fold doctor assert and source venv in GHA (Closes #67)
+
+
 ## [v0.2.5] - 2026-08-12
 - Fix: Add CHANGELOG 0.2.1 and remove stale --context claim (Closes #62)
 

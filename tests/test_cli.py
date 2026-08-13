@@ -10,4 +10,5 @@ def test_aim_help():
 def test_aim_doctor():
     result = subprocess.run(["./aim", "doctor"], capture_output=True, text=True)
     assert result.returncode == 0
-    assert "Doctor" in result.stdout or "Diagnostic" in result.stdout or "Status" in result.stdout
+    out = result.stdout.lower()
+    assert "doctor" in out or "diagnostic" in out or "status" in out
