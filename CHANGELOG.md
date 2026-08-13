@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.8] - 2026-08-12
+- Fix: A+ acceptance tests and docs (Closes #69, Closes #70, Closes #71)
+
+
+## [v0.2.8] - 2026-08-12
+- Feature: Added extended pytest suite for aim search, JSON outputs, vault seal/audit paths, and promote math (Closes #69, #71)
+- Fix: Addressed theater in HANDOFF and fixed aim map footer reference (Closes #70)
+
 ## [v0.2.7] - 2026-08-12
 - Fix: JOSH-022 and JOSH-023 HANDOFF and CHANGELOG (Closes #68)
 

@@ -109,9 +109,9 @@ def print_knowledge_map():
     if k_map["session_history"]:
         print(f"\n## SESSION HISTORY")
         print(f"  - {len(k_map['session_history'])} historical sessions indexed.")
-        print(f"    (Use '{os.path.basename(AIM_ROOT)} search' with --session to narrow down specific events)")
+        print(f"    (Use './aim search' with --session to narrow down specific events)")
 
-    print(f"\nUse '{os.path.basename(AIM_ROOT)} search \"<filename>\" --full' to surgically recall specific keys.")
+    print(f"\nUse './aim search \"<filename>\" --full' to surgically recall specific keys.")
 
 def expand_sandwich_context(results):
     expanded_results = []
