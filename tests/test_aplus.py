@@ -1,60 +1,91 @@
+"""A+ acceptance: exercise the real ./aim wrapper (no mocked cmd_*)."""
+import json
 import os
 import subprocess
-import json
 import uuid
+from pathlib import Path
+
+
+def _aim(*args):
+    return subprocess.run(["./aim", *args], capture_output=True, text=True)
+
+
+def _json_from_stdout(stdout: str):
+    text = stdout.strip()
+    for i, ch in enumerate(text):
+        if ch in "[{":
+            return json.loads(text[i:])
+    return json.loads(text)
+
 
 def test_aim_search():
-    result = subprocess.run(["./aim", "search", "worktree", "--top-k", "1"], capture_output=True, text=True)
-    assert result.returncode == 0
-    assert len(result.stdout) > 0
+    result = _aim("search", "worktree", "--top-k", "1")
+    assert result.returncode == 0, result.stderr
+    assert "SEARCH RESULTS" in result.stdout
+
 
 def test_aim_search_json():
-    result = subprocess.run(["./aim", "search", "worktree", "--top-k", "1", "--json"], capture_output=True, text=True)
-    assert result.returncode == 0
-    parsed = json.loads(result.stdout)
+    result = _aim("search", "worktree", "--top-k", "1", "--json")
+    assert result.returncode == 0, result.stderr
+    parsed = _json_from_stdout(result.stdout)
     assert isinstance(parsed, (list, dict))
+    # NOTICE must not live on stdout (GHA has no embeddings)
+    assert "[NOTICE]" not in result.stdout
+
 
 def test_aim_unknown_verb():
-    result = subprocess.run(["./aim", "unknown_verb"], capture_output=True, text=True)
+    result = _aim("unknown_verb")
     assert result.returncode == 2
     assert "invalid choice" in result.stderr.lower()
 
+
 def test_aim_vault_doctor():
-    result = subprocess.run(["./aim", "vault", "doctor"], capture_output=True, text=True)
-    assert result.returncode == 0
+    result = _aim("vault", "doctor")
+    assert result.returncode == 0, result.stderr
     out = result.stdout.lower()
     assert "keyring" in out or "blackbox" in out
 
+
+def test_aim_map_footer_uses_aim_search():
+    result = _aim("map")
+    assert result.returncode == 0, result.stderr
+    assert "./aim search" in result.stdout
+    assert "joshua_os search" not in result.stdout
+
+
 def test_promote_math():
-    common_dir_res = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True)
-    assert common_dir_res.returncode == 0
-    raw_dir = common_dir_res.stdout.strip()
-    repo_root = os.path.abspath(raw_dir)
-    if repo_root.endswith(".git"):
-        repo_root = os.path.dirname(repo_root)
+    common = subprocess.run(
+        ["git", "rev-parse", "--git-common-dir"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    repo_root = os.path.dirname(os.path.abspath(os.path.join(os.getcwd(), common)))
     assert os.path.isdir(os.path.join(repo_root, ".git"))
 
-def test_vault_hermetic_decrypt():
-    # Hermetic test for vault seal and audit/decrypt paths
-    session_id = str(uuid.uuid4())
-    brain_dir = os.path.join(os.path.expanduser("~"), ".gemini", "antigravity-cli", "brain", session_id)
-    logs_dir = os.path.join(brain_dir, ".system_generated", "logs")
-    os.makedirs(logs_dir, exist_ok=True)
-    transcript_path = os.path.join(logs_dir, "transcript.jsonl")
-    
-    with open(transcript_path, "w") as f:
-        f.write('{"type": "USER_INPUT", "content": "hello hermetic vault"}\\n')
-        
+
+def test_vault_hermetic_decrypt(tmp_path):
+    marker = f"hello hermetic vault {uuid.uuid4().hex[:8]}"
+    transcript = tmp_path / "raw.jsonl"
+    transcript.write_text(json.dumps({"type": "USER_INPUT", "content": marker}) + "\n")
+    sid = f"hermetic-{uuid.uuid4().hex[:8]}"
+    vessel = os.getcwd()
     try:
-        seal_res = subprocess.run(["./aim", "vault", "seal", "--session-id", session_id], capture_output=True, text=True)
-        assert seal_res.returncode == 0
-        
-        audit_res = subprocess.run(["./aim", "vault", "audit", session_id], capture_output=True, text=True)
-        assert audit_res.returncode == 0
-        assert "hello hermetic vault" in audit_res.stdout
+        seal = _aim(
+            "vault",
+            "seal",
+            "--path",
+            str(transcript),
+            "--session-id",
+            sid,
+            "--vessel",
+            vessel,
+        )
+        assert seal.returncode == 0, seal.stdout + seal.stderr
+        audit = _aim("vault", "audit", sid, "--vessel", vessel)
+        assert audit.returncode == 0, audit.stdout + audit.stderr
+        assert marker in audit.stdout
     finally:
-        import shutil
-        shutil.rmtree(brain_dir, ignore_errors=True)
-        sealed_path = os.path.join(os.path.expanduser("~"), ".aim", "vault", f"{session_id}.enc")
-        if os.path.exists(sealed_path):
-            os.remove(sealed_path)
+        blob = Path(vessel) / "archive" / ".raw_jsonl_blackbox" / f"{sid}.enc"
+        if blob.is_file():
+            blob.unlink()

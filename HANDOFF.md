@@ -1,37 +1,37 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-08-12T21:50:00-04:00
-> **Updated by:** Antigravity (Session ID: a9a18157-d942-4a8c-b7b1-42c610cdc750)
-> **Priority Mission:** Complete Audit #3 and A+ Polish
+> **Updated:** 2026-08-12T23:20:00-04:00
+> **Updated by:** grok-audit (orchestrator) + aim-joshua
+> **Priority Mission:** Land issue #72 (GHA `--json` NOTICE + hermetic vault + HANDOFF honesty). Do not claim A+ until grok-audit pass 8.
 
 ---
 
 ## 0. COMPLETED WORK (DO NOT REVISIT)
+
 | Session | Work | Status |
 |---------|------|--------|
-| [3c7e001f] | Audit #3 Resolution Sprint: Fixed `aim promote`, added CI, wiped `wiki_tools.py` (Issues #36-45) | ✅ RESOLVED |
-| [20ea24cb] | Audit #3 Polish Sprint: Resolved SOURCE.md, doc sync, LanceDB seed, search output, CI tests (Issues #46-51) | ✅ RESOLVED |
-| [20ea24cb] | Audit #3 Polish Sprint (Cont'd): Vault Keyring Fallback, CLI Parser strictness, CONTRIBUTING.md (Issues #52-54) | ✅ RESOLVED |
-| [20ea24cb] | `memory-wiki` ingestion and update for Audit #3 Polish Sprint (Issue #58) | ✅ RESOLVED |
-| [a9a18157] | Fixed Issue #57: `aim_batch_merge.py` now uses dynamic default branch resolution (main/master) | ✅ RESOLVED |
-| [a9a18157] | Final Audit #3 residuals: Wired `aim vault doctor` (#59), updated SOURCE.md (#60), removed stale imports (#61), fixed CHANGELOG (#62) | ✅ RESOLVED |
-| [a9a18157] | A+ Polish Sprint: Added Pytest framework (#63), built E2E `aim promote` integration test (#64), and added Gitleaks secrets scanner CI (#65) | ✅ RESOLVED |
-| [a9a18157] | Audit 6 Fixes: Fixed CI Pytest Harness for `aim promote` integration in GHA (#67) | ✅ RESOLVED |
-| [a9a18157] | Audit 6 Fixes: Corrected HANDOFF and CHANGELOG to reflect reality (#68) | ✅ RESOLVED |
+| prior | Audit #3 through pass 7 residuals (#36–#68) | ✅ RESOLVED |
+| aim-joshua | #69–#71 first A+ attempt (tests + map footer) | ✅ SHIPPED — **GHA red** (see #72) |
+
+Do not reopen 021–023. Do not treat #69–#71 as acceptance.
 
 ---
 
 ## 1. TACTICAL STATE
-- **CI Stabilized:** The `pytest` harness for the CLI previously caused the GitHub Actions smoke test to go red because it did not execute within the `joshua_os/venv`. This was corrected in Issue #67 (JOSH-021), and the GHA pipeline is now **green**.
-- **Vault Fixes:** The `aim vault doctor` subcommand is officially wired and reports system keyring/blackbox fallback status correctly. A new hermetic decrypt test exercises the path in CI.
-- **GitOps Enforcement:** All updates were performed strictly through `aim fix` worktrees, merged via `aim promote` with interactive Operator confirmation, and marked done on the Kanban board.
-- **Auto-versioning bug identified:** `aim push` automatically uses `git add -u` (which excludes newly created files). The new `pytest` files were manually staged via `git add tests/` before pushing in the final ticket to successfully bypass this quirk.
-- **System Health:** J.O.S.H.U.A. is stable. Residual bugs, stale imports, and documentation inconsistencies raised during Audit #3 have all been wiped.
+
+- **Tip before #72:** `c12da8b8` closed #69–#71 while `smoke-test.yml` run `31663187836` **failed**.
+- **Failure:** `test_aim_search_json` — `--json` printed `[NOTICE] Semantic Engine Offline` on **stdout** (GHA has no embeddings). Local host hid this.
+- **Vault test** wrote under `~/.gemini/...` (not hermetic). Replacement uses `./aim vault seal --path`.
+- **Map footer** already `./aim search` on `c12da8b8`.
+- **This worktree:** NOTICE → stderr; stronger `./aim` tests; this HANDOFF; CHANGELOG `v0.2.9`.
 
 ## 2. EXECUTION QUEUE
-- **Backlog Empty:** There are no open backlog issues for this sprint. All Audit #3 items are resolved. The CI regressions caught in the living audit have been corrected and documented.
+
+1. Promote #72 after local pytest green.
+2. Wait for **main** `smoke-test.yml` **success**.
+3. Then grok-audit **delta** (pass 8). Do not self-award A+.
 
 ## 3. NEXT STEPS
-- The Operator should review the green GHA smoke-test workflow and the updated `CHANGELOG.md`.
-- Await next operator mandate or begin the next audit phase.
-- J.O.S.H.U.A. is stable and fully aligned with the GitOps workflow.
+
+- Operator: `aim promote` yes if asked.
+- Auditor: reaudit only after green tip SHA.

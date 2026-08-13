@@ -237,8 +237,14 @@ def perform_search_internal(query, top_k=10, session_filter=None):
         query_vec = None
 
     if not query_vec:
-        print("\\n[NOTICE] Semantic Engine Offline: Falling back to exact-keyword (Lexical) search.")
-        print(f"         Run '{os.path.basename(AIM_ROOT)} tui' to configure local embeddings for deep semantic recall.\\n")
+        print(
+            "[NOTICE] Semantic Engine Offline: Falling back to exact-keyword (Lexical) search.",
+            file=sys.stderr,
+        )
+        print(
+            "         Run './aim tui' to configure local embeddings for deep semantic recall.",
+            file=sys.stderr,
+        )
 
     try:
         backend = VectorBackend()
