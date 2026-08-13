@@ -20,3 +20,9 @@ J.O.S.H.U.A. automates high-risk git operations like `aim promote` through dynam
 The Continuous Integration pipeline enforces strict safety rules on every pull request or push to the main branch.
 - **Smoke Tests:** The `.github/workflows/smoke-test.yml` pipeline handles Python dependency setups, CLI sanity checks, LanceDB validations, and native Pytest execution.
 - **Secrets Scanning:** To prevent catastrophic access token bleed in a fully autonomous agentic system, a strict `.github/workflows/gitleaks.yml` workflow is enabled to scan the repository using `gitleaks` prior to any code integration.
+
+## 4. Offline Environment Blindspots (CI vs Local)
+When tests run in GitHub Actions, they often run in an offline or unconfigured environment relative to the developer's machine.
+- **Semantic Engine Example:** If LanceDB or the embeddings engine is unconfigured in CI, the system might gracefully fallback to lexical search but print a `[NOTICE]` to standard output. 
+- **JSON Parsing Failures:** Text warnings injected into stdout will catastrophically break tests asserting valid JSON payloads (`aim search ... --json`). Code must ensure such notices are strictly routed to `stderr` to maintain clean `stdout` streams for automated parsing.
+- **Hermetic Testing:** Features relying on the local filesystem or operator data (like the Blackbox Vault) must be tested using hermetic, disposable fixtures (e.g. generating a temporary transcript UUID and sealing it inside `/tmp` or a mock directory) rather than depending on real active sessions.

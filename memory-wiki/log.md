@@ -44,3 +44,11 @@
 - Built a localized robust `pytest` harness containing E2E simulated git repository mocking to validate `aim promote` dynamically without disrupting the Operator's host system (Issues #63-64).
 - Hardened CI environment using the `gitleaks` GitHub action for rigid secrets scanning (Issue #65).
 - Created a new wiki page `pages/ci-testing.md` to catalog the test scaffolding.
+
+## [2026-08-12] ingest | Audit 6 to 8: A+ Sprint, Offline CI, and Orchestrator Freeze
+- Ingested Audit Pass 6, Pass 7, and Pass 8 (A+ Sprint) findings.
+- Documented architectural CI blindspots: Infrastructure variations (like the Semantic Engine being offline in GHA) can break parsers if text warnings (`[NOTICE]`) precede JSON array outputs on standard output.
+- Documented the strict A+ Acceptance Bar: no process theater ("A+ / incredibly robust" claims), 100% path coverage via testing (hermetic vault decrypts, exact CLI behavior), and zero closures on red CI.
+- Documented the `FREEZE` Orchestrator Override protocol: If the orchestrator (`grok-audit`) takes over the tree to fix CI, the active agent must immediately stay idle and NOT push, promote, or edit.
+- Added `pages/audit-protocol.md` to detail the A+ and override mechanics.
+- Updated `pages/ci-testing.md` with offline/hermetic test warnings.
