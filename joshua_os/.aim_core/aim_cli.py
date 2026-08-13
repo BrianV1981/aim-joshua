@@ -607,8 +607,12 @@ def cmd_vault(args):
                 vessel, session_id=getattr(args, "session_id", None)
             )
         sys.exit(0 if ok else 1)
+    elif sub == "doctor":
+        from aim_vault import vault_doctor
+        vault_doctor()
+        sys.exit(0)
     else:
-        print("Usage: aim vault {audit|verify|seal} ...")
+        print("Usage: aim vault {audit|verify|seal|doctor} ...")
         sys.exit(2)
 
 
@@ -1156,6 +1160,8 @@ def main():
     vault_seal.add_argument("--session-id", default=None)
     vault_seal.add_argument("--path", default=None, help="Explicit raw transcript path")
     vault_seal.add_argument("--vessel", default=None)
+
+    vault_doctor = vault_sub.add_parser("doctor", help="Run vault diagnostics and key recovery info")
 
     rein_parser = subparsers.add_parser(
         "reincarnate",
