@@ -4,7 +4,7 @@
 |-------|--------|
 | **Vessel** | `aim-joshua` |
 | **Product** | J.O.S.H.U.A. Universal OS |
-| **Runtime** | Antigravity CLI (AGY) |
+| **Runtime** | CLI-agnostic |
 | **Created** | 2026-07-24 |
 
 ## Sovereign Identity
