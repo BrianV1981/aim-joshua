@@ -5,12 +5,16 @@ import argparse
 import sys
 
 def main():
-    parser = argparse.ArgumentParser(description="A.I.M. Batch Merge Utility - Merges all open fix/issue-* branches into main.")
-    parser.add_argument("--push", action="store_true", help="Automatically push main to origin after successful merges")
+    parser = argparse.ArgumentParser(description="A.I.M. Batch Merge Utility - Merges all open fix/issue-* branches into the default branch.")
+    parser.add_argument("--push", action="store_true", help="Automatically push default branch to origin after successful merges")
     args = parser.parse_args()
 
     print("--- A.I.M. BATCH MERGE AUTOMATION ---")
     
+    # Determine default branch
+    branch_res = subprocess.run(["git", "branch", "--list"], capture_output=True, text=True)
+    default_branch = "master" if "master" in branch_res.stdout and "main" not in branch_res.stdout else "main"
+
     # Get all remote branches
     res = subprocess.run(["git", "branch", "-r"], capture_output=True, text=True, check=True)
     branches = [line.strip().replace("origin/", "") for line in res.stdout.split("\n") if "origin/fix/issue-" in line]
@@ -21,9 +25,9 @@ def main():
 
     print(f"Found {len(branches)} issue branches to merge.")
 
-    print("\n[1/3] Preparing main branch...")
-    subprocess.run(["git", "checkout", "main"], check=True)
-    subprocess.run(["git", "pull", "origin", "main"], check=True)
+    print(f"\n[1/3] Preparing {default_branch} branch...")
+    subprocess.run(["git", "checkout", default_branch], check=True)
+    subprocess.run(["git", "pull", "origin", default_branch], check=True)
 
     failed_merges = []
     successful_merges = []
@@ -58,11 +62,11 @@ def main():
             print(f"  - {f}")
 
     if successful_merges and args.push:
-        print("\n[3/3] Pushing unified main branch to origin...")
-        subprocess.run(["git", "push", "origin", "main"], check=True)
+        print(f"\n[3/3] Pushing unified {default_branch} branch to origin...")
+        subprocess.run(["git", "push", "origin", default_branch], check=True)
         print("[SUCCESS] All patches deployed to live repository.")
     elif successful_merges:
-        print("\n[3/3] Skipped push. Run 'git push origin main' manually when ready, or use --push flag next time.")
+        print(f"\n[3/3] Skipped push. Run 'git push origin {default_branch}' manually when ready, or use --push flag next time.")
 
 if __name__ == "__main__":
     main()
