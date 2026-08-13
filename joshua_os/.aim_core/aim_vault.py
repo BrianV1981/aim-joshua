@@ -43,6 +43,47 @@ def list_keys():
     
     console.print(table)
 
+def vault_doctor():
+    import os
+    from pathlib import Path
+    table = Table(title="A.I.M. Vault Diagnostics")
+    table.add_column("Component", style="cyan")
+    table.add_column("Status", style="magenta")
+    table.add_column("Details", style="green")
+    
+    # 1. Check OS Keyring
+    try:
+        keyring.set_password("aim-system", "vault-doctor-test", "test")
+        val = keyring.get_password("aim-system", "vault-doctor-test")
+        if val == "test":
+            table.add_row("OS Keyring", "[green]OK[/green]", "Working properly")
+            try:
+                keyring.delete_password("aim-system", "vault-doctor-test")
+            except:
+                pass
+        else:
+            table.add_row("OS Keyring", "[red]FAIL[/red]", "Could not retrieve test value")
+    except Exception as e:
+        table.add_row("OS Keyring", "[red]FAIL[/red]", str(e))
+        
+    # 2. Check Blackbox Fallback Key
+    bb_key = Path.home() / ".aim" / "blackbox.key"
+    if bb_key.is_file():
+        st = bb_key.stat()
+        mode = oct(st.st_mode)[-3:]
+        if mode == "600":
+            table.add_row("Blackbox Key", "[green]OK[/green]", f"{bb_key} (mode 0600)")
+        else:
+            table.add_row("Blackbox Key", "[yellow]WARN[/yellow]", f"{bb_key} (mode {mode}, should be 0600)")
+    else:
+        table.add_row("Blackbox Key", "[yellow]MISSING[/yellow]", f"Not found at {bb_key}")
+        
+    console.print(table)
+    console.print("\n[bold]Recovery Information:[/bold]")
+    console.print("If your system keyring is wiped or unavailable, Blackbox Vault decryption will fail.")
+    console.print(f"By default, a fallback file key is created at [bold cyan]{Path.home() / '.aim' / 'blackbox.key'}[/bold cyan].")
+    console.print("Back up this file to a secure location to ensure you can always recover encrypted sessions.")
+
 def main():
     parser = argparse.ArgumentParser(description="A.I.M. Secret Vault Manager")
     subparsers = parser.add_subparsers(dest="command")
@@ -58,6 +99,8 @@ def main():
     
     subparsers.add_parser("list", help="List status of common keys")
     
+    doctor_parser = subparsers.add_parser("doctor", help="Run vault diagnostics and key recovery info")
+    
     args = parser.parse_args()
     
     if args.command == "set":
@@ -68,6 +111,8 @@ def main():
         else: console.print("[red]Not found.[/red]")
     elif args.command == "list":
         list_keys()
+    elif args.command == "doctor":
+        vault_doctor()
     else:
         parser.print_help()
 
