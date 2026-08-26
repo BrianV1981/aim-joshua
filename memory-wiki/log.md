@@ -52,3 +52,9 @@
 - Documented the `FREEZE` Orchestrator Override protocol: If the orchestrator (`grok-audit`) takes over the tree to fix CI, the active agent must immediately stay idle and NOT push, promote, or edit.
 - Added `pages/audit-protocol.md` to detail the A+ and override mechanics.
 - Updated `pages/ci-testing.md` with offline/hermetic test warnings.
+
+## [2026-08-26] ingest | TUI Cockpit Overhaul & Reincarnation Purge
+- Formally deleted the `reincarnation/` sub-package and `aim_reincarnate.py` script. The "Reincarnation" mechanic is entirely obsolete, fully replaced by the `aim-handoff` skill.
+- Overhauled the Interactive TUI Cockpit (`aim_config.py`), stripping all abandoned legacy hooks (e.g. Subconscious Daemon, Cognitive Mantras).
+- Removed brittle markdown regex parsers from the TUI. The TUI is now strictly scoped to managing API Keys, LLM Cognitive Tiers, the Secret Vault, and the MCP Server.
+- Synced `joshua_os_docs/` to reflect these changes. Updated `pages/architecture.md`.
