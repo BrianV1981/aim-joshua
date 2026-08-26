@@ -53,125 +53,6 @@ tui_style = questionary.Style([
     ('disabled', 'fg:#858585 italic')
 ])
 
-OPERATOR_TEMPLATE = """# OPERATOR.md - Operator Record
-## 👤 Basic Identity
-- **Name:** {name}
-- **Tech Stack:** {stack}
-- **Style:** {style}
-
-## 🧬 Physical & Personal (Optional)
-- **Age/Height/Weight:** {physical}
-- **Life Rules:** {rules}
-- **Primary Goal:** {goals}
-
-## 🏢 Business Intelligence
-{business}
-
-## 🤖 Grok/Social Archetype
-See core/OPERATOR_PROFILE.md
-"""
-
-def save_config(config):
-    with open(CONFIG_PATH, 'w') as f:
-        json.dump(config, f, indent=2)
-
-def _extract_md_field(content, label, default=""):
-    match = re.search(rf"- \*\*{re.escape(label)}:\*\* (.*)", content)
-    return match.group(1).strip() if match else default
-
-def _extract_section(content, heading, next_heading=None, default=""):
-    if next_heading:
-        pattern = rf"## {re.escape(heading)}\n(.*?)\n## {re.escape(next_heading)}"
-    else:
-        pattern = rf"## {re.escape(heading)}\n(.*)"
-    match = re.search(pattern, content, re.DOTALL)
-    return match.group(1).strip() if match else default
-
-def load_operator_identity_defaults():
-    defaults = {
-        "name": "Operator",
-        "stack": "General",
-        "style": "Direct",
-        "physical": "N/A",
-        "rules": "N/A",
-        "goals": "N/A",
-        "business": "None provided.",
-        "grok_profile": "No profile provided."
-    }
-
-    gemini_path = os.path.join(PROJECT_ROOT, "AGENTS.md")
-    if os.path.exists(gemini_path):
-        with open(gemini_path, "r", encoding="utf-8") as f:
-            agy = f.read()
-        defaults["name"] = _extract_md_field(agy, "Operator", defaults["name"])
-        defaults["exec_mode"] = _extract_md_field(agy, "Execution Mode", "Autonomous")
-        defaults["cog_level"] = _extract_md_field(agy, "Cognitive Level", "Technical")
-        defaults["concise_mode"] = _extract_md_field(agy, "Conciseness", "False")
-        defaults["lightweight_guardrails"] = "## ⚠️ EXPLICIT GUARDRAILS" in agy
-    else:
-        defaults["exec_mode"] = "Autonomous"
-        defaults["cog_level"] = "Technical"
-        defaults["concise_mode"] = "False"
-        defaults["lightweight_guardrails"] = False
-
-    operator_path = os.path.join(AIM_ROOT, "core", "OPERATOR.md")
-    if os.path.exists(operator_path):
-        with open(operator_path, "r", encoding="utf-8") as f:
-            operator = f.read()
-        defaults["name"] = _extract_md_field(operator, "Name", defaults["name"])
-        defaults["stack"] = _extract_md_field(operator, "Tech Stack", defaults["stack"])
-        defaults["style"] = _extract_md_field(operator, "Style", defaults["style"])
-        defaults["physical"] = _extract_md_field(operator, "Age/Height/Weight", defaults["physical"])
-        defaults["rules"] = _extract_md_field(operator, "Life Rules", defaults["rules"])
-        defaults["goals"] = _extract_md_field(operator, "Primary Goal", defaults["goals"])
-        defaults["business"] = _extract_section(operator, "🏢 Business Intelligence", "🤖 Grok/Social Archetype", defaults["business"])
-
-    operator_profile_path = os.path.join(AIM_ROOT, "core", "OPERATOR_PROFILE.md")
-    if os.path.exists(operator_profile_path):
-        with open(operator_profile_path, "r", encoding="utf-8") as f:
-            defaults["grok_profile"] = f.read().strip() or defaults["grok_profile"]
-
-    return defaults
-
-def write_operator_documents(operator_path, operator_profile_path, values):
-    operator_content = OPERATOR_TEMPLATE.format(
-        name=values["name"],
-        stack=values["stack"],
-        style=values["style"],
-        physical=values["physical"],
-        rules=values["rules"],
-        goals=values["goals"],
-        business=values["business"]
-    )
-    with open(operator_path, "w", encoding="utf-8") as f:
-        f.write(operator_content)
-    with open(operator_profile_path, "w", encoding="utf-8") as f:
-        f.write(values["grok_profile"] or "No profile provided.")
-
-def update_gemini_behavior_file(gemini_path, exec_mode, cog_level, concise_mode, guardrails):
-    if not os.path.exists(gemini_path):
-        return False
-
-    with open(gemini_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    content = re.sub(r'- \*\*Execution Mode:\*\*.*', f'- **Execution Mode:** {exec_mode}', content)
-    content = re.sub(r'- \*\*Cognitive Level:\*\*.*', f'- **Cognitive Level:** {cog_level}', content)
-    content = re.sub(r'- \*\*Conciseness:\*\*.*', f'- **Conciseness:** {concise_mode}', content)
-
-    if "- **Execution Mode:**" not in content and "## 1. IDENTITY & PRIMARY DIRECTIVE" in content:
-        content = content.replace(
-            "## 1. IDENTITY & PRIMARY DIRECTIVE",
-            f"## 1. IDENTITY & PRIMARY DIRECTIVE\n- **Execution Mode:** {exec_mode}\n- **Cognitive Level:** {cog_level}\n- **Conciseness:** {concise_mode}"
-        )
-
-    content = re.sub(r'- \*\*WARNING:\*\* Behavioral guardrails skipped.*', '', content)
-    content = re.sub(r'## ⚠️ EXPLICIT GUARDRAILS.*', '', content, flags=re.DOTALL)
-    content = content.strip() + "\n" + guardrails
-
-    with open(gemini_path, 'w', encoding='utf-8') as f:
-        f.write(content)
-    return True
 
 def test_provider(provider, model, endpoint, brain_type="default_reasoning", auth_type="API Key"):
     """Validates the provider configuration with a simple prompt."""
@@ -411,164 +292,10 @@ def mcp_server_menu():
             rprint(f"4. Args: [yellow]{os.path.join(AIM_ROOT, '.aim_core/mcp_server.py')}[/yellow]")
             input("\nPress Enter to continue...")
 
-def update_operator_profile():
-    defaults = load_operator_identity_defaults()
-    rprint(Panel("[bold blue]Operator Profile & Behavioral Guardrails[/bold blue]"))
+def save_config(config):
+    with open(CONFIG_PATH, 'w') as f:
+        json.dump(config, f, indent=2)
 
-    name = questionary.text("Operator Name:", default=defaults["name"]).ask() or defaults["name"]
-    stack = questionary.text("Core Tech Stack:", default=defaults["stack"]).ask() or defaults["stack"]
-    style = questionary.text("Working Style:", default=defaults["style"]).ask() or defaults["style"]
-    physical = questionary.text("Metrics (Age/Height/Weight):", default=defaults["physical"]).ask() or defaults["physical"]
-    rules = questionary.text("Life Rules/Principles:", default=defaults["rules"]).ask() or defaults["rules"]
-    goals = questionary.text("Primary Mission/Life Goal:", default=defaults["goals"]).ask() or defaults["goals"]
-    business = questionary.text("Business Info:", default=defaults["business"]).ask() or defaults["business"]
-    grok_profile = questionary.text("Operator Persona / Grok Profile:", default=defaults["grok_profile"]).ask() or defaults["grok_profile"]
-    
-    lvl = questionary.select(
-        "Grammar & Explanation Level:",
-        choices=[
-            "1. Novice (Explain concepts clearly with analogies)",
-            "2. Enthusiast (Standard professional level)",
-            "3. Technical (Assume deep domain expertise)"
-        ],
-        default=f"3. {defaults['cog_level']} (Assume deep domain expertise)" if defaults["cog_level"] == "Technical" else None
-    ).ask()
-    cog_level = "Novice" if "Novice" in lvl else ("Enthusiast" if "Enthusiast" in lvl else "Technical")
-    
-    tkn = questionary.confirm(
-        "Enable Extreme Conciseness (Say as little as possible)?",
-        default=defaults["concise_mode"] == "True"
-    ).ask()
-    concise_mode = "True" if tkn else "False"
-    
-    ex = questionary.select(
-        "Execution Mode:",
-        choices=[
-            "1. Autonomous (Proactive, execute and fix directly)",
-            "2. Cautious (Propose plans, wait for human approval)"
-        ],
-        default="1. Autonomous (Proactive, execute and fix directly)" if defaults["exec_mode"] == "Autonomous" else "2. Cautious (Propose plans, wait for human approval)"
-    ).ask()
-    exec_mode = "Cautious" if "Cautious" in ex else "Autonomous"
-    
-    tier = questionary.select(
-        "Target Model Intelligence:",
-        choices=[
-            "1. Flagship (Lean prompt, saves tokens)",
-            "2. Local/Lightweight (Explicit strict guardrails)"
-        ],
-        default="2. Local/Lightweight (Explicit strict guardrails)" if defaults["lightweight_guardrails"] else "1. Flagship (Lean prompt, saves tokens)"
-    ).ask()
-    
-    guardrails = ""
-    if "Lightweight" in tier:
-        cli_name = os.path.basename(AIM_ROOT)
-        guardrails = f"""
-## ⚠️ EXPLICIT GUARDRAILS (Lightweight Mode Active)
-1. **NO TITLE HALLUCINATION:** When you run `{cli_name} map`, you are only seeing titles. You MUST NOT guess the contents. You MUST run `{cli_name} search` to read the actual text.
-2. **PARALLEL TOOLS:** Do not use tools sequentially. If you need to read 3 files, request all 3 files in a single tool turn.
-3. **DESTRUCTIVE MEMORY:** When tasked with updating memory, you MUST delete stale facts. Do not endlessly concatenate data.
-4. **PATH STRICTNESS:** Do not guess file paths. Use the exact absolute paths provided in your environment.
-"""
-    
-    gemini_path = os.path.join(PROJECT_ROOT, "AGENTS.md")
-    operator_path = os.path.join(AIM_ROOT, "core", "OPERATOR.md")
-    operator_profile_path = os.path.join(AIM_ROOT, "core", "OPERATOR_PROFILE.md")
-
-    if not update_gemini_behavior_file(gemini_path, exec_mode, cog_level, concise_mode, guardrails):
-        rprint("[red]Error: AGENTS.md not found.[/red]")
-    else:
-        write_operator_documents(
-            operator_path,
-            operator_profile_path,
-            {
-                "name": name,
-                "stack": stack,
-                "style": style,
-                "physical": physical,
-                "rules": rules,
-                "goals": goals,
-                "business": business,
-                "grok_profile": grok_profile
-            }
-        )
-        rprint("[green]AGENTS.md, OPERATOR.md, and OPERATOR_PROFILE.md successfully updated.[/green]")
-        
-    input("\nPress Enter to continue...")
-
-def update_agent_persona():
-    os.system('clear')
-    rprint(Panel("[bold cyan]Agent Persona Configuration[/bold cyan]\nSelect a specialized mandate for your agent."))
-    
-    cli_name = os.path.basename(AIM_ROOT)
-    
-    personas = {
-        "Generic Sovereign Agent": f"You are a Senior Sovereign Agent. DO NOT hallucinate. You must follow this 3-step loop:\n1. **Search:** Use `{cli_name} search \"<keyword>\"` to pull documentation from the Engram DB BEFORE writing code.\n2. **Plan:** Write a markdown To-Do list outlining your technical strategy.\n3. **Execute:** Methodically execute the To-Do list step-by-step. Prove your code works empirically via TDD.",
-        "Frontend Architect": f"You are a Frontend Architect and UI/UX Artist. DO NOT hallucinate. You must follow this 3-step loop:\n1. **Search:** Use `{cli_name} search` to verify exact UI documentation (Tailwind v4, Next.js 15, React 19) and `{cli_name} search \"UI UX Design System\"` for aesthetic guidelines.\n2. **Plan:** Write a markdown To-Do list outlining your component architecture and aesthetic goals.\n3. **Execute:** Methodically execute the To-Do list step-by-step. Write rendering tests and adhere to TDD.",
-        "Fintech Backend Engineer": f"You are a Fintech Backend Engineer. DO NOT hallucinate APIs. You must follow this 3-step loop:\n1. **Search:** Use `{cli_name} search` to pull the exact constraints for Stripe Webhooks or Supabase SSR from the Engram DB.\n2. **Plan:** Write a markdown To-Do list outlining your database schema and routing logic.\n3. **Execute:** Methodically execute the To-Do list step-by-step. Prevent security vulnerabilities using strict TDD.",
-        "Web3 Smart Contract Auditor": f"You are a Senior Web3 Auditor. DO NOT hallucinate cryptography. You must follow this 3-step loop:\n1. **Search:** Use `{cli_name} search` to verify exact documentation for Solana Anchor and Token Extensions.\n2. **Plan:** Write a markdown To-Do list outlining your architectural strategy and re-entrancy protections.\n3. **Execute:** Methodically execute the To-Do list step-by-step. Write exhaustive security tests before deploying.",
-        "Custom...": ""
-    }
-    
-    choice = questionary.select(
-        "Select Persona:",
-        choices=list(personas.keys()) + ["Cancel"]
-    ).ask()
-    
-    if choice == "Cancel" or not choice:
-        return
-        
-    mandate = personas[choice]
-    if choice == "Custom...":
-        mandate = questionary.text("Enter custom mandate (e.g., 'You are a Python Data Scientist...'):").ask()
-        if not mandate: return
-
-    gemini_path = os.path.join(PROJECT_ROOT, "AGENTS.md")
-    if os.path.exists(gemini_path):
-        with open(gemini_path, 'r') as f: content = f.read()
-        import re
-        # Safely replace the mandate block
-        new_content = re.sub(r'> \*\*MANDATE:\*\*.*?(?=\n## 1\.)', f'> **MANDATE:** {mandate}\n\n', content, flags=re.DOTALL)
-        if new_content == content:
-            rprint("[yellow]Could not find standard MANDATE block. Appending to top.[/yellow]")
-            new_content = f"> **MANDATE:** {mandate}\n\n" + content
-            
-        with open(gemini_path, 'w') as f: f.write(new_content)
-        rprint(f"[green]Persona updated to: {choice}[/green]")
-    else:
-        rprint("[red]Error: AGENTS.md not found.[/red]")
-    
-    input("\nPress Enter to continue...")
-
-def configure_cognitive_mantra():
-    """Configures the Anti-Drift Shield (Cognitive Mantra) thresholds."""
-    if 'cognitive_mantra' not in CONFIG['settings']:
-        CONFIG['settings']['cognitive_mantra'] = {"enabled": True, "mantra_interval": 50}
-    
-    current = CONFIG['settings']['cognitive_mantra']
-    
-    rprint("\n[cyan]--- Cognitive Mantra (Anti-Drift Shield) ---[/cyan]")
-    rprint("This background hook tracks autonomous tool calls to prevent 'Lost in the Middle' context collapse.")
-    
-    enabled = questionary.confirm("Enable Cognitive Mantra?", default=current.get("enabled", True)).ask()
-    if enabled is None: return
-    
-    if enabled:
-        mantra = questionary.text(
-            "Full Mantra Recital Interval (Tool Calls):",
-            default=str(current.get("mantra_interval", 50))
-        ).ask()        
-        if mantra and mantra.isdigit():
-            CONFIG['settings']['cognitive_mantra'] = {
-                "enabled": True,
-                "mantra_interval": int(mantra)
-            }
-            save_config(CONFIG)
-            rprint("[bold green]Cognitive Mantra settings updated![/bold green]")
-    else:
-        CONFIG['settings']['cognitive_mantra']['enabled'] = False
-        save_config(CONFIG)
-        rprint("[yellow]Cognitive Mantra disabled.[/yellow]")
 
 
 def rag_model_matrix_menu():
@@ -649,25 +376,16 @@ def main_menu():
             choices=[
                 "1. Run Cognitive Health Check",
                 "2. Manage Secret Vault",
-                "3. Configure Primary Brain (Headless Background Tasks)",
-                "4. Configure Subconscious Wiki Daemon",
-                "5. Manage MCP Server",
-                "6. Update Operator Profile & Behavior",
-                "7. Update Synced Knowledge Vault Path",
-                "8. Configure Cognitive Architecture",
-                "9. Archive Retention",
-                "10. Set Agent Persona",
-                "11. Configure Cognitive Mantra",
-                "12. Configure LAST_SESSION_FLIGHT_RECORDER.md",
-                "13. Reincarnation Protocol",
-                "14. BitTorrent Swarm Integration",
-                "15. RAG Model Matrix (Dynamic Config)",
-                "16. Exit"
+                "3. Configure Primary Brain",
+                "4. Manage MCP Server",
+                "5. Archive Retention",
+                "6. RAG Model Matrix (Dynamic Config)",
+                "7. Exit"
             ],
             style=tui_style
         ).ask()
 
-        if not choice or choice.startswith("16. Exit"): break
+        if not choice or choice.startswith("7. Exit"): break
         
         if choice.startswith("1."):
             for i, t in enumerate(tiers):
@@ -688,105 +406,15 @@ def main_menu():
                     import time; time.sleep(2)
         elif choice.startswith("2."): setup_secrets_menu()
         elif choice.startswith("3."): setup_cognitive_tier("default_reasoning")
-        elif choice.startswith("4."): setup_cognitive_tier("subconscious_daemon")
-        elif choice.startswith("5."): mcp_server_menu()
-        elif choice.startswith("6."): update_operator_profile()
-        elif choice.startswith("7."):
-            path = questionary.text("Synced Knowledge Vault Path:", default=CONFIG['settings'].get('obsidian_vault_path', "")).ask()
-            if path is not None:
-                CONFIG['settings']['obsidian_vault_path'] = path
-                save_config(CONFIG)
-        elif choice.startswith("8."):
-            rprint("\n[cyan]--- Configure Cognitive Architecture (Decoupled Brain) ---[/cyan]")
-            rprint("A.I.M. allows you to offload heavy LLM memory distillation to a second computer (Subconscious Node).")
-            rprint("This keeps your primary laptop (Frontline Agent) lightning fast and saves battery/tokens,")
-            rprint("while your 2nd PC does the heavy architectural distillation in the background.\n")
-            mode = questionary.select(
-                "Select Cognitive Architecture Mode:",
-                choices=[
-                    "monolithic (Default) - Your machine handles all coding and memory distillation locally.",
-                    "frontline (Laptop) - Pure speed. Bypasses memory distillation and drops transcripts to your Obsidian Vault.",
-                    "subconscious (Server) - Background brain. Monitors Obsidian Vault and distills memory for the frontline agent.",
-                    "Cancel"
-                ]
-            ).ask()
-            if mode and mode != "Cancel":
-                val = mode.split(" ")[0]
-                if val in ["frontline", "subconscious"]:
-                    vault_path = CONFIG.get('settings', {}).get('obsidian_vault_path', "")
-                    if not vault_path:
-                        rprint("[bold red]WARNING: You must configure a Synced Knowledge Vault Path (Menu Option 7) before enabling a decoupled mode![/bold red]")
-                        import time; time.sleep(2)
-                        continue
-                if 'settings' not in CONFIG: CONFIG['settings'] = {}
-                CONFIG['settings']['cognitive_mode'] = val
-                save_config(CONFIG)
-                rprint(f"[green]Cognitive Architecture set to {val.upper()}.[/green]")
-                import time; time.sleep(1.5)
-        elif choice.startswith("9."):
+        elif choice.startswith("4."): mcp_server_menu()
+        elif choice.startswith("5."):
             rprint("[cyan]Set retention days for raw logs and proposals.[/cyan]")
             rprint("[yellow]Enter '0' to deactivate automatic purge.[/yellow]")
             days = questionary.text("Retention Days:", default=str(CONFIG['settings'].get('archive_retention_days', 0))).ask()
             if days and days.isdigit():
                 CONFIG['settings']['archive_retention_days'] = int(days)
                 save_config(CONFIG)
-        elif choice.startswith("10."):
-            update_agent_persona()
-        elif choice.startswith("11."):
-            configure_cognitive_mantra()
-        elif choice.startswith("12."):
-            rprint("\n[cyan]--- Configure LAST_SESSION_FLIGHT_RECORDER.md ---[/cyan]")
-            rprint("This determines the maximum number of lines preserved in `LAST_SESSION_FLIGHT_RECORDER.md`.")
-            rprint("Decrease this number if you frequently hit max token limits on context handoffs (e.g., 1000).")
-            rprint("Increase this number (up to 1990) if your agent needs deeper historical memory of the active session.")
-            rprint("Set this to [bold yellow]0[/bold yellow] to preserve the FULL session history (No truncation).")
-            current_tail = str(CONFIG.get('settings', {}).get('handoff_context_lines', 0))
-            tail_input = questionary.text("Flight Recorder (Max Lines Buffer, 0 for Full):", default=current_tail).ask()
-
-            if tail_input and tail_input.isdigit():
-                if 'settings' not in CONFIG:
-                    CONFIG['settings'] = {}
-                CONFIG['settings']['handoff_context_lines'] = int(tail_input)
-                save_config(CONFIG)
-                if tail_input == "0":
-                    rprint("[green]LAST_SESSION_FLIGHT_RECORDER.md successfully set to FULL SESSION.[/green]")
-                else:
-                    rprint(f"[green]LAST_SESSION_FLIGHT_RECORDER.md successfully set to {tail_input} lines.[/green]")
-                import time; time.sleep(1.5)
-
-        elif choice.startswith("13."):
-            rprint("\n[cyan]--- The Reincarnation Protocol ---[/cyan]")
-            rprint("When enabled, the agent will automatically spawn a new tmux terminal and hand off its context when the context window fills.")
-            current_rebirth = CONFIG.get('settings', {}).get('auto_rebirth', False)
-            toggle = questionary.confirm("Enable Auto-Rebirth?", default=current_rebirth).ask()
-            if toggle is not None:
-                if 'settings' not in CONFIG:
-                    CONFIG['settings'] = {}
-                CONFIG['settings']['auto_rebirth'] = toggle
-                save_config(CONFIG)
-                status = "ON" if toggle else "OFF"
-                rprint(f"[green]Auto-Rebirth successfully turned {status}.[/green]")
-                import time; time.sleep(1.5)
-
-        elif choice.startswith("14."):
-            rprint("\n[cyan]--- BitTorrent Swarm Integration ---[/cyan]")
-            rprint("When enabled, the agent will peer with the Sovereign Swarm to share and retrieve engrams.")
-            if 'settings' not in CONFIG:
-                CONFIG['settings'] = {}
-            current_swarm = CONFIG['settings'].get('swarm_enabled', False)
-            toggle = questionary.confirm("Enable Swarm Peering?", default=current_swarm).ask()
-            if toggle is not None:
-                CONFIG['settings']['swarm_enabled'] = toggle
-                if toggle:
-                    CONFIG['settings']['max_download_speed'] = questionary.text("Max Download Speed (e.g., 0 for unlimited, 5M, 500K):", default=str(CONFIG['settings'].get('max_download_speed', '0'))).ask()
-                    CONFIG['settings']['seeding_ratio'] = float(questionary.text("Seeding Ratio (e.g., 1.0):", default=str(CONFIG['settings'].get('seeding_ratio', 1.0))).ask() or 1.0)
-                    CONFIG['settings']['rpc_port'] = int(questionary.text("RPC Port (default: 6800):", default=str(CONFIG['settings'].get('rpc_port', 6800))).ask() or 6800)
-                save_config(CONFIG)
-                status = "ON" if toggle else "OFF"
-                rprint(f"[green]Swarm Peering successfully turned {status}.[/green]")
-                import time; time.sleep(1.5)
-
-        elif choice.startswith("15."):
+        elif choice.startswith("6."):
             rag_model_matrix_menu()
 
 if __name__ == "__main__":
