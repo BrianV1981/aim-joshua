@@ -20,7 +20,7 @@ This document is the literal map of every internal script running the A.I.M. OS.
 
 *   **`aim_cli.py`**: The central router. Parses all `aim` commands and dispatches the corresponding script.
 *   **`aim_router.py`**: Handles dynamic routing algorithms.
-*   **`aim_config.py`**: The Interactive TUI (Cockpit) for modifying configurations.
+*   **`aim_config.py`**: The Interactive TUI (Cockpit) for managing API Keys, LLM Cognitive Tiers, and MCP Servers.
 *   **`aim_push.sh`**: The GitOps validation wrapper enforcing branch/issue protocols and semantic versioning.
 *   **`aim_batch_merge.py`**: Utility for merging multiple open `fix/issue-*` branches into main.
 *   **`aim_delegate.py`**: A.I.M. Dynamic Sub-Agent Delegation protocol for distributed processing.

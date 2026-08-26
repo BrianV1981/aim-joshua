@@ -29,7 +29,7 @@ venv/bin/pip install -r requirements.txt
 ### 3. Execute Headless Initialization
 Execute the core initialization script using the isolated virtual environment and the `--headless` flag. 
 
-This flag suppresses the interactive TUI, applies the default Sovereign Operator configurations, and automatically triggers the `bootstrap_brain.py` sequence to compile the initial LanceDB memory fragments.
+This flag suppresses the interactive TUI (`aim_config.py`), applies default routing configurations, and automatically triggers the `bootstrap_brain.py` sequence to compile the initial LanceDB memory fragments.
 ```bash
 venv/bin/python aim_core/aim_init.py --headless
 ```
