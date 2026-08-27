@@ -66,3 +66,7 @@
 - Updated `install.sh` and `install-agent.sh` to automatically write the server definition to the Operator's global `~/.gemini/config/mcp_config.json`.
 - Updated `HYBRID_SEARCH.md` and `handoff-and-retrieval.md` to reflect the new tool-calling architecture over legacy shell commands.
 - **Addendum**: Established the "Two-Tier Protocol" for retrieval in AGENTS.md, defining MCP as the primary pathway and `aim_cli.py search` as the strict fallback to maintain J.O.S.H.U.A.'s CLI-agnostic mandate.
+
+## [2026-08-27] ingest | Architecture Sync for Two-Tier Protocol
+- Ingested the Two-Tier Protocol (MCP + Fallback) architectural strategy into `pages/architecture.md`.
+- Verified that the "CLI-Agnostic" foundational mandate is firmly defended in the wiki's core logic.

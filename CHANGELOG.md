@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.2] - 2026-08-27
+- Fix: Wiki: Update architecture.md for MCP Two-Tier Protocol (Closes #80)
+
+
 ## [v0.3.1] - 2026-08-27
 - Fix: Docs: Update AGENTS.md for Two-Tier Retrieval Protocol (MCP + Fallback) (Closes #79)
 

@@ -21,3 +21,8 @@ The TUI has been strictly scoped down to OS-level environment management. It no 
 
 ## Handoff vs Reincarnation
 The original `reincarnation` sub-package (which automatically spawned new terminals via background hooks) has been completely purged from the codebase. It has been 100% superseded by the `aim-handoff` skill, placing the responsibility of context teleportation back into the hands of the conscious agent rather than unpredictable background daemons.
+
+## Tool Injection (MCP)
+J.O.S.H.U.A. operates with a strict "Two-Tier Protocol" for extending capabilities (such as the LanceDB memory pool).
+- **Primary (Native MCP):** Modern CLI harnesses automatically ingest the local MCP server (`mcp_lancedb.py`), natively granting the active agent the `search_lancedb` internal tool. The MCP server dynamically binds to the active workspace to prevent cross-contamination.
+- **Fallback (CLI-Agnostic):** To ensure 100% interoperability with legacy or custom CLI loops, agents gracefully degrade to direct python subprocess shell commands (e.g., `aim_cli.py search`) if an MCP tool is not present in their prompt. This guarantees no agent is ever completely blind.
