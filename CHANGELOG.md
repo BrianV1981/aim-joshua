@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.0] - 2026-08-26
+- Feature: Architectural Upgrade: Migrate LanceDB Search to MCP Server (Closes #78)
+
+
 ## [v0.2.9] - 2026-08-12
 - Fix: `--json` search keeps NOTICE on stderr so GHA can parse JSON (Closes #72)
 - Fix: Hermetic `./aim vault seal --path` + `audit` test (no `~/.gemini` layout)

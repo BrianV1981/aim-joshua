@@ -23,3 +23,7 @@ A.I.M. chunks data precisely by speaker boundaries (500-1500 chars). A retrieved
 If the local embedding server (e.g., Ollama) fails, rate-limits, or crashes with an OOM error during retrieval, the system does not crash.
 *   The `get_embedding()` function catches the exception and passes `query_vec = None` to the backend.
 *   LanceDB dynamically detects the missing vector, aborts the cosine-similarity calculations, and completely falls back to a pure Tantivy FTS keyword search, ensuring the system remains indestructible under heavy load.
+## 5. Model Context Protocol (MCP) Integration
+LanceDB search is integrated natively into the agent's toolset via the `mcp_lancedb.py` MCP server.
+*   **Zero-Touch Configuration:** During installation, the MCP server is automatically appended to the operator's global `~/.gemini/config/mcp_config.json`.
+*   **Workspace Handshake:** The server dynamically intercepts the initialization payload (`params.workspaceFolders[0].uri`) sent by the Antigravity client to properly resolve the path to `memory_lance/` based on the active workspace, avoiding hardcoded root paths.

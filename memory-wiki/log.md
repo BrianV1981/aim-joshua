@@ -58,3 +58,10 @@
 - Overhauled the Interactive TUI Cockpit (`aim_config.py`), stripping all abandoned legacy hooks (e.g. Subconscious Daemon, Cognitive Mantras).
 - Removed brittle markdown regex parsers from the TUI. The TUI is now strictly scoped to managing API Keys, LLM Cognitive Tiers, the Secret Vault, and the MCP Server.
 - Synced `joshua_os_docs/` to reflect these changes. Updated `pages/architecture.md`.
+
+## [2026-08-26] ingest | LanceDB MCP Server Migration
+- Migrated LanceDB semantic search from a shell execution (`aim_cli.py search`) to a native Python MCP Server (`mcp_lancedb.py`).
+- Updated the system to register `search_lancedb` as an internal agent tool.
+- Implemented a dynamic workspace handshake: the MCP server reads `params.workspaceFolders[0].uri` from the client's initialize payload to dynamically locate `memory_lance/`.
+- Updated `install.sh` and `install-agent.sh` to automatically write the server definition to the Operator's global `~/.gemini/config/mcp_config.json`.
+- Updated `HYBRID_SEARCH.md` and `handoff-and-retrieval.md` to reflect the new tool-calling architecture over legacy shell commands.
