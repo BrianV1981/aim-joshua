@@ -7,8 +7,7 @@ When an agent's context window fills up, or a specific vessel is needed, the age
 3. **`aim-handoff`:** The agent invokes the `aim-handoff` skill to write a highly structured `HANDOFF.md`.
 4. **Baton Pass:** The agent uses Tmux to spawn the next agent vessel and injects the handoff document directly into its prompt.
 
-## LanceDB Retrieval (MCP)
-A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21). When an agent needs to retrieve factual knowledge, it must natively act as a retrieval agent. 
-- Agents can natively use the `search_lancedb` internal tool exposed via the `mcp_lancedb.py` MCP server.
-- The MCP server dynamically extracts the active workspace URI during the initialization handshake, removing the need for hardcoded root paths.
-- The LanceDB memory pool is dynamically routed to the active `memory_lance/` folder using the workspace handshake.
+## LanceDB Retrieval (Two-Tier Protocol)
+A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21). When an agent needs to retrieve factual knowledge, it must natively act as a retrieval agent using the Two-Tier Protocol:
+1. **Primary (Native MCP):** Agents should use the `search_lancedb` internal tool exposed via the `mcp_lancedb.py` MCP server. The MCP server dynamically routes to the active `memory_lance/` folder using the workspace initialization handshake.
+2. **Fallback (CLI-Agnostic):** If an agent is spawned in a vessel that does not support MCP (e.g. legacy CLIs or bare LLM loops), they must degrade to executing the raw Python CLI script explicitly: `python3 joshua_os/.aim_core/aim_cli.py search "<query>"`

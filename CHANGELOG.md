@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.1] - 2026-08-27
+- Fix: Docs: Update AGENTS.md for Two-Tier Retrieval Protocol (MCP + Fallback) (Closes #79)
+
+
 ## [v0.3.0] - 2026-08-26
 - Feature: Architectural Upgrade: Migrate LanceDB Search to MCP Server (Closes #78)
 
