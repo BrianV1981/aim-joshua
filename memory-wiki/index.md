@@ -1,6 +1,7 @@
 # Project Wiki Index
 
 ## Core Concepts
+- [DHH Agentic Philosophy](pages/dhh-agentic-philosophy.md): The core agentic engineering directives (Outcome-Oriented, Operator Taste, Agentic Gatekeeper, CLI Ascendancy).
 - [Architecture](pages/architecture.md): The core architecture of the J.O.S.H.U.A. Operating System.
 - [Operations](pages/operations.md): GitOps, Parallel Worktrees, and Installation.
 - [Project Management (Kanban)](pages/projects.md): The `aim projects` CLI wrapper and agent board protocol.

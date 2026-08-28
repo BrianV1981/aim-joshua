@@ -77,3 +77,11 @@
 - Parameterized `bootstrap_brain.py` with an `argparse` `--dir` flag.
 - Discovered and resolved a CLI router bug in `aim_cli.py` where the `aim index` command dropped its arguments. The CLI now correctly forwards the `--dir` flag to the ingestion engine.
 - Documented the `aim index [--dir <path>]` command in `joshua_os_docs/AIM_CLI_TOOLS.md`.
+
+## [2026-08-28] ingest | DHH Agentic Philosophy & OS Alignment
+- Ingested the findings from the Lex Fridman Podcast #501 (David Heinemeier Hansson on Agentic Engineering).
+- Documented the architectural shift towards "Outcome-Oriented Directives" (the agent defines the "how", the Operator provides the "what").
+- Logged the "Elevated Operator Role" (agents handle syntax/mechanics; humans handle taste/design).
+- Documented the "Plain-Text & CLI Ascendancy" mandate (Unix Philosophy) emphasizing flat files and CLI over GUIs.
+- Logged the "Agentic Gatekeeper" pre-flight review protocol.
+- Created `pages/dhh-agentic-philosophy.md` to formally catalog these new core OS directives and updated `index.md` to link to it.
