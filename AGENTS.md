@@ -47,7 +47,6 @@ You are part of a continuous, multi-agent relay race. When your context window f
 ## 7. DETACHED EXECUTION PROTOCOL (BACKGROUND ORCHESTRATION)
 A Sovereign OS agent should never paralyze its own primary execution loop by waiting synchronously for long-running tasks. 
 - **The Detached Mandate:** When executing a script, build process, or long-running shell command, you MUST execute it in a detached background terminal using `tmux new-session -d -s <session_name> "command"`. This allows the Operator to attach and monitor progress live.
-- **The Herder Protocol (Swarms & Interrupts):** When managing parallel agent sessions, use a "Herder" approach. If a detached agent gets blocked or reaches a critical decision node, it must ping the Operator (via tmux message or logging) for a "taste/design" decision, rather than guessing or failing silently.
 
 
 ## 8. THE GITOPS WORKFLOW (WORKTREES)
