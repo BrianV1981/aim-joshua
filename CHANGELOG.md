@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.0] - 2026-08-28
+- Feature: Implement Agentic Era Protocols from DHH Insights (Closes #84)
+
+
 ## [v0.3.4] - 2026-08-28
 - Fix: CLI router swallows aim index arguments & Update Docs (Closes #82)
 
