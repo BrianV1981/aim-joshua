@@ -9,6 +9,10 @@ The system utilizes a Just-In-Time (JIT) memory synthesis approach.
 - Instead, Conscious Agents invoke the `aim-memory-wiki` skill synchronously to synthesize recent architectural changes and natively edit this persistent markdown wiki.
 - During system boot, the wiki is embedded directly into the `memory_lance` LanceDB RAM pool.
 
+### The Ingestion Engine (`bootstrap_brain.py`)
+The primary vector ingestion engine has been hardened against configuration drift. It correctly recursively parses (`**/*.md`) both the `memory-wiki/` and `joshua_os_docs/` trees to ensure zero blindspots during bootstrapping. Agents can trigger this explicitly by calling `aim index`.
+Additionally, the engine is fully parameterized: custom external documentation can be dynamically ingested into the local LanceDB RAM pool by executing `aim index --dir <path>`.
+
 ## The Skill Library Architecture
 The `aim-skill-library` utilizes a **Base + Override** architecture. All universal tool skills reside in the global `skills/` directory. However, when a specific vessel requires unique mechanics (e.g., `aim-handoff` triggering distinct `agy-blackbox` or `grok-blackbox` commands), the vessel-specific override is stored in `vessels/<cli>/skills/`. The installation script seamlessly detects and links the override, falling back to the global base if none exists.
 

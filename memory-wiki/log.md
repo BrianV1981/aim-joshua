@@ -70,3 +70,10 @@
 ## [2026-08-27] ingest | Architecture Sync for Two-Tier Protocol
 - Ingested the Two-Tier Protocol (MCP + Fallback) architectural strategy into `pages/architecture.md`.
 - Verified that the "CLI-Agnostic" foundational mandate is firmly defended in the wiki's core logic.
+
+## [2026-08-28] ingest | Configuration Drift, Testing, and Ingestion Blindspot Fixes
+- Implemented automated `pytest` coverage for the new MCP Server (`mcp_lancedb.py`) and the ingestion engine (`bootstrap_brain.py`) to fulfill TDD mandates.
+- Fixed a major ingestion blindspot in `bootstrap_brain.py`: updated `glob.glob` to use `recursive=True` ensuring subdirectories within `memory-wiki/` and `joshua_os_docs/` are correctly indexed.
+- Parameterized `bootstrap_brain.py` with an `argparse` `--dir` flag.
+- Discovered and resolved a CLI router bug in `aim_cli.py` where the `aim index` command dropped its arguments. The CLI now correctly forwards the `--dir` flag to the ingestion engine.
+- Documented the `aim index [--dir <path>]` command in `joshua_os_docs/AIM_CLI_TOOLS.md`.

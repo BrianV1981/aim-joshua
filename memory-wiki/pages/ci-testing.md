@@ -7,6 +7,7 @@ J.O.S.H.U.A. embraces a hardened testing and Continuous Integration (CI) pipelin
 The `pytest` testing harness is located at the root of the repository in the `tests/` directory.
 
 - **Wrapper Simulation:** Tests interact directly with the `./aim` CLI wrapper, asserting exit codes and output patterns (e.g. `test_cli.py` tests `--help` and `doctor`).
+- **Python Module Testing:** The core Python modules (`joshua_os/.aim_core/`) such as the MCP Server (`mcp_lancedb.py`) and the vector ingestion engine (`bootstrap_brain.py`) are rigorously covered by unit tests relying on `unittest.mock` to assert correct execution paths and state management without spinning up active databases.
 - **Path Considerations:** Because the `./aim` wrapper resolves the python executable by looking for `joshua_os/venv/bin/python3`, CI runners MUST execute the local `joshua_os/setup.sh` script to construct the environment before kicking off `pytest`.
 - **Untracked File Exclusion:** An architectural quirk exists in the core `aim_push.sh` script: it utilizes `git add -u` to capture semantic version modifications, but as a side effect it explicitly ignores newly created, untracked files in the root. **Developers must explicitly execute `git add <new_files>` before running `aim push`** for new tests or files to be tracked and shipped.
 
