@@ -25,34 +25,42 @@ def verify_embedding_engine():
     print("\n[NOTICE] Semantic Engine Offline (Ollama/Nomic not found).")
     return False
 
-def bootstrap_foundation():
+def bootstrap_foundation(target_dir=None):
     embeddings_active = verify_embedding_engine()
     print("\n--- A.I.M. BRAIN BOOTSTRAP ---")
     
-    foundation_targets = [
-        os.path.join(PROJECT_ROOT, "AGENTS.md"),
-        os.path.join(AIM_ROOT, "joshua_os_docs/*.md"),
-        os.path.join(AIM_ROOT, "memory-wiki/**/*.md"),
-    ]
-    
-    foundry_dir = os.path.join(AIM_ROOT, "foundry")
     backend = VectorBackend()
     
     new_fragments = 0
     
-    print("[1/2] Syncing Foundation Knowledge...")
-    for pattern in foundation_targets:
-        for file_path in glob.glob(pattern):
+    if target_dir:
+        print(f"[1/1] Syncing Custom Target Directory: {target_dir}...")
+        pattern = os.path.join(target_dir, "**", "*.md")
+        for file_path in glob.glob(pattern, recursive=True):
             if "memory/archive" in file_path: continue
-            new_fragments += index_file(backend, file_path, "foundation_knowledge", ingest_only=False, use_embeddings=embeddings_active)
+            new_fragments += index_file(backend, file_path, "expert_knowledge", ingest_only=False, use_embeddings=embeddings_active)
+    else:
+        foundation_targets = [
+            os.path.join(PROJECT_ROOT, "AGENTS.md"),
+            os.path.join(AIM_ROOT, "joshua_os_docs", "**", "*.md"),
+            os.path.join(AIM_ROOT, "memory-wiki", "**", "*.md"),
+        ]
+        
+        foundry_dir = os.path.join(AIM_ROOT, "foundry")
+        
+        print("[1/2] Syncing Foundation Knowledge...")
+        for pattern in foundation_targets:
+            for file_path in glob.glob(pattern, recursive=True):
+                if "memory/archive" in file_path: continue
+                new_fragments += index_file(backend, file_path, "foundation_knowledge", ingest_only=False, use_embeddings=embeddings_active)
 
-    print("[2/2] Melting down Foundry materials into Engrams...")
-    if os.path.exists(foundry_dir):
-        for root, _, files in os.walk(foundry_dir):
-            for file in files:
-                if file.endswith((".md", ".markdown", ".txt", ".py", ".rs", ".js", ".ts", ".rst")):
-                    file_path = os.path.join(root, file)
-                    new_fragments += index_file(backend, file_path, "expert_knowledge", ingest_only=True, use_embeddings=embeddings_active)
+        print("[2/2] Melting down Foundry materials into Engrams...")
+        if os.path.exists(foundry_dir):
+            for root, _, files in os.walk(foundry_dir):
+                for file in files:
+                    if file.endswith((".md", ".markdown", ".txt", ".py", ".rs", ".js", ".ts", ".rst")):
+                        file_path = os.path.join(root, file)
+                        new_fragments += index_file(backend, file_path, "expert_knowledge", ingest_only=True, use_embeddings=embeddings_active)
 
     try:
         table = backend.get_table()
@@ -105,4 +113,8 @@ def index_file(backend, file_path, frag_type, ingest_only=False, use_embeddings=
         return 0
 
 if __name__ == "__main__":
-    bootstrap_foundation()
+    import argparse
+    parser = argparse.ArgumentParser(description="A.I.M. Brain Bootstrap")
+    parser.add_argument("--dir", type=str, help="Target directory to ingest into the brain")
+    args = parser.parse_args()
+    bootstrap_foundation(target_dir=args.dir)

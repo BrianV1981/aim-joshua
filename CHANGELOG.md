@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.3] - 2026-08-27
+- Fix: Implement tests for MCP server and fix ingestion engine blindspot (Closes #81)
+
+
 ## [v0.3.2] - 2026-08-27
 - Fix: Wiki: Update architecture.md for MCP Two-Tier Protocol (Closes #80)
 
