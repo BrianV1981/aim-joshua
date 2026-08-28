@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.4] - 2026-08-28
+- Fix: CLI router swallows aim index arguments & Update Docs (Closes #82)
+
+
 ## [v0.3.3] - 2026-08-27
 - Fix: Implement tests for MCP server and fix ingestion engine blindspot (Closes #81)
 

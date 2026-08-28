@@ -27,6 +27,9 @@ A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21).
     *   *Rule:* Use this instead of reading massive codebases.
 *   **`aim map`**
     *   *Usage:* Prints an index map of available knowledge within the database.
+*   **`aim index [--dir <path>]`**
+    *   *Usage:* Bootstraps and ingests documentation into the LanceDB vector store. If `--dir` is omitted, it defaults to indexing `AGENTS.md`, `joshua_os_docs/`, and `memory-wiki/`.
+    *   *Rule:* Execute this whenever there is a significant update to core protocols or to inject a new custom directory into the brain.
 
 ## 3. Cognitive Teleportation & Checkpoints
 Long-running sessions experience context collapse (hallucinations) past 30% utilization.

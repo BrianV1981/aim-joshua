@@ -105,7 +105,10 @@ def cmd_map(args):
 
 def cmd_index(args):
     """Dispatches to bootstrap_brain.py."""
-    run_script(os.path.join(AIM_CORE_DIR, "bootstrap_brain.py"), [])
+    cmd_args = []
+    if getattr(args, 'dir', None):
+        cmd_args.extend(["--dir", args.dir])
+    run_script(os.path.join(AIM_CORE_DIR, "bootstrap_brain.py"), cmd_args)
 
 def cmd_doctor(args):
     """Dispatches to aim_doctor.py to validate environment dependencies."""
@@ -1118,7 +1121,8 @@ def main():
     
     subparsers.add_parser("purge")
     subparsers.add_parser("uninstall")
-    subparsers.add_parser("index")
+    index_parser = subparsers.add_parser("index", help="Bootstrap and ingest documents into the A.I.M. Brain")
+    index_parser.add_argument("--dir", type=str, help="Custom target directory to ingest")
     scrape_parser = subparsers.add_parser("scrape", help="Scrape Forum/Issues into Synapse Markdown docs.")
     scrape_parser.add_argument("--source", choices=["github", "stackoverflow"], default="github", help="Source to scrape from")
     scrape_parser.add_argument("--repo", default=None, help="Target repository for github source")
