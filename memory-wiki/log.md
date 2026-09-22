@@ -85,3 +85,9 @@
 - Documented the "Plain-Text & CLI Ascendancy" mandate (Unix Philosophy) emphasizing flat files and CLI over GUIs.
 - Logged the "Agentic Gatekeeper" pre-flight review protocol.
 - Created `pages/dhh-agentic-philosophy.md` to formally catalog these new core OS directives and updated `index.md` to link to it.
+
+## [2026-09-22] ingest | Integration of Direct Execution Protocol (i-have-adhd)
+- Evaluated the `i-have-adhd` skill repository and identified its core conversational efficiency rules (No Preambles, Numbered Steps, Lead with Action).
+- Wove these rules directly into the core `AGENTS.md` and active ecosystem blueprints (`aim-connect`, `aim-tmux-dashboard`, `aim-coagents`) rather than keeping them as an opt-in skill.
+- Clarified the architectural distinction between *opt-in skills* and *innate DNA* (`AGENTS.md`).
+- Updated `pages/dhh-agentic-philosophy.md` to document this new conversational mandate.

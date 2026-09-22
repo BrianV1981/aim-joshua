@@ -22,5 +22,9 @@ These protocols represent a shift in how the OS expects to be commanded and how 
 *   **The Mandate:** Linux is the ultimate agentic platform because of its reliance on CLI tools and plain-text configuration files. Any new functionality built for J.O.S.H.U.A. must be instrumented through CLI commands. Configuration drift must be tracked in flat, easily parsable files (Markdown, JSON, YAML) so agents can natively read/write without relying on fragile UI wrappers.
 *   **Rationale:** Agents are incredibly fast at reading/writing text and executing terminal commands, but struggle with opaque GUIs or hidden databases. Plain-text and CLI architectures ensure the OS remains infinitely malleable by the agents themselves.
 
+### 5. Conversational Efficiency (The Direct Execution Protocol)
+*   **The Mandate:** Zero conversational fluff. Agents must not use preambles ("Great question!"), recaps, or closing pleasantries. Output must lead directly with the next actionable step. Multi-step tasks must be numbered and capped at 5 items to reduce cognitive overhead. Errors must be stated matter-of-factly.
+*   **Rationale:** Derived from the `i-have-adhd` skill methodology, this protocol shifts the agent from a conversational AI to a direct engineering executor. In an ecosystem where agents talk to other agents (e.g., via `aim-communicate`), conversational latency wastes token bandwidth, breaks CLI parsers, and slows down execution. By baking this directly into `AGENTS.md`, it becomes innate DNA rather than an opt-in skill.
+
 ## Implementation Notes
 These protocols are codified as strict behavioral mandates within `AGENTS.md`. Early ideas that implied the necessity of unbuilt code (such as a custom `Herder` tmux orchestrator script) were deliberately stripped out to ensure the Constitution remains a pure set of behavioral rules that the agent can follow immediately, regardless of the underlying tooling infrastructure.
