@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.1] - 2026-10-19
+- Fix: Reconcile local Git and worktree drift (Closes #87)
+
+
 ## [v0.4.0] - 2026-08-28
 - Feature: Implement Agentic Era Protocols from DHH Insights (Closes #84)
 
