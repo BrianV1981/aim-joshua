@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.3] - 2026-10-20
+- Fix: Use atomic os.replace when updating ./aim wrapper in cmd_update (Refs #96)
+
+
 ## [v0.7.2] - 2026-10-20
 - Fix: Auto-populate consumer .gitignore with joshua_os/, aim, workspace/, and archive/ (Closes #96)
 

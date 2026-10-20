@@ -693,9 +693,11 @@ def cmd_update(args):
 
     src_aim = os.path.join(os.path.dirname(source_os_dir), "aim")
     dst_aim = os.path.join(BASE_DIR, "aim")
-    if os.path.isfile(src_aim):
-        shutil.copy2(src_aim, dst_aim)
-        os.chmod(dst_aim, 0o755)
+    if os.path.isfile(src_aim) and os.path.abspath(src_aim) != os.path.abspath(dst_aim):
+        tmp_aim = dst_aim + ".tmp"
+        shutil.copy2(src_aim, tmp_aim)
+        os.chmod(tmp_aim, 0o755)
+        os.replace(tmp_aim, dst_aim)
 
     ensure_consumer_gitignore(BASE_DIR)
 
