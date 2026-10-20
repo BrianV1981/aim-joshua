@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.5.0] - 2026-10-19
+- Feature: Harden aim update for Co-Agent fleet engine rollouts (Closes #92)
+
+
 ## [v0.4.3] - 2026-10-19
 - Fix: Standardize README.md ecosystem section to AIM_ECOSYSTEM block (Closes #90)
 

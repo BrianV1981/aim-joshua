@@ -853,83 +853,91 @@ def cmd_uninstall(args):
     print("\n[SUCCESS] A.I.M. removed.")
 
 def cmd_update(args):
-    """Safely pulls the latest A.I.M. core engine files from GitHub into the local isolated project."""
+    """Safely pulls the latest A.I.M. core engine files into the local isolated project while preserving Co-Agent blueprint and tenant state."""
     print("--- A.I.M. SOVEREIGN ENGINE UPDATE ---")
-    print("[*] Contacting remote Swarm network...")
-    
-    # 1. Download and extract fresh payload (ZIP) to temp directory
-    temp_dir = os.path.join(OS_DIR, ".aim_temp_update")
-    if os.path.exists(temp_dir):
-        import shutil
-        shutil.rmtree(temp_dir)
-    os.makedirs(temp_dir, exist_ok=True)
-        
-    try:
-        import urllib.request
-        import zipfile
-        import io
-        
-        zip_url = "https://github.com/BrianV1981/aim-joshua/archive/refs/heads/main.zip"
-        req = urllib.request.Request(zip_url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
-            with zipfile.ZipFile(io.BytesIO(response.read())) as z:
-                z.extractall(temp_dir)
-        print("    [SUCCESS] Remote payload secured.")
-    except Exception as e:
-        traceback.print_exc()
-        print(f"[ERROR] Failed to connect to Swarm network: {e}")
-        return
+    source_arg = getattr(args, "source", None)
+    skip_deps = getattr(args, "skip_deps", False)
+    temp_dir = None
 
-    # 2. Surgically overwrite core logic files (avoiding user data)
-    print("[*] Hot-swapping local execution engine...")
-    import shutil
-    
-    # Source directory in the extracted repository (GitHub zips prefix with repo-branch)
-    extracted_root = os.path.join(temp_dir, "aim-joshua-main")
-    source_os_dir = os.path.join(extracted_root, "joshua_os")
-    
-    # Overwrite .aim_core
+    if source_arg:
+        source_root = os.path.abspath(source_arg)
+        candidate_os = os.path.join(source_root, "joshua_os") if os.path.isdir(os.path.join(source_root, "joshua_os")) else source_root
+        if not os.path.isdir(os.path.join(candidate_os, ".aim_core")):
+            print(f"[ERROR] Invalid local update source '{source_arg}': missing .aim_core directory.", file=sys.stderr)
+            sys.exit(1)
+        source_os_dir = candidate_os
+        print(f"[*] Using local engine source: {source_os_dir}")
+    else:
+        print("[*] Contacting remote Swarm network...")
+        temp_dir = os.path.join(OS_DIR, ".aim_temp_update")
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        os.makedirs(temp_dir, exist_ok=True)
+
+        try:
+            import urllib.request
+            import zipfile
+            import io
+
+            zip_url = "https://github.com/BrianV1981/aim-joshua/archive/refs/heads/main.zip"
+            req = urllib.request.Request(zip_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req) as response:
+                with zipfile.ZipFile(io.BytesIO(response.read())) as z:
+                    z.extractall(temp_dir)
+            print("    [SUCCESS] Remote payload secured.")
+        except Exception as e:
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+            traceback.print_exc()
+            print(f"[ERROR] Failed to connect to Swarm network: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        extracted_root = os.path.join(temp_dir, "aim-joshua-main")
+        source_os_dir = os.path.join(extracted_root, "joshua_os")
+
+    # Preserve local .aim_core/CONFIG.json across engine swap
     local_core = os.path.join(OS_DIR, ".aim_core")
-    if os.path.exists(local_core): shutil.rmtree(local_core)
-    shutil.copytree(os.path.join(source_os_dir, ".aim_core"), local_core)
-    
-    # Overwrite joshua_os_docs protocols
-    local_os = os.path.join(OS_DIR, "joshua_os_docs")
-    if os.path.exists(local_os): shutil.rmtree(local_os)
-    shutil.copytree(os.path.join(source_os_dir, "joshua_os_docs"), local_os)
+    config_path = os.path.join(local_core, "CONFIG.json")
+    preserved_config = None
+    if os.path.isfile(config_path):
+        with open(config_path, "rb") as cf:
+            preserved_config = cf.read()
 
-    # Overwrite handoff module
-    local_handoff = os.path.join(OS_DIR, "handoff")
-    if os.path.exists(local_handoff): shutil.rmtree(local_handoff)
-    shutil.copytree(os.path.join(source_os_dir, "handoff"), local_handoff)
+    # Surgically overwrite core logic folders (strictly preserving tenant AGENTS.md, TOOLS.md, manifest.json, memory-wiki/, artifacts/, memory_lance/)
+    print("[*] Hot-swapping local execution engine...")
+    for subdir in (".aim_core", "joshua_os_docs", "handoff", "scripts", "hooks"):
+        src_sub = os.path.join(source_os_dir, subdir)
+        dst_sub = os.path.join(OS_DIR, subdir)
+        if os.path.isdir(src_sub):
+            if os.path.exists(dst_sub):
+                shutil.rmtree(dst_sub)
+            shutil.copytree(src_sub, dst_sub)
 
-    # Overwrite scripts
-    local_scripts = os.path.join(OS_DIR, "scripts")
-    if os.path.exists(local_scripts): shutil.rmtree(local_scripts)
-    shutil.copytree(os.path.join(source_os_dir, "scripts"), local_scripts)
+    if preserved_config is not None:
+        os.makedirs(local_core, exist_ok=True)
+        with open(config_path, "wb") as cf:
+            cf.write(preserved_config)
 
-    # Overwrite hooks
-    local_hooks = os.path.join(OS_DIR, "hooks")
-    if os.path.exists(local_hooks): shutil.rmtree(local_hooks)
-    shutil.copytree(os.path.join(source_os_dir, "hooks"), local_hooks)
-    
-    # Overwrite setup scripts
-    shutil.copy2(os.path.join(source_os_dir, "setup.sh"), os.path.join(OS_DIR, "setup.sh"))
-    shutil.copy2(os.path.join(source_os_dir, "requirements.txt"), os.path.join(OS_DIR, "requirements.txt"))
+    for fname in ("setup.sh", "requirements.txt", "link_cli_alias.sh", "VERSION"):
+        src_file = os.path.join(source_os_dir, fname)
+        if os.path.isfile(src_file):
+            shutil.copy2(src_file, os.path.join(OS_DIR, fname))
 
     # Cleanup deprecated background daemons (Active Memory Protocol)
     deprecated_wiki_agents = os.path.join(OS_DIR, "memory-wiki", "AGENTS.md")
-    if os.path.exists(deprecated_wiki_agents): os.remove(deprecated_wiki_agents)
+    if os.path.exists(deprecated_wiki_agents):
+        os.remove(deprecated_wiki_agents)
     deprecated_ingest = os.path.join(OS_DIR, "memory-wiki", "_ingest")
-    if os.path.exists(deprecated_ingest): shutil.rmtree(deprecated_ingest)
+    if os.path.exists(deprecated_ingest):
+        shutil.rmtree(deprecated_ingest)
 
-    # 3. Rebuild dependencies
-    print("[*] Rebuilding dependencies...")
-    subprocess.run(["bash", os.path.join(OS_DIR, "setup.sh")], check=True, cwd=BASE_DIR, stdout=subprocess.DEVNULL)
-    
-    # 4. Clean up
-    shutil.rmtree(temp_dir)
-    print("\\n[SUCCESS] Sovereign Engine Update Complete. You are running the latest A.I.M. OS.")
+    if not skip_deps and os.path.isfile(os.path.join(OS_DIR, "setup.sh")):
+        print("[*] Rebuilding dependencies...")
+        subprocess.run(["bash", os.path.join(OS_DIR, "setup.sh")], check=True, cwd=BASE_DIR, stdout=subprocess.DEVNULL)
+
+    if temp_dir and os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    print("\n[SUCCESS] Sovereign Engine Update Complete. You are running the latest A.I.M. OS.")
 
 def cmd_import(args):
     """Manually ingests raw JSONL, JSON, or MD files into the Subconscious Swarm."""
@@ -1091,6 +1099,8 @@ def main():
     subparsers.add_parser("core-memory", help="Open the Core Memory block for instant invariant tracking")
     update_parser = subparsers.add_parser("update", help="Update the A.I.M. engine or the target project")
     update_parser.add_argument("target", choices=["engine", "project"], nargs="?", default="engine", help="Which component to update")
+    update_parser.add_argument("--source", type=str, default=None, help="Optional local path to aim-joshua source repository")
+    update_parser.add_argument("--skip-deps", action="store_true", help="Skip running setup.sh dependency rebuild after engine file sync")
     subparsers.add_parser("doctor", help="Run a diagnostic check on system dependencies")
     subparsers.add_parser("health")
     
