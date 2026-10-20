@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-20T00:32:00-04:00
+> **Updated:** 2026-10-20T02:30:35-04:00
 > **Updated by:** Antigravity (Session ID: 513519c1-66da-4aa0-8814-22c364a7b3aa)
-> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, Backlog Clear)
+> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.7.4`, 16-Repo Fleet Upgraded, Backlog Clear)
 > **Operator:** The Operator
 
 ---
@@ -21,6 +21,9 @@
 | 513519c1 | #91: Pass 9 Delta Audit by `aim-auditor` (`e37ea954`) — **Overall Grade: A+** (`0` open findings) | ✅ RESOLVED |
 | 513519c1 | #94: Implemented Local-First + Umbrella Subfolder Fallback in `mcp_lancedb.py` | ✅ RESOLVED |
 | 513519c1 | #95: Hardened `install.sh`/`install-agent.sh` (`$HOME` guard, clean project scaffolding) & clarified `README.md` onboarding (`28/28` pytest passing) | ✅ RESOLVED |
+| 513519c1 | #96: Auto-populate consumer `.gitignore` (`joshua_os/`, `aim`, `workspace/`, `archive/`), atomic `os.replace` on `./aim` in `cmd_update` (`29/29` pytest passing) | ✅ RESOLVED |
+| 513519c1 | #97: Ingested `.gitignore` safeguards, atomic `./aim` updates, and 16-repo fleet upgrade into `memory-wiki/` (`v0.7.4`, `6d7a383b`) | ✅ RESOLVED |
+| 513519c1 | Fleet Rollout: Provisioned `aim-skorbane` and upgraded all 16 active `aim-*` & `aim-agents/*` repos to `v0.7.3+` (`./aim doctor` 100% green) | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -78,6 +81,8 @@ Follow strict GitOps workflow for any future tasks:
 - **The Blackbox Mandate:** Before an agent vessel dies, it MUST execute its vessel-specific vault command (e.g. `aim agy-blackbox --session-id <uuid>`) to extract raw session logs. 
 - **The Audit Protocol:** Do not close issues or claim success if the GitHub Actions smoke test is red.
 - **The Untracked File Trap:** The OS `aim_push.sh` script ignores untracked files by default due to a `git add -u` quirk. You must run `git add <file>` manually before `aim push` for new files.
+- **Consumer `.gitignore` & Atomic `./aim` Replacement:** Downstream consumer projects must never track `joshua_os/` or `./aim` in Git (`ensure_consumer_gitignore` in `aim_cli.py` and `install.sh` enforce this automatically). When updating `./aim` inside `cmd_update`, always use atomic `os.replace(tmp_aim, dst_aim)` rather than `shutil.copy2` so running `/bin/bash ./aim update` processes do not suffer inode byte-offset shifts.
+- **Legacy `aim-agy_os/` Migration Sequence:** When migrating legacy `aim-agy_os/` repos to `joshua_os/`, copy the updated `joshua_os/.aim_core/config_utils.py` *before* running `./aim update` so `find_project_root()` does not walk up to `~/aim-agy_os`.
 
 ---
 
