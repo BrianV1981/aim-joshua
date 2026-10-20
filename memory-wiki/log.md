@@ -108,5 +108,12 @@
 - Provisioned `/home/kingb/aim-skorbane` and upgraded all 16 active ecosystem and Co-Agent repositories (`aim-joshua`, `aim-skorbane`, `aim-calendar`, `aim-connect`, `aim-cron-dashboard`, `aim-ld`, `aim-tbsoftwash`, `aim-tmux-dashboard`, `aim-ayrianna`, `aim-youtube`, `aim-flight-recorder`, `aim-auditor`, `aim-gbp`, `aim-permits`, `aim-tbsoftwash-blogger`, and `aim-tester`) to `v0.7.3` with `./aim doctor` passing across the entire fleet.
 - Updated `pages/operations.md` and `pages/handoff-and-retrieval.md`.
 
-
+## [2026-10-20] ingest | Windows 10/11 Launchers, Pure-Python Push, MCP Cartridge Root & Ecosystem Lore Sync (`v0.8.0`, #98–#100)
+- Added native Windows 10/11 root launchers (`aim.ps1` and `aim.cmd`) alongside `./aim`, cross-platform venv Python resolution (`resolve_venv_python()` in `config_utils.py` checking `Scripts/python.exe` and `bin/python3`), and Windows drive-root loop termination (`parent == current`) in `find_project_root()` (#98).
+- Replaced the external `bash aim_push.sh` subprocess in `cmd_push` (`aim_cli.py`) with pure-Python `git_push_changes()`, adding an automatic `[NOTICE]` warning on `stderr` when untracked files are skipped by `git add -u` and an opt-in `--include-untracked` (`-a`) flag (#98).
+- Normalized backslash paths in `cmd_promote` (`os.path.abspath(os.getcwd()).replace("\\", "/")`) and updated `cmd_update` and `ensure_consumer_gitignore` to atomically propagate and ignore `aim.ps1` and `aim.cmd` in consumer repos (#98).
+- Added `get_active_aim_root()` in `retriever.py` so `archive/cartridges` and `archive/flashrank_cache` dynamically track `lance_backend.LANCE_DB_PATH` during MCP Local-First and Umbrella Subfolder queries (#99).
+- Set default `github_projects` (`owner: BrianV1981`, `number: 7`, `status_field: Status`) in `config_utils.py`, bumped `VERSION` to `0.8.0`, and expanded the `pytest` suite to `32/32` passing tests.
+- Authored two architectural essays in `/home/kingb/aim-knowledge/Philosophy_and_Concepts/` (*The Great Convergence: From Vessel Fragmentation to J.O.S.H.U.A.* and *J.O.S.H.U.A. vs. The Open-Source Harness Era*) and updated `AIM_ECOSYSTEM_HISTORY.md` (commit `c6b4d63`) documenting the Operator's origin story (`A.I.M.` named after Ayrianna, Isabella, and Michael; `J.O.S.H.U.A.` born from the `aim-ld-joshua` B2B field-sales pivot; and the X.com origin of the Forensic Blackbox Vault).
+- Updated `pages/architecture.md`, `pages/operations.md`, `pages/projects.md`, and `pages/handoff-and-retrieval.md` (#100).
 

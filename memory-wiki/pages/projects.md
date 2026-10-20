@@ -17,4 +17,4 @@ The active GitHub CLI account (`gh auth status`) MUST have the specific project 
 gh auth refresh -h github.com -s project,read:project
 ```
 
-Configuration relies on setting `AIM_PROJECTS_OWNER` and `AIM_PROJECTS_NUMBER` (and optionally `AIM_PROJECTS_REPO`) via environment variables or inside `CONFIG.json`.
+Configuration defaults to `owner: "BrianV1981"`, `number: 7`, and `status_field: "Status"` in `config_utils.py` (`settings.github_projects`), and can be overridden via environment variables (`AIM_PROJECTS_OWNER`, `AIM_PROJECTS_NUMBER`, and optionally `AIM_PROJECTS_REPO`) or inside `CONFIG.json`.
