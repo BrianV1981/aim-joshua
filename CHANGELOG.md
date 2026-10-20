@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.4] - 2026-10-20
+- Fix: Ingest consumer .gitignore safeguards, atomic ./aim updates, and 16-repo fleet upgrade into memory-wiki (Closes #97)
+
+
 ## [v0.7.3] - 2026-10-20
 - Fix: Use atomic os.replace when updating ./aim wrapper in cmd_update (Refs #96)
 

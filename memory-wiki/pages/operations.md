@@ -8,13 +8,16 @@ J.O.S.H.U.A. enforces a highly parallel GitOps execution model, heavily formaliz
 - System-level isolation can be optionally added using `bwrap` if network or filesystem restrictions are required.
 
 ## Installation Pathways
-- **Clean Installation (Default)**: Uses `install.sh` to install the engine natively while completely purging Git history, tests, and benchmarks.
+- **Clean Installation (Default)**: Uses `install.sh` to install the engine natively while completely purging upstream Git history, tests, and benchmarks. Enforces a `$HOME`/`/` safety guard (refusing to install directly in `$HOME` or `/`), copies only `joshua_os/`, `AGENTS.md` (`cp -n`), and `TOOLS.md` (`cp -n`), initializes `.git` if missing, registers AGY folder-trust (`agy_workspace_trust.py`), and automatically populates `.gitignore` with `joshua_os/`, `aim`, `workspace/`, and `archive/`.
 - **Core Contributor Installation**: Uses `install-core.sh` to install the engine while preserving developer histories and `.git` artifacts.
-- **Isolated Sandbox / Sovereign Co-Agent**: Uses `install-agent.sh` for headless Sovereign Co-Agent deployments (`aim-agents/*`).
+- **Isolated Sandbox / Sovereign Co-Agent**: Uses `install-agent.sh` for headless Sovereign Co-Agent deployments (`aim-agents/*`), with the same `$HOME`/`/` safety guard and `.gitignore` exoskeleton rules.
 
-## Co-Agent Engine Updates (`aim update`)
+## Co-Agent Engine Updates (`aim update`) & Fleet Migrations
 `cmd_update` (`aim update [--source <local_dir>] [--skip-deps]`) upgrades `joshua_os/` across deployed projects and Co-Agent nodes while strictly preserving tenant state:
 - Preserves `.aim_core/CONFIG.json` across `.aim_core` directory replacement.
 - Never overwrites tenant root files (`AGENTS.md`, `TOOLS.md`, `manifest.json`, `memory-wiki/`, `artifacts/`, or `joshua_os/memory_lance/`).
 - Guards optional subdirectories (such as `scripts/`) with existence checks prior to `shutil.copytree`.
+- **Consumer `.gitignore` Safeguard (`ensure_consumer_gitignore`)**: Automatically ensures `joshua_os/`, `aim`, `workspace/`, and `archive/` are ignored in downstream consumer projects' `.gitignore` files while skipping the upstream `aim-joshua` repository (`is_upstream_engine_repo`).
+- **Atomic `./aim` Wrapper Refresh**: Uses `os.replace(tmp_aim, dst_aim)` rather than in-place `shutil.copy2` when refreshing the root `./aim` bash wrapper so that an actively executing `/bin/bash ./aim update` process continues reading its original inode without a byte-offset shift.
+- **Legacy `aim-agy_os/` → `joshua_os/` Migration Pitfall**: When migrating legacy `aim-agy_os/` repositories to `joshua_os/`, copy the new `.aim_core/config_utils.py` *before* running `./aim update`; otherwise, the legacy `find_project_root()` walks up to `$HOME` if `~/aim-agy_os` exists and misroutes `PROJECT_ROOT`.
 

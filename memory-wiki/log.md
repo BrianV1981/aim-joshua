@@ -101,4 +101,12 @@
 - Implemented Pure Automatic Mode (Local-First + Subfolder Fallback) in `mcp_lancedb.py` (#94) and guarded `aim_cli.py` top-level `os.execv` behind `if __name__ == "__main__":`, expanding `pytest` coverage to 27 passing tests.
 - Hardened `joshua_os/install.sh` and `joshua_os/install-agent.sh` (#95) with `$HOME`/`/` safety guards, aligned `install.sh` to copy only `joshua_os/`, `AGENTS.md` (`cp -n`), and `TOOLS.md` (`cp -n`) with `git init` and AGY workspace trust registration, fixed `aim_projects.py` `item-add` JSON parsing for >200-item boards, and overhauled `README.md` with explicit `mkdir/cd`, `doctor`, and project customization onboarding instructions (`28/28` pytest passing).
 
+## [2026-10-20] ingest | Consumer `.gitignore` Safeguard, Atomic `./aim` Replacement, and 16-Repo Fleet Rollout (`v0.7.3`)
+- Added automatic `.gitignore` exoskeleton population (`joshua_os/`, `aim`, `workspace/`, `archive/`) to `joshua_os/install.sh`, `joshua_os/install-agent.sh`, and `cmd_update` (`ensure_consumer_gitignore` in `aim_cli.py`, skipping upstream `aim-joshua` via `is_upstream_engine_repo`) (#96, `29/29` pytest passing).
+- Discovered and fixed an in-place bash script overwrite bug in `cmd_update`: replacing `./aim` via `shutil.copy2` mutated the open inode of the running `/bin/bash ./aim update` process, causing a syntax error when bash resumed reading at the old byte offset. Switched to atomic `os.replace(tmp_aim, dst_aim)`.
+- Discovered and documented the legacy `aim-agy_os/` → `joshua_os/` migration pitfall: legacy `config_utils.py` (`find_project_root()`) walks up to `$HOME` if `~/aim-agy_os` exists unless the updated `config_utils.py` is copied into `joshua_os/.aim_core/` prior to invoking `./aim update`.
+- Provisioned `/home/kingb/aim-skorbane` and upgraded all 16 active ecosystem and Co-Agent repositories (`aim-joshua`, `aim-skorbane`, `aim-calendar`, `aim-connect`, `aim-cron-dashboard`, `aim-ld`, `aim-tbsoftwash`, `aim-tmux-dashboard`, `aim-ayrianna`, `aim-youtube`, `aim-flight-recorder`, `aim-auditor`, `aim-gbp`, `aim-permits`, `aim-tbsoftwash-blogger`, and `aim-tester`) to `v0.7.3` with `./aim doctor` passing across the entire fleet.
+- Updated `pages/operations.md` and `pages/handoff-and-retrieval.md`.
+
+
 
