@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.3] - 2026-10-19
+- Fix: Standardize README.md ecosystem section to AIM_ECOSYSTEM block (Closes #90)
+
+
 ## [v0.4.2] - 2026-10-19
 - Fix: Remove deprecated swarm CLI routes and parser from aim_cli.py (Closes #89)
 

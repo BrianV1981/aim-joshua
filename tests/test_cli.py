@@ -21,3 +21,11 @@ def test_aim_swarm_removed():
     swarm_res = subprocess.run(["./aim", "swarm"], capture_output=True, text=True)
     assert swarm_res.returncode == 2
 
+def test_readme_ecosystem_block():
+    with open("README.md", "r", encoding="utf-8") as f:
+        readme = f.read()
+    assert "<!-- AIM_ECOSYSTEM_START -->" in readme
+    assert "https://github.com/BrianV1981/aim-ecosystem" in readme
+    assert "<!-- AIM_ECOSYSTEM_END -->" in readme
+
+
