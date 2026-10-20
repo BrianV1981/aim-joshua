@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.1] - 2026-10-20
+- Fix: Harden install.sh and clarify README.md project onboarding & customization flow (Closes #95)
+
+
 ## [v0.7.0] - 2026-10-20
 - Feature: Add automatic local-first + umbrella subfolder fallback to mcp_lancedb.py (Closes #94)
 

@@ -19,7 +19,8 @@
 | 513519c1 | #92: Hardened `cmd_update` (`--source`, `--skip-deps`, `CONFIG.json` & Co-Agent blueprint preservation) | ✅ RESOLVED |
 | 513519c1 | #93: Modularized `aim_cli.py` (`cli_vault.py`, `cli_memory.py`), fixed relative imports, expanded pytest suite | ✅ RESOLVED |
 | 513519c1 | #91: Pass 9 Delta Audit by `aim-auditor` (`e37ea954`) — **Overall Grade: A+** (`0` open findings) | ✅ RESOLVED |
-| 513519c1 | #94: Implemented Local-First + Umbrella Subfolder Fallback in `mcp_lancedb.py` (`27/27` pytest passing) | ✅ RESOLVED |
+| 513519c1 | #94: Implemented Local-First + Umbrella Subfolder Fallback in `mcp_lancedb.py` | ✅ RESOLVED |
+| 513519c1 | #95: Hardened `install.sh`/`install-agent.sh` (`$HOME` guard, clean project scaffolding) & clarified `README.md` onboarding (`28/28` pytest passing) | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 

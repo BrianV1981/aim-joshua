@@ -192,5 +192,22 @@ def test_vault_subparser_missing_verb_exits_2():
     assert "Usage: aim vault" in res.stdout
 
 
+def test_installers_have_home_guard_and_clean_readme_onboarding():
+    with open("joshua_os/install.sh", "r", encoding="utf-8") as f:
+        install_sh = f.read()
+    with open("joshua_os/install-agent.sh", "r", encoding="utf-8") as f:
+        install_agent_sh = f.read()
+    with open("README.md", "r", encoding="utf-8") as f:
+        readme = f.read()
+
+    assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_sh
+    assert "cp -a joshua_os ../" in install_sh
+    assert "cp -a * ../" not in install_sh
+    assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_agent_sh
+    assert "mkdir -p ~/my-project && cd ~/my-project" in readme
+    assert "Customizing J.O.S.H.U.A. for Your New Project" in readme
+
+
+
 
 

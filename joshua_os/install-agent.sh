@@ -8,6 +8,13 @@ echo "--- J.O.S.H.U.A. SOVEREIGN CO-AGENT INSTALLER ---"
 CURRENT_DIR=$(pwd)
 CLI_NAME=$(basename "$CURRENT_DIR")
 
+if [ "$CURRENT_DIR" = "$HOME" ] || [ "$CURRENT_DIR" = "/" ]; then
+    echo "[ERROR] Refusing to install directly in $CURRENT_DIR."
+    echo "Please create and cd into a dedicated project or co-agent directory first:"
+    echo "  mkdir -p ~/aim-agents/my-agent && cd ~/aim-agents/my-agent"
+    exit 1
+fi
+
 echo "[*] Step 1: Provisioning Local Operating System..."
 
 git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git .aim_temp_clone

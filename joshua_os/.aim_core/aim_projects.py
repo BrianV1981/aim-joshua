@@ -401,8 +401,17 @@ def set_issue_status(
         if add.returncode != 0:
             _eprint(f"[ERROR] item-add failed:\n{(add.stderr or add.stdout or '').strip()}")
             sys.exit(add.returncode or 1)
-        items = list_items(owner, number, limit=200)
-        match = find_item_by_issue(items, issue_number, repo)
+        try:
+            added_obj = json.loads((add.stdout or "").strip())
+            if isinstance(added_obj, dict) and added_obj.get("id"):
+                match = normalize_item(added_obj)
+                if not match.get("number"):
+                    match["number"] = issue_number
+        except Exception:
+            match = None
+        if not match or not match.get("id"):
+            items = list_items(owner, number, limit=500)
+            match = find_item_by_issue(items, issue_number, repo)
         if not match or not match.get("id"):
             _eprint(f"[ERROR] Issue #{issue_number} still not found after item-add.")
             sys.exit(1)

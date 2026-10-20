@@ -99,5 +99,6 @@
 - Modularized `aim_cli.py` (#93) by extracting vault/blackbox handlers into `cli_vault.py` and memory/cartridge/maintenance handlers into `cli_memory.py`, fixed broken `.aim_core` relative imports in `audit_tools.py`, `recall_tools.py`, and `cmd_sync`, implemented `cmd_clean`, added worktree venv fallback to `./aim`, and expanded `pytest` coverage to 25 tests.
 - Verified Pass 9 Delta Audit by `aim-auditor` (#91) upgrading `AUDIT_AIM_JOSHUA.md` to **Overall Grade: A+**.
 - Implemented Pure Automatic Mode (Local-First + Subfolder Fallback) in `mcp_lancedb.py` (#94) and guarded `aim_cli.py` top-level `os.execv` behind `if __name__ == "__main__":`, expanding `pytest` coverage to 27 passing tests.
+- Hardened `joshua_os/install.sh` and `joshua_os/install-agent.sh` (#95) with `$HOME`/`/` safety guards, aligned `install.sh` to copy only `joshua_os/`, `AGENTS.md` (`cp -n`), and `TOOLS.md` (`cp -n`) with `git init` and AGY workspace trust registration, fixed `aim_projects.py` `item-add` JSON parsing for >200-item boards, and overhauled `README.md` with explicit `mkdir/cd`, `doctor`, and project customization onboarding instructions (`28/28` pytest passing).
 
 

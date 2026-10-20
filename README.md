@@ -5,37 +5,63 @@ J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve 
 
 ## 🚀 Quickstart & Installation
 
-J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Node.js v20+, and your preferred underlying LLM CLI.
+J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Python 3.10+, Node.js v20+, and your preferred underlying LLM CLI (Antigravity, Grok, OpenCode, Codex, etc.).
 
-J.O.S.H.U.A. can be installed as a native, globally accessible operating framework, or deployed as a headless Sovereign Co-Agent within individual project directories for multi-tenant isolation.
+> **⚠️ IMPORTANT (Target Directory Rule):** All installers scaffold J.O.S.H.U.A. **directly into your current working directory (`pwd`)** and register a bash CLI alias matching the folder name (`basename $(pwd)`). Always create and `cd` into your target project directory **before** running the installer.
 
-### Option A: Clean Installation (Default)
-Installs the universal engine natively with a completely fresh footprint (purges Git history and developer files). This is the recommended approach for standard users and daily driver use.
+### Option A: Clean Project Installation (Default — New or Existing Projects)
+Installs the `joshua_os/` engine, local `./aim` wrapper, project-specific `memory_lance/` database, `search_lancedb` MCP server, and default `AGENTS.md` / `TOOLS.md` blueprints into your project directory without `aim-joshua` contributor history.
 
 ```bash
+# 1. Create and enter your project directory (the folder name becomes your CLI alias)
+mkdir -p ~/my-project && cd ~/my-project
+
+# 2. Run the clean installer
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install.sh | bash
+
+# 3. Reload shell and verify installation
+source ~/.bashrc
+my-project doctor
 ```
 
-### Option B: Core Contributor Installation
-Installs the universal engine but preserves the `.git` directory, test suites, and benchmarks for those looking to develop or contribute to J.O.S.H.U.A.
+### Option B: Headless Co-Agent (Sovereign Node)
+Deploys a stripped-down, headless Sovereign Co-Agent node (ideal for specialist peers under `~/aim-agents/<node-name>` paired with a blueprint from `aim-coagents`).
 
 ```bash
+mkdir -p ~/aim-agents/my-agent && cd ~/aim-agents/my-agent
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash
+source ~/.bashrc
+my-agent doctor
+```
+
+### Option C: Core Contributor Installation
+Installs the universal engine while preserving the `aim-joshua` `.git` history, test suites (`tests/`), and `memory-wiki/` for developing J.O.S.H.U.A. itself.
+
+```bash
+mkdir -p ~/aim-joshua-dev && cd ~/aim-joshua-dev
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.sh | bash
 ```
 
-### Option C: Headless Co-Agent (Sovereign Node)
-Sets up a stripped-down, headless environment for autonomous co-agents. Ideal for deploying J.O.S.H.U.A. directly into individual project repositories without global OS footprint overhead.
+### Customizing J.O.S.H.U.A. for Your New Project
+Once installed in your project directory:
+1. **Customize Identity & Rules (`AGENTS.md`):** Edit `AGENTS.md` (and `TOOLS.md`) in the project root to define your project's domain architecture, tech stack, and specific rules, or copy a specialist blueprint from [`aim-coagents`](https://github.com/BrianV1981/aim-coagents).
+2. **Initialize Project Knowledge (`memory-wiki/` & LanceDB):** Add project documentation in `memory-wiki/` (or any docs folder) and vectorize it into your project's isolated LanceDB database:
+   ```bash
+   ./aim index
+   # Or ingest a custom documentation directory:
+   ./aim index --dir ./docs
+   ```
+3. **Keep the Engine Updated:** At any time, pull the latest J.O.S.H.U.A. engine into your project without overwriting your custom `AGENTS.md`, `TOOLS.md`, `memory-wiki/`, or `CONFIG.json`:
+   ```bash
+   ./aim update
+   ```
+
+### Universal Skill Injection (Required Once Per Host CLI)
+Because J.O.S.H.U.A. is CLI-agnostic, skills are not hardcoded into the OS. Clone the central skill library once and link the skills into your preferred CLI vessel:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash
-```
-
-### Universal Skill Injection (Required)
-Because J.O.S.H.U.A. is CLI-agnostic, skills are not hardcoded into the OS. You must clone the central skill library and inject them universally into your preferred CLI vessel:
-
-```bash
-git clone https://github.com/BrianV1981/aim-skill-library.git
-cd aim-skill-library
+git clone https://github.com/BrianV1981/aim-skill-library.git ~/aim-skill-library
+cd ~/aim-skill-library
 
 # Example: Install globally for the 'agy' vessel
 ./scripts/install.sh --vessel agy --dest ~/.gemini/antigravity-cli/builtin/skills --mode symlink
