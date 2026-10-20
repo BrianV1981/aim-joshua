@@ -3,7 +3,8 @@
 ## Parallel Execution & GitOps
 J.O.S.H.U.A. enforces a highly parallel GitOps execution model, heavily formalized in `CONTRIBUTING.md`:
 - Agents must NOT code on the `main` branch. They use `aim fix <issue_id>` to spawn physically isolated `git worktree` sandboxes.
-- The agent workspace loop uses `aim push "<msg>"` to commit and push changes within the worktree. **Important:** `aim push` implicitly relies on `git add -u`, which will ignore newly created untracked files unless they are explicitly staged with `git add` first.
+- The agent workspace loop uses `aim push "<msg>"` (implemented in pure Python via `git_push_changes` in `aim_cli.py`) to commit and push changes within the worktree. By default, `aim push` stages tracked changes (`git add -u`) and emits a `[NOTICE]` on `stderr` if untracked files are detected; pass `--include-untracked` (`-a`) or run `git add <file>` to stage new files.
+- Native cross-platform entrypoints (`./aim` for Bash, `aim.ps1` for PowerShell, and `aim.cmd` for Windows CMD) resolve both Unix (`venv/bin/python3`) and Windows (`venv\Scripts\python.exe`) virtual environments.
 - The atomic release process utilizes `aim promote` to safely archive `main`, merge the active worktree branch, deploy the final baseline to GitHub, and destroy the local workspace sandbox.
 - System-level isolation can be optionally added using `bwrap` if network or filesystem restrictions are required.
 

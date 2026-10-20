@@ -93,3 +93,22 @@ def test_search_lancedb_umbrella_subfolder_fallback(mock_perform_search, tmp_pat
     assert "[2] Score: 0.7500 | Source: [agent-a] a_doc.md" in out
 
 
+def test_retriever_active_aim_root_follows_lance_db_path(tmp_path):
+    """Issue #99: retriever.get_active_aim_root() must dynamically resolve from lance_backend.LANCE_DB_PATH."""
+    import lance_backend
+    import retriever
+
+    orig_path = getattr(lance_backend, "LANCE_DB_PATH", None)
+    custom_os_root = tmp_path / "sub-agent" / "joshua_os"
+    custom_db = custom_os_root / "memory_lance"
+    custom_db.mkdir(parents=True)
+
+    try:
+        lance_backend.LANCE_DB_PATH = str(custom_db)
+        assert retriever.get_active_aim_root() == str(custom_os_root)
+    finally:
+        if orig_path is not None:
+            lance_backend.LANCE_DB_PATH = orig_path
+
+
+

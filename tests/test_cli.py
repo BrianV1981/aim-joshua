@@ -237,6 +237,69 @@ def test_ensure_consumer_gitignore_populates_and_skips_upstream(tmp_path):
     assert not (upstream_dir / ".gitignore").exists()
 
 
+def test_git_push_changes_pure_python_and_untracked_warning(tmp_path, capsys):
+    import sys
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import aim_cli
+
+    origin_dir = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "--bare", str(origin_dir)], check=True, capture_output=True)
+
+    repo_dir = tmp_path / "repo"
+    subprocess.run(["git", "clone", str(origin_dir), str(repo_dir)], check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=repo_dir, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_dir, check=True)
+
+    (repo_dir / "VERSION").write_text("v0.7.5", encoding="utf-8")
+    (repo_dir / "tracked.txt").write_text("v1", encoding="utf-8")
+    subprocess.run(["git", "add", "VERSION", "tracked.txt"], cwd=repo_dir, check=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=repo_dir, check=True, capture_output=True)
+    subprocess.run(["git", "branch", "-M", "main"], cwd=repo_dir, check=True)
+    subprocess.run(["git", "push", "-u", "origin", "main"], cwd=repo_dir, check=True, capture_output=True)
+
+    # Modify tracked file and create an untracked file
+    (repo_dir / "tracked.txt").write_text("v2", encoding="utf-8")
+    (repo_dir / "untracked.txt").write_text("new file", encoding="utf-8")
+
+    aim_cli.git_push_changes("Fix: pure python push", cwd=str(repo_dir), include_untracked=False)
+    captured = capsys.readouterr()
+    assert "Successfully pushed A.I.M. version: v0.7.5" in captured.out
+    assert "untracked.txt" in captured.err
+
+    # Now push with include_untracked=True
+    aim_cli.git_push_changes("Feat: stage untracked", cwd=str(repo_dir), include_untracked=True)
+    status_out = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=repo_dir, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    assert status_out == ""
+
+
+def test_cross_platform_windows_launchers_and_venv_resolution(tmp_path):
+    import sys
+    from unittest.mock import patch
+
+    assert os.path.isfile("aim.ps1")
+    assert os.path.isfile("aim.cmd")
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import config_utils
+
+    win_os_root = tmp_path / "joshua_os"
+    win_py = win_os_root / "venv" / "Scripts" / "python.exe"
+    win_py.parent.mkdir(parents=True)
+    win_py.write_text("", encoding="utf-8")
+
+    with patch.object(config_utils.os, "name", "nt"):
+        resolved = config_utils.resolve_venv_python(str(win_os_root))
+        assert resolved == str(win_py)
+
+
+
 
 
 

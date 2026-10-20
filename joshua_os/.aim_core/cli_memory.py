@@ -12,7 +12,7 @@ _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 if _CORE_DIR not in sys.path:
     sys.path.insert(0, _CORE_DIR)
 
-from config_utils import PROJECT_ROOT, OS_ROOT
+from config_utils import PROJECT_ROOT, OS_ROOT, resolve_venv_python
 
 BASE_DIR = PROJECT_ROOT
 OS_DIR = OS_ROOT
@@ -20,11 +20,7 @@ AIM_CORE_DIR = _CORE_DIR
 
 
 def _resolve_venv_python():
-    for rel in ("venv/bin/python3", "../../venv/bin/python3", "../../../joshua_os/venv/bin/python3"):
-        cand = os.path.abspath(os.path.join(OS_DIR, rel))
-        if os.path.exists(cand):
-            return cand
-    return sys.executable
+    return resolve_venv_python(OS_DIR)
 
 
 def _run_script(script_path, args):

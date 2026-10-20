@@ -159,7 +159,7 @@ def require_project_number(cfg: dict) -> int:
     if cfg.get("number") is None:
         _eprint(
             "[ERROR] GitHub Project number not set.\n"
-            "  export AIM_PROJECTS_NUMBER=5\n"
+            "  export AIM_PROJECTS_NUMBER=7\n"
             "  # or CONFIG.json settings.github_projects.number\n"
             "  # list boards: aim projects list"
         )
@@ -521,7 +521,7 @@ def cmd_list_projects(owner: str) -> None:
     print(
         "\nSet default:\n"
         "  export AIM_PROJECTS_OWNER=BrianV1981\n"
-        "  export AIM_PROJECTS_NUMBER=5"
+        "  export AIM_PROJECTS_NUMBER=7"
     )
 
 
@@ -676,7 +676,7 @@ def main(argv: Optional[list[str]] = None) -> None:
             "\nExamples:\n"
             "  aim projects doctor\n"
             "  aim projects list\n"
-            "  export AIM_PROJECTS_NUMBER=5 AIM_PROJECTS_OWNER=BrianV1981\n"
+            "  export AIM_PROJECTS_NUMBER=7 AIM_PROJECTS_OWNER=BrianV1981\n"
             "  aim projects board\n"
             "  aim projects in-progress 206\n"
             "  aim projects done 206\n"

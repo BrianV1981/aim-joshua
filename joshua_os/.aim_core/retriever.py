@@ -35,6 +35,19 @@ if AIM_ROOT not in sys.path: sys.path.append(AIM_ROOT)
 src_dir = os.path.join(AIM_ROOT, ".aim_core")
 if src_dir not in sys.path: sys.path.append(src_dir)
 
+
+def get_active_aim_root():
+    """Returns the active joshua_os root based on lance_backend.LANCE_DB_PATH when overridden (e.g., MCP queries)."""
+    try:
+        import lance_backend
+        db_path = getattr(lance_backend, "LANCE_DB_PATH", None)
+        if db_path:
+            return os.path.dirname(os.path.abspath(db_path))
+    except Exception:
+        pass
+    return AIM_ROOT
+
+
 from config_utils import CONFIG
 from plugins.datajack.forensic_utils import get_embedding
 
@@ -70,7 +83,7 @@ def get_aggregated_knowledge_map():
         pass
         
     # 2. Query ROM (Parquet Cartridges)
-    cartridges_dir = os.path.join(AIM_ROOT, "archive", "cartridges")
+    cartridges_dir = os.path.join(get_active_aim_root(), "archive", "cartridges")
     if os.path.exists(cartridges_dir):
         import glob
         import pyarrow.dataset as ds
@@ -129,9 +142,11 @@ def expand_sandwich_context(results):
 
     mem_db = lancedb.connect("memory://")
 
+    active_aim_root = get_active_aim_root()
+
     def query_fragments(source_db, cond_str):
         if source_db and source_db.endswith(".parquet"):
-            parquet_path = os.path.join(AIM_ROOT, "archive", "cartridges", source_db)
+            parquet_path = os.path.join(active_aim_root, "archive", "cartridges", source_db)
             if not os.path.exists(parquet_path):
                 return []
             try:
@@ -258,7 +273,7 @@ def perform_search_internal(query, top_k=10, session_filter=None):
 
     try:
         from flashrank import Ranker, RerankRequest
-        cache_dir = os.path.join(AIM_ROOT, "archive", "flashrank_cache")
+        cache_dir = os.path.join(get_active_aim_root(), "archive", "flashrank_cache")
         os.makedirs(cache_dir, exist_ok=True)
         ranker = Ranker(model_name="ms-marco-MiniLM-L-12-v2", cache_dir=cache_dir)
         

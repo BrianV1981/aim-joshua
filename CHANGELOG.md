@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.0] - 2026-10-20
+- Feature: Add Windows 10/11 launchers, pure-Python git_push_changes, and dynamic MCP cartridge root (Closes #98, Closes #99)
+
+
 ## [v0.7.4] - 2026-10-20
 - Fix: Ingest consumer .gitignore safeguards, atomic ./aim updates, and 16-repo fleet upgrade into memory-wiki (Closes #97)
 

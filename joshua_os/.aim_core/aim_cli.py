@@ -14,30 +14,28 @@ from datetime import datetime
 # --- VENV BOOTSTRAP ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 aim_root = os.path.dirname(current_dir)
-venv_python = os.path.join(aim_root, "venv", "bin", "python3")
+venv_python = (
+    os.path.join(aim_root, "venv", "Scripts", "python.exe")
+    if os.name == "nt"
+    else os.path.join(aim_root, "venv", "bin", "python3")
+)
 
-if __name__ == "__main__" and os.path.exists(venv_python) and sys.executable != venv_python:
-    os.execv(venv_python, [venv_python] + sys.argv)
+if __name__ == "__main__" and os.path.exists(venv_python) and os.path.abspath(sys.executable) != os.path.abspath(venv_python):
+    if os.name == "nt":
+        sys.exit(subprocess.call([venv_python] + sys.argv))
+    else:
+        os.execv(venv_python, [venv_python] + sys.argv)
 
 # --- CONFIG BOOTSTRAP ---
 src_dir = os.path.join(aim_root, ".aim_core")
 if src_dir not in sys.path: sys.path.append(src_dir)
 
-from config_utils import CONFIG, PROJECT_ROOT, OS_ROOT
+from config_utils import CONFIG, PROJECT_ROOT, OS_ROOT, resolve_venv_python
 
 BASE_DIR = PROJECT_ROOT
 OS_DIR = OS_ROOT
 CLI_NAME = os.path.basename(BASE_DIR)
-VENV_PYTHON = os.path.join(OS_DIR, "venv/bin/python3")
-if not os.path.exists(VENV_PYTHON):
-    # Support for worktrees (workspace/issue-<id>/joshua_os -> ../../../joshua_os/venv/bin/python3)
-    for _rel in ("../../venv/bin/python3", "../../../joshua_os/venv/bin/python3"):
-        _cand = os.path.abspath(os.path.join(OS_DIR, _rel))
-        if os.path.exists(_cand):
-            VENV_PYTHON = _cand
-            break
-    else:
-        VENV_PYTHON = sys.executable
+VENV_PYTHON = resolve_venv_python(OS_DIR)
 AIM_CORE_DIR = os.path.join(OS_DIR, ".aim_core")
 
 def run_script(script_path, args):
@@ -345,7 +343,7 @@ def cmd_promote(args):
     print("--- A.I.M. PHASE PROMOTION ---")
     try:
         current_dir = os.getcwd()
-        in_worktree = "workspace/issue-" in current_dir
+        in_worktree = "workspace/issue-" in current_dir.replace("\\", "/")
         
         # Determine the main repository root dynamically by finding the common .git directory
         common_dir = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=current_dir, capture_output=True, text=True, check=True).stdout.strip()
@@ -433,8 +431,55 @@ def cmd_merge_batch(args):
         merge_args.append("--push")
     run_script(os.path.join(AIM_CORE_DIR, "aim_batch_merge.py"), merge_args)
 
+def git_push_changes(msg, cwd=None, include_untracked=False):
+    """Cross-platform pure-Python replacement for aim_push.sh with untracked file detection."""
+    work_dir = cwd or os.getcwd()
+    version_str = "v1.0.0"
+    version_path = os.path.join(work_dir, "VERSION")
+    if not os.path.isfile(version_path):
+        version_path = os.path.join(BASE_DIR, "VERSION")
+    if os.path.isfile(version_path):
+        with open(version_path, "r", encoding="utf-8") as vf:
+            version_str = vf.read().strip() or "v1.0.0"
+
+    for rel_file in ("VERSION", "CHANGELOG.md"):
+        if os.path.isfile(os.path.join(work_dir, rel_file)):
+            subprocess.run(["git", "add", rel_file], cwd=work_dir, check=False, capture_output=True)
+
+    if include_untracked:
+        subprocess.run(["git", "add", "-A"], cwd=work_dir, check=True)
+    else:
+        subprocess.run(["git", "add", "-u"], cwd=work_dir, check=True)
+        untracked_res = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard"],
+            cwd=work_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        untracked = [line.strip() for line in (untracked_res.stdout or "").splitlines() if line.strip()]
+        if untracked:
+            print(
+                f"[NOTICE] Untracked files not staged (use 'git add <file>' or '{CLI_NAME} push --include-untracked'): "
+                + ", ".join(untracked),
+                file=sys.stderr,
+            )
+
+    subprocess.run(["git", "commit", "-m", msg, "-m", f"Version: {version_str}"], cwd=work_dir, check=True)
+    branch_res = subprocess.run(
+        ["git", "branch", "--show-current"],
+        cwd=work_dir,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    current_branch = branch_res.stdout.strip()
+    subprocess.run(["git", "push", "origin", current_branch], cwd=work_dir, check=True)
+    print(f"Successfully pushed A.I.M. version: {version_str}")
+
+
 def cmd_push(args):
-    """Dispatches to aim_push.sh with Sovereign Sync and Semantic Release."""
+    """Pure-Python Semantic Release, Sovereign Sync, and Git push pipeline."""
     msg = args.message
     
     # 1. SEMANTIC RELEASE PIPELINE (Phase 23)
@@ -502,7 +547,11 @@ def cmd_push(args):
         print(f"[WARNING] Background Sovereign Sync spawn failed: {e}")
         
     print("[3/3] Deploying to GitHub...")
-    run_bash_script(os.path.join(AIM_CORE_DIR, "aim_push.sh"), [msg])
+    try:
+        git_push_changes(msg, include_untracked=getattr(args, "include_untracked", False))
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Git push failed with exit code {e.returncode}", file=sys.stderr)
+        sys.exit(e.returncode)
 
 def cmd_sync_issues(args):
     """Synchronizes remote GitHub issues to the local ISSUE_TRACKER.md file."""
@@ -604,6 +653,8 @@ def ensure_consumer_gitignore(project_root):
     required = [
         ("joshua_os/", {"joshua_os", "joshua_os/", "joshua_os/*", "/joshua_os", "/joshua_os/"}),
         ("aim", {"aim", "/aim", "./aim"}),
+        ("aim.ps1", {"aim.ps1", "/aim.ps1", "./aim.ps1"}),
+        ("aim.cmd", {"aim.cmd", "/aim.cmd", "./aim.cmd"}),
         ("workspace/", {"workspace", "workspace/", "workspace/*", "/workspace", "/workspace/"}),
         ("archive/", {"archive", "archive/", "archive/*", "/archive", "/archive/"}),
     ]
@@ -691,13 +742,16 @@ def cmd_update(args):
         if os.path.isfile(src_file):
             shutil.copy2(src_file, os.path.join(OS_DIR, fname))
 
-    src_aim = os.path.join(os.path.dirname(source_os_dir), "aim")
-    dst_aim = os.path.join(BASE_DIR, "aim")
-    if os.path.isfile(src_aim) and os.path.abspath(src_aim) != os.path.abspath(dst_aim):
-        tmp_aim = dst_aim + ".tmp"
-        shutil.copy2(src_aim, tmp_aim)
-        os.chmod(tmp_aim, 0o755)
-        os.replace(tmp_aim, dst_aim)
+    source_parent = os.path.dirname(source_os_dir)
+    for wrapper_name in ("aim", "aim.ps1", "aim.cmd"):
+        src_wrapper = os.path.join(source_parent, wrapper_name)
+        dst_wrapper = os.path.join(BASE_DIR, wrapper_name)
+        if os.path.isfile(src_wrapper) and os.path.abspath(src_wrapper) != os.path.abspath(dst_wrapper):
+            tmp_wrapper = dst_wrapper + ".tmp"
+            shutil.copy2(src_wrapper, tmp_wrapper)
+            if wrapper_name == "aim":
+                os.chmod(tmp_wrapper, 0o755)
+            os.replace(tmp_wrapper, dst_wrapper)
 
     ensure_consumer_gitignore(BASE_DIR)
 
@@ -952,6 +1006,12 @@ def main():
 
     push_parser = subparsers.add_parser("push")
     push_parser.add_argument("message")
+    push_parser.add_argument(
+        "--include-untracked",
+        "-a",
+        action="store_true",
+        help="Stage all untracked (non-gitignored) worktree files before committing",
+    )
 
     if len(sys.argv) == 1:
         parser.print_help()

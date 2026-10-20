@@ -22,10 +22,13 @@ def find_project_root():
     """
     # 1. Check current directory and parents (Dynamic Workspace Isolation)
     current = os.path.abspath(os.getcwd())
-    while current != '/':
+    while True:
         if os.path.exists(os.path.join(current, "joshua_os", ".aim_core")):
             return current
-        current = os.path.dirname(current)
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
         
     # 2. Fallback to physical installation path (Global Execution)
     # Note: If this file is at joshua_os/.aim_core/config_utils.py, 
@@ -74,7 +77,12 @@ def load_config():
             "sentinel_mode": "full",
             "obsidian_vault_path": "",
             "auto_distill_tier": "T4",
-            "auto_rebirth": False
+            "auto_rebirth": False,
+            "github_projects": {
+                "owner": "BrianV1981",
+                "number": 7,
+                "status_field": "Status"
+            }
         }
     }
 
@@ -126,3 +134,33 @@ def load_config():
         return default_config
 
 CONFIG = load_config()
+
+
+def resolve_venv_python(os_root=None):
+    """Cross-platform venv Python resolver (supports Linux/macOS venv/bin and Windows venv/Scripts + worktree fallbacks)."""
+    root = os_root or OS_ROOT
+    candidates = (
+        (
+            os.path.join("venv", "Scripts", "python.exe"),
+            os.path.join("..", "..", "venv", "Scripts", "python.exe"),
+            os.path.join("..", "..", "..", "joshua_os", "venv", "Scripts", "python.exe"),
+            os.path.join("venv", "bin", "python3"),
+            os.path.join("..", "..", "venv", "bin", "python3"),
+            os.path.join("..", "..", "..", "joshua_os", "venv", "bin", "python3"),
+        )
+        if os.name == "nt"
+        else (
+            os.path.join("venv", "bin", "python3"),
+            os.path.join("..", "..", "venv", "bin", "python3"),
+            os.path.join("..", "..", "..", "joshua_os", "venv", "bin", "python3"),
+            os.path.join("venv", "Scripts", "python.exe"),
+            os.path.join("..", "..", "venv", "Scripts", "python.exe"),
+            os.path.join("..", "..", "..", "joshua_os", "venv", "Scripts", "python.exe"),
+        )
+    )
+    for rel in candidates:
+        cand = os.path.abspath(os.path.join(root, rel))
+        if os.path.exists(cand):
+            return cand
+    return sys.executable
+
