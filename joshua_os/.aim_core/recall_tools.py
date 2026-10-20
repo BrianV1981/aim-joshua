@@ -1,6 +1,12 @@
 import os
 import sqlite3
-from .aim_core.reasoning_utils import generate_reasoning
+import sys
+
+_CORE_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CORE_DIR not in sys.path:
+    sys.path.insert(0, _CORE_DIR)
+
+from reasoning_utils import generate_reasoning
 
 def get_base_dir():
     current = os.path.dirname(os.path.abspath(__file__))

@@ -30,3 +30,11 @@ The original `reincarnation` sub-package (which automatically spawned new termin
 J.O.S.H.U.A. operates with a strict "Two-Tier Protocol" for extending capabilities (such as the LanceDB memory pool).
 - **Primary (Native MCP):** Modern CLI harnesses automatically ingest the local MCP server (`mcp_lancedb.py`), natively granting the active agent the `search_lancedb` internal tool. The MCP server dynamically binds to the active workspace to prevent cross-contamination.
 - **Fallback (CLI-Agnostic):** To ensure 100% interoperability with legacy or custom CLI loops, agents gracefully degrade to direct python subprocess shell commands (e.g., `aim_cli.py search`) if an MCP tool is not present in their prompt. This guarantees no agent is ever completely blind.
+
+## Modular CLI Router (`aim_cli.py`, `cli_vault.py`, `cli_memory.py`)
+The CLI router (`joshua_os/.aim_core/aim_cli.py`) has been decomposed into focused domain modules while preserving top-level symbol re-exports:
+- **`aim_cli.py`**: Core GitOps (`fix`, `push`, `promote`, `merge-batch`, `prune-remote`, `bug`, `projects`), RAG dispatch (`search`, `map`, `index`), diagnostics (`doctor`, `health`, `status`), and `update`.
+- **`cli_vault.py`**: Forensic blackbox and Handoff vNext handlers (`cmd_vault`, `cmd_agy_blackbox`, `cmd_grok_blackbox`, `cmd_codex_blackbox`, `cmd_opencode_blackbox`, `cmd_handoff_vnext`).
+- **`cli_memory.py`**: Cartridge exchange, session recall/audit, and rolling archive maintenance (`cmd_clean`, `cmd_sync`, `cmd_audit`, `cmd_recall`, `cmd_bake`, `cmd_exchange`, `cmd_jack_in`, `cmd_unplug`, `cmd_purge`, `cmd_uninstall`, `cmd_import`).
+- Deprecated `swarm` CLI routes were removed from `aim_cli.py` in favor of `aim-coagents` blueprints (`install-agent.sh`) and `aim-communicate` tmux messaging.
+

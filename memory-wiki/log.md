@@ -91,3 +91,10 @@
 - Wove these rules directly into the core `AGENTS.md` and active ecosystem blueprints (`aim-connect`, `aim-tmux-dashboard`, `aim-coagents`) rather than keeping them as an opt-in skill.
 - Clarified the architectural distinction between *opt-in skills* and *innate DNA* (`AGENTS.md`).
 - Updated `pages/dhh-agentic-philosophy.md` to document this new conversational mandate.
+
+## [2026-10-19] ingest | CLI Modularization, Co-Agent Engine Update Hardening, and A+ Test Expansion (#87–#93)
+- Reconciled local Git/worktree drift (#87) and purged 95 stale remote and 72 local `archive-fix/*` / `fix/issue-*` branches (#88).
+- Removed deprecated `swarm` CLI routes (`cmd_swarm` and `swarm` subparser) from `aim_cli.py` (#89) and standardized `README.md` to the `<!-- AIM_ECOSYSTEM_START -->` protocol (#90).
+- Hardened `cmd_update` (#92) to support `--source <path>` and `--skip-deps`, guard optional engine subdirectories (`scripts/`), and strictly preserve `.aim_core/CONFIG.json` alongside Co-Agent blueprint/wiki/artifact files.
+- Modularized `aim_cli.py` (#93) by extracting vault/blackbox handlers into `cli_vault.py` and memory/cartridge/maintenance handlers into `cli_memory.py`, fixed broken `.aim_core` relative imports in `audit_tools.py`, `recall_tools.py`, and `cmd_sync`, implemented `cmd_clean`, added worktree venv fallback to `./aim`, and expanded `pytest` coverage to 26 tests.
+

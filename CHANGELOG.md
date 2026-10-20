@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.0] - 2026-10-19
+- Feature: Modularize aim_cli.py, fix legacy relative imports, and expand pytest suite for A+ bar (Closes #93)
+
+
 ## [v0.5.0] - 2026-10-19
 - Feature: Harden aim update for Co-Agent fleet engine rollouts (Closes #92)
 

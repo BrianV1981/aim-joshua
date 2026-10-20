@@ -30,10 +30,12 @@ OS_DIR = OS_ROOT
 CLI_NAME = os.path.basename(BASE_DIR)
 VENV_PYTHON = os.path.join(OS_DIR, "venv/bin/python3")
 if not os.path.exists(VENV_PYTHON):
-    # Support for worktrees
-    parent_venv = os.path.join(OS_DIR, "../../venv/bin/python3")
-    if os.path.exists(parent_venv):
-        VENV_PYTHON = parent_venv
+    # Support for worktrees (workspace/issue-<id>/joshua_os -> ../../../joshua_os/venv/bin/python3)
+    for _rel in ("../../venv/bin/python3", "../../../joshua_os/venv/bin/python3"):
+        _cand = os.path.abspath(os.path.join(OS_DIR, _rel))
+        if os.path.exists(_cand):
+            VENV_PYTHON = _cand
+            break
     else:
         VENV_PYTHON = sys.executable
 AIM_CORE_DIR = os.path.join(OS_DIR, ".aim_core")
@@ -507,178 +509,17 @@ def cmd_sync_issues(args):
     run_script(os.path.join(AIM_CORE_DIR, "sync_issue_tracker.py"), [])
 
 
-
-
-def cmd_handoff_vnext(args):
-    """Handoff vNext three pipelines (docs/HANDOFF_VNEXT_E2E.md / issue #32)."""
-    import subprocess
-    import sys as _sys
-
-    os_root = os.path.dirname(AIM_CORE_DIR)  # joshua_os
-    vessel = os.path.dirname(os_root)
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os_root + os.pathsep + AIM_CORE_DIR + (
-        os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else ""
-    )
-    env.setdefault("AIM_BLACKBOX_ALLOW_CRON", "1")
-    cmd = [
-        _sys.executable,
-        "-m",
-        "handoff.cli",
-        args.vnext_command,
-        "--adapter",
-        getattr(args, "adapter", None) or "agy",
-        "--vessel-root",
-        vessel,
-        "--project-root",
-        vessel,
-        "--limit",
-        str(getattr(args, "limit", 50) or 50),
-    ]
-    if getattr(args, "session_id", None):
-        cmd += ["--session-id", args.session_id]
-    if getattr(args, "fixture_root", None):
-        cmd += ["--fixture-root", args.fixture_root]
-    if getattr(args, "marker", None):
-        cmd += ["--marker", args.marker]
-    if getattr(args, "json", False):
-        cmd.append("--json")
-    raise SystemExit(subprocess.call(cmd, env=env, cwd=vessel))
-
-
-def cmd_vault(args):
-    """Operator forensic black box (audit/verify/seal). Non-agent critical path."""
-    sys.path.insert(0, AIM_CORE_DIR)
-    from blackbox_vault import (
-        audit_vault,
-        verify_manifest,
-        vault_session,
-        seal_for_reincarnate,
-    )
-
-    vessel = getattr(args, "vessel", None) or os.getcwd()
-    sub = getattr(args, "vault_command", None)
-    if sub == "audit":
-        audit_vault(args.session_id, vessel_root=vessel)
-    elif sub == "verify":
-        ok = verify_manifest(
-            args.session_id, vessel_root=vessel, live_path=getattr(args, "live", None)
-        )
-        sys.exit(0 if ok else 1)
-    elif sub == "seal":
-        if getattr(args, "path", None):
-            ok = vault_session(
-                args.path,
-                session_id=getattr(args, "session_id", None),
-                vessel_root=vessel,
-                reason="reincarnate",
-            )
-        else:
-            ok = seal_for_reincarnate(
-                vessel, session_id=getattr(args, "session_id", None)
-            )
-        sys.exit(0 if ok else 1)
-    elif sub == "doctor":
-        from aim_vault import vault_doctor
-        vault_doctor()
-        sys.exit(0)
-    else:
-        print("Usage: aim vault {audit|verify|seal|doctor} ...")
-        sys.exit(2)
-
-
-
 def cmd_delegate(args):
     """Dispatches to aim_delegate.py to spawn parallel sub-agents."""
     delegate_args = [args.instruction, "--files"] + args.files
     run_script(os.path.join(AIM_CORE_DIR, "aim_delegate.py"), delegate_args)
 
-def cmd_sync(args):
-    """Bakes native LanceDB cartridges and runs Sovereign Sync."""
-    print("--- A.I.M. SYNC ---")
-    try:
-        from .aim_core.sovereign_sync import export_to_parquet, import_from_parquet
-        
-        sync_dir = os.path.join(OS_DIR, "archive/sync")
-        os.makedirs(sync_dir, exist_ok=True)
-        
-        export_to_parquet(OS_DIR, sync_dir)
-        
-        print("[2/3] Executing network sync...")
-        run_script(os.path.join(AIM_CORE_DIR, "back-populator.py"), [])
-        
-        imported = import_from_parquet(OS_DIR, sync_dir)
-        print(f"      Imported {imported} new/updated cartridges.")
-        print("[SUCCESS] Workspace synchronized.")
-    except Exception as e:
-        traceback.print_exc()
-        print(f"[ERROR] Sync failed: {e}")
 
 def cmd_handoff(args):
     """Dispatches to handoff_pulse_generator.py and syncs remote issues."""
     run_script(os.path.join(AIM_CORE_DIR, "handoff_pulse_generator.py"), [])
     run_script(os.path.join(AIM_CORE_DIR, "sync_issue_tracker.py"), [])
 
-
-def cmd_audit(args):
-    """Generates a strategic synthesis/morning report from recent sessions."""
-    from .aim_core.audit_tools import run_audit
-    run_audit(args.n)
-
-def cmd_recall(args):
-    """Synthesizes memory recall from historical sessions."""
-    from .aim_core.recall_tools import run_recall
-    query = " ".join(args.query)
-    run_recall(query)
-
-def cmd_mail(args):
-    """Syncs the Unread Mail tracker from the Swarm Post Office."""
-    run_script(os.path.join(AIM_CORE_DIR, "sync_mail.py"), [])
-
-def cmd_sessions(args):
-    """Lists recent cleaned historical sessions."""
-    run_script(os.path.join(AIM_CORE_DIR, "handoff_pulse_generator.py"), [])
-    history_db = os.path.join(OS_DIR, "archive/history.db")
-    if not os.path.exists(history_db):
-        print("No historical sessions found.")
-        return
-    
-    conn = sqlite3.connect(history_db)
-    c = conn.cursor()
-    c.execute("SELECT session_id, timestamp FROM history ORDER BY timestamp DESC LIMIT 20")
-    rows = c.fetchall()
-    print("\n--- RECENT SESSIONS ---")
-    for r in rows:
-        print(f"[{r[1]}] {r[0][:8]}")
-    conn.close()
-
-def cmd_search_sessions(args):
-    """Searches the full session history database."""
-    query = " ".join(args.query)
-    history_db = os.path.join(OS_DIR, "archive/history.db")
-    if not os.path.exists(history_db):
-        run_script(os.path.join(AIM_CORE_DIR, "handoff_pulse_generator.py"), [])
-        if not os.path.exists(history_db):
-            print("No historical sessions found.")
-            return
-    
-    conn = sqlite3.connect(history_db)
-    c = conn.cursor()
-    # Search FTS5
-    sql = "SELECT session_id, timestamp, snippet(history_fts, 2, '...', '...', '...', 10) FROM history_fts WHERE history_fts MATCH ? ORDER BY rank LIMIT 10"
-    try:
-        c.execute(sql, (query,))
-        rows = c.fetchall()
-        print(f"\n--- SEARCH RESULTS: {query} ---")
-        if not rows:
-            print("No matches found.")
-        for r in rows:
-            print(f"\nSession: {r[0][:8]} ({r[1]})")
-            print(f"Match: {r[2]}")
-    except Exception as e:
-        traceback.print_exc()
-        print(f"Search failed: {e}")
-    conn.close()
 
 def cmd_init(args):
     """Dispatches to aim_init.py (New User Setup)."""
@@ -694,15 +535,6 @@ def cmd_init(args):
     except subprocess.CalledProcessError as e:
         import sys; print(f"[ERROR] 'aim init' failed: {e}", file=sys.stderr)
 
-def cmd_scrape(args):
-    """Scrapes forum threads or GitHub issues into Synapse Markdown docs."""
-    scrape_args = []
-    if args.source: scrape_args += ["--source", args.source]
-    if args.repo: scrape_args += ["--repo", args.repo]
-    if args.query: scrape_args += ["--query", args.query]
-    if args.limit: scrape_args += ["--limit", str(args.limit)]
-    if args.outdir: scrape_args += ["--outdir", args.outdir]
-    run_script(os.path.join(AIM_CORE_DIR, "aim_scraper.py"), scrape_args)
 
 def cmd_config(args):
     """Dispatches to aim_config.py (TUI Cockpit)."""
@@ -711,146 +543,34 @@ def cmd_config(args):
     except subprocess.CalledProcessError as e:
         import sys; print(f"[ERROR] 'aim config' failed: {e}", file=sys.stderr)
 
-def cmd_bake(args):
-    """Dispatches to aim_bake.py."""
-    bake_args = [args.directory, args.output]
-    if args.author: bake_args += ["--author", args.author]
-    if args.version: bake_args += ["--version", args.version]
-    if args.description: bake_args += ["--description", args.description]
-    run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_bake.py"), bake_args)
 
-def cmd_export(args):
-    """Exports and seeds an engram via BitTorrent Swarm."""
-    target = args.file
-    if not os.path.exists(target):
-        print(f"[ERROR] File not found: {target}")
-        sys.exit(1)
-        
-    print("\n[EXPORT] Preparing DataJack Swarm Seed...")
-    torrent_handler = os.path.join(AIM_CORE_DIR, "aim_torrent.py")
-    if not os.path.exists(torrent_handler):
-        print("[ERROR] Torrent handler not found.")
-        sys.exit(1)
-        
-    try:
-        subprocess.run([VENV_PYTHON, torrent_handler, "seed", target], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Seeding failed: {e}")
-        sys.exit(e.returncode)
+from cli_vault import (
+    cmd_handoff_vnext,
+    cmd_vault,
+    cmd_agy_blackbox,
+    cmd_grok_blackbox,
+    cmd_codex_blackbox,
+    cmd_opencode_blackbox,
+)
+from cli_memory import (
+    cmd_clean,
+    cmd_sync,
+    cmd_audit,
+    cmd_recall,
+    cmd_mail,
+    cmd_sessions,
+    cmd_search_sessions,
+    cmd_scrape,
+    cmd_bake,
+    cmd_export,
+    cmd_exchange,
+    cmd_jack_in,
+    cmd_unplug,
+    cmd_purge,
+    cmd_uninstall,
+    cmd_import,
+)
 
-def cmd_exchange(args):
-    """Dispatches to aim_exchange.py."""
-    run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), sys.argv[2:])
-
-def cmd_jack_in(args):
-    """Dispatches to aim_exchange.py import, with support for BitTorrent Magnet Links."""
-    target = args.file
-    
-    # Phase 38: The P2P DataJack Swarm
-    if target.startswith("magnet:?"):
-        print("\n[JACK-IN] Initiating DataJack Swarm Handshake...")
-        print(f"  Target: Magnet Link Detected")
-        
-        # We need to route the torrent payload directly into the Quarantine for scanning
-        temp_dir = os.path.join(OS_DIR, "archive/quarantine")
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        try:
-            # We use a dedicated script to handle the async/threading complexities of torrents
-            torrent_handler = os.path.join(AIM_CORE_DIR, "aim_torrent.py")
-            if not os.path.exists(torrent_handler):
-                print("[ERROR] Torrent handler not found. Ensure Phase 38 is fully installed.")
-                sys.exit(1)
-                
-            print("  Connecting to swarm. Please wait (this depends on seeder availability)...")
-            
-            # Execute the torrent download. The script will return the absolute path to the downloaded .engram
-            result = subprocess.run(
-                [VENV_PYTHON, torrent_handler, "download", target, temp_dir],
-                capture_output=True, text=True, check=True
-            )
-            
-            # Parse the final output line to get the downloaded file path
-            output_lines = result.stdout.strip().split("\n")
-            downloaded_file = ""
-            for line in reversed(output_lines):
-                if line.startswith("SUCCESS_PATH:"):
-                    downloaded_file = line.replace("SUCCESS_PATH:", "").strip()
-                    break
-                    
-            if not downloaded_file or not os.path.exists(downloaded_file):
-                print(f"[ERROR] Swarm download failed or returned invalid file path.")
-                print(f"  DEBUG:\n{result.stdout}\n{result.stderr}")
-                sys.exit(1)
-                
-            print(f"[JACK-IN] Swarm payload isolated in Quarantine: {os.path.basename(downloaded_file)}")
-            print(f"          The Quarantine Daemon will perform heuristic analysis before merging.")
-            return
-            
-        except subprocess.CalledProcessError as e:
-            print(f"[ERROR] DataJack Swarm failure (Code {e.returncode}).")
-            print(f"  DEBUG:\n{e.stdout}\n{e.stderr}")
-            sys.exit(e.returncode)
-
-    # Standard Local Engram Injection (File Path)
-    run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), ["import", target])
-
-
-
-def cmd_unplug(args):
-    """Dispatches to aim_exchange.py unplug."""
-    run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), ["unplug"] + sys.argv[2:])
-
-def cmd_purge(args):
-    """Executes the Clean Slate Protocol --- (Safety Warning Required) ---"""
-    print("--- A.I.M. Clean Slate Protocol (The Purge) ---")
-    confirm = input("This will permanently delete ALL memory, continuity, and database files. Are you sure? [y/N]: ")
-    if confirm.lower() != 'y': return
-    
-    dirs = ["continuity/", "archive/raw/", "archive/history/", "archive/sync/", "workstreams/", "memory_lance/", "archive/cartridges/"]
-    for d in dirs:
-        path = os.path.join(BASE_DIR, d)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-            os.makedirs(path, exist_ok=True)
-            
-    db_paths = [os.path.join(OS_DIR, "archive/project_core.db"), os.path.join(OS_DIR, "archive/history.db")]
-    for db_path in db_paths:
-        if os.path.exists(db_path): os.remove(db_path)
-        
-    docs = ["ROADMAP.md", "CURRENT_STATE.md", "DECISIONS.md"]
-    for doc in docs:
-        doc_path = os.path.join(OS_DIR, "docs", doc)
-        if os.path.exists(doc_path):
-            with open(doc_path, 'w') as f:
-                f.write(f"# {doc.replace('.md', '').title()}\n\n[PURGED: {datetime.now().strftime('%Y-%m-%d %H:%M')}]\n")
-    
-    print("\n[SUCCESS] A.I.M. has been purged.")
-
-def cmd_uninstall(args):
-    """Interactive uninstaller."""
-    print("\n--- A.I.M. UNINSTALLER ---")
-    confirm = input("\nRemove A.I.M. from your system? [y/N]: ").lower()
-    if confirm != 'y': return
-
-    print("\n1. Software Only\n2. Total Purge")
-    choice = input("\nSelect [1-2]: ").strip()
-    
-    if choice == '2':
-        for item in os.listdir(BASE_DIR):
-            p = os.path.join(BASE_DIR, item)
-            if os.path.isfile(p): os.unlink(p)
-            elif os.path.isdir(p): shutil.rmtree(p)
-    else:
-        dirs = [".aim_core/", ".aim_core/", "hooks/", "venv/", "archive/experimental/"]
-        for d in dirs:
-            p = os.path.join(BASE_DIR, d)
-            if os.path.exists(p): shutil.rmtree(p)
-        for f in ["setup.sh", "requirements.txt", "LICENSE"]:
-            p = os.path.join(BASE_DIR, f)
-            if os.path.exists(p): os.remove(p)
-
-    print("\n[SUCCESS] A.I.M. removed.")
 
 def cmd_update(args):
     """Safely pulls the latest A.I.M. core engine files into the local isolated project while preserving Co-Agent blueprint and tenant state."""
@@ -939,19 +659,6 @@ def cmd_update(args):
         shutil.rmtree(temp_dir)
     print("\n[SUCCESS] Sovereign Engine Update Complete. You are running the latest A.I.M. OS.")
 
-def cmd_import(args):
-    """Manually ingests raw JSONL, JSON, or MD files into the Subconscious Swarm."""
-    filepath = getattr(args, 'file', None)
-    if not filepath:
-        print("Usage: aim import <path/to/file.jsonl | file.md>")
-        sys.exit(1)
-        
-    if not os.path.exists(filepath):
-        print(f"[ERROR] File not found: {filepath}")
-        sys.exit(1)
-        
-    subprocess.run([sys.executable, os.path.join(OS_DIR, ".aim_core", "memory_salvage.py"), filepath], check=False)
-
 
 def ensure_hooks_mapped():
     """Silently self-heals stale hook paths in the global Antigravity CLI settings when the workspace is moved or cloned."""
@@ -982,104 +689,6 @@ def ensure_hooks_mapped():
     except:
         pass
 
-def cmd_agy_blackbox(args):
-    import os
-    from pathlib import Path
-    try:
-        from blackbox_vault import vault_session
-    except ImportError:
-        import sys
-        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
-        from blackbox_vault import vault_session
-
-    sid = args.session_id
-    agy_log = Path.home() / ".gemini" / "antigravity-cli" / "brain" / sid / ".system_generated" / "logs" / "transcript.jsonl"
-    if agy_log.is_file():
-        if vault_session(str(agy_log), session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
-            print(f"Sealed AGY session {sid} into blackbox.")
-        else:
-            print(f"WARN: Failed to seal AGY session {sid}.")
-    else:
-        print(f"ERROR: AGY transcript not found for {sid} at {agy_log}")
-
-def cmd_grok_blackbox(args):
-    import os
-    try:
-        from blackbox_vault import seal_for_reincarnate
-    except ImportError:
-        import sys
-        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
-        from blackbox_vault import seal_for_reincarnate
-
-    sid = args.session_id
-    if seal_for_reincarnate(os.getcwd(), session_id=sid):
-        print(f"Sealed Grok session {sid} into blackbox.")
-    else:
-        print(f"WARN: Failed to seal Grok session {sid}.")
-
-def cmd_codex_blackbox(args):
-    import os
-    try:
-        from blackbox_vault import seal_for_reincarnate
-    except ImportError:
-        import sys
-        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
-        from blackbox_vault import seal_for_reincarnate
-
-    sid = args.session_id
-    if seal_for_reincarnate(os.getcwd(), session_id=sid):
-        print(f"Sealed Codex session {sid} into blackbox.")
-    else:
-        print(f"WARN: Failed to seal Codex session {sid}.")
-
-def cmd_opencode_blackbox(args):
-    import os, json, tempfile, sqlite3
-    try:
-        from blackbox_vault import vault_session
-    except ImportError:
-        import sys
-        sys.path.append(os.path.join(os.getcwd(), "joshua_os", ".aim_core"))
-        from blackbox_vault import vault_session
-
-    sid = args.session_id
-    db_path = os.path.join(os.getcwd(), "opencode_data", "opencode.db")
-    if not os.path.exists(db_path):
-        print(f"ERROR: opencode.db not found at {db_path}")
-        return
-        
-    try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        query = '''
-        SELECT m.data as m_data, p.data as p_data, m.time_created
-        FROM message m
-        JOIN part p ON m.id = p.message_id
-        ORDER BY m.time_created ASC, p.time_created ASC
-        '''
-        rows = cursor.execute(query).fetchall()
-        
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".jsonl", encoding="utf-8") as tmp:
-            for r in rows:
-                obj = {
-                    "message": json.loads(r["m_data"]),
-                    "part": json.loads(r["p_data"]),
-                    "time_created": r["time_created"]
-                }
-                tmp.write(json.dumps(obj) + "\\n")
-            tmp_path = tmp.name
-        conn.close()
-        
-        if vault_session(tmp_path, session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
-            print(f"Sealed OpenCode session {sid} into blackbox.")
-        else:
-            print(f"WARN: Failed to seal OpenCode session {sid}.")
-            
-    except Exception as e:
-        print(f"ERROR extracting opencode session: {e}")
-    finally:
-        if 'tmp_path' in locals() and os.path.exists(tmp_path):
-            os.remove(tmp_path)
 
 def main():
     ensure_hooks_mapped()

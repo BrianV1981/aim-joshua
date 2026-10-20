@@ -10,4 +10,11 @@ J.O.S.H.U.A. enforces a highly parallel GitOps execution model, heavily formaliz
 ## Installation Pathways
 - **Clean Installation (Default)**: Uses `install.sh` to install the engine natively while completely purging Git history, tests, and benchmarks.
 - **Core Contributor Installation**: Uses `install-core.sh` to install the engine while preserving developer histories and `.git` artifacts.
-- **Isolated Sandbox**: Uses `install-agent.sh` for `bwrap` sandboxed installations.
+- **Isolated Sandbox / Sovereign Co-Agent**: Uses `install-agent.sh` for headless Sovereign Co-Agent deployments (`aim-agents/*`).
+
+## Co-Agent Engine Updates (`aim update`)
+`cmd_update` (`aim update [--source <local_dir>] [--skip-deps]`) upgrades `joshua_os/` across deployed projects and Co-Agent nodes while strictly preserving tenant state:
+- Preserves `.aim_core/CONFIG.json` across `.aim_core` directory replacement.
+- Never overwrites tenant root files (`AGENTS.md`, `TOOLS.md`, `manifest.json`, `memory-wiki/`, `artifacts/`, or `joshua_os/memory_lance/`).
+- Guards optional subdirectories (such as `scripts/`) with existence checks prior to `shutil.copytree`.
+
