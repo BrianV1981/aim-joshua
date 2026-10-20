@@ -32,17 +32,41 @@ def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
 
     db_path = os.path.join(workspace_path, "joshua_os", "memory_lance")
     
-    # We must dynamically override the hardcoded LANCE_DB_PATH in lance_backend
+    # Dynamically locate .aim_core (prefer workspace, fall back to script directory for umbrella folders)
     core_path = os.path.join(workspace_path, "joshua_os", ".aim_core")
+    if not os.path.isdir(core_path):
+        core_path = os.path.dirname(os.path.abspath(__file__))
     if core_path not in sys.path:
         sys.path.insert(0, core_path)
         
     try:
         import lance_backend
-        lance_backend.LANCE_DB_PATH = db_path
-        
         from retriever import perform_search
-        results = perform_search(query, top_k=top_k)
+
+        # Rule 1 (Strict Project Isolation): If local DB exists, never scan subfolders.
+        # Rule 2 (Umbrella Fallback): If no local DB exists in an existing parent directory, scan immediate */joshua_os/memory_lance subfolders.
+        subfolder_dbs = []
+        if not os.path.isdir(db_path) and os.path.isdir(workspace_path):
+            for entry in sorted(os.listdir(workspace_path)):
+                sub_db = os.path.join(workspace_path, entry, "joshua_os", "memory_lance")
+                if os.path.isdir(sub_db):
+                    subfolder_dbs.append((entry, sub_db))
+
+        if subfolder_dbs:
+            results = []
+            for sub_name, sub_db in subfolder_dbs:
+                lance_backend.LANCE_DB_PATH = sub_db
+                sub_hits = perform_search(query, top_k=top_k) or []
+                for hit in sub_hits:
+                    hit_copy = dict(hit)
+                    orig_src = hit_copy.get('filename') or hit_copy.get('source_db') or hit_copy.get('session_id') or 'Unknown'
+                    hit_copy['filename'] = f"[{sub_name}] {orig_src}"
+                    results.append(hit_copy)
+            results.sort(key=lambda r: r.get('score', 0.0), reverse=True)
+            results = results[:top_k]
+        else:
+            lance_backend.LANCE_DB_PATH = db_path
+            results = perform_search(query, top_k=top_k)
         
         if not results:
             return f"No fragments found for query: '{query}'"

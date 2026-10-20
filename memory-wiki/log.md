@@ -96,5 +96,8 @@
 - Reconciled local Git/worktree drift (#87) and purged 95 stale remote and 72 local `archive-fix/*` / `fix/issue-*` branches (#88).
 - Removed deprecated `swarm` CLI routes (`cmd_swarm` and `swarm` subparser) from `aim_cli.py` (#89) and standardized `README.md` to the `<!-- AIM_ECOSYSTEM_START -->` protocol (#90).
 - Hardened `cmd_update` (#92) to support `--source <path>` and `--skip-deps`, guard optional engine subdirectories (`scripts/`), and strictly preserve `.aim_core/CONFIG.json` alongside Co-Agent blueprint/wiki/artifact files.
-- Modularized `aim_cli.py` (#93) by extracting vault/blackbox handlers into `cli_vault.py` and memory/cartridge/maintenance handlers into `cli_memory.py`, fixed broken `.aim_core` relative imports in `audit_tools.py`, `recall_tools.py`, and `cmd_sync`, implemented `cmd_clean`, added worktree venv fallback to `./aim`, and expanded `pytest` coverage to 26 tests.
+- Modularized `aim_cli.py` (#93) by extracting vault/blackbox handlers into `cli_vault.py` and memory/cartridge/maintenance handlers into `cli_memory.py`, fixed broken `.aim_core` relative imports in `audit_tools.py`, `recall_tools.py`, and `cmd_sync`, implemented `cmd_clean`, added worktree venv fallback to `./aim`, and expanded `pytest` coverage to 25 tests.
+- Verified Pass 9 Delta Audit by `aim-auditor` (#91) upgrading `AUDIT_AIM_JOSHUA.md` to **Overall Grade: A+**.
+- Implemented Pure Automatic Mode (Local-First + Subfolder Fallback) in `mcp_lancedb.py` (#94) and guarded `aim_cli.py` top-level `os.execv` behind `if __name__ == "__main__":`, expanding `pytest` coverage to 27 passing tests.
+
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.0] - 2026-10-20
+- Feature: Add automatic local-first + umbrella subfolder fallback to mcp_lancedb.py (Closes #94)
+
+
 ## [v0.6.0] - 2026-10-19
 - Feature: Modularize aim_cli.py, fix legacy relative imports, and expand pytest suite for A+ bar (Closes #93)
 
