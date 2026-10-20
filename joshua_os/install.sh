@@ -40,6 +40,15 @@ if [ ! -d ".git" ]; then
     git init
 fi
 
+# Ensure J.O.S.H.U.A. OS exoskeleton is gitignored in consumer projects
+touch .gitignore
+for entry in "joshua_os/" "aim" "workspace/" "archive/"; do
+    base="${entry%/}"
+    if ! grep -qxE "/?${base}(/|/\*)?" .gitignore 2>/dev/null; then
+        echo "$entry" >> .gitignore
+    fi
+done
+
 [ ! -f README.md ] && echo "# $CLI_NAME" > README.md
 
 # Base OS Provisioning (Moving the pre-baked DB to the active layer)

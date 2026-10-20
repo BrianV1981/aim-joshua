@@ -203,9 +203,39 @@ def test_installers_have_home_guard_and_clean_readme_onboarding():
     assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_sh
     assert "cp -a joshua_os ../" in install_sh
     assert "cp -a * ../" not in install_sh
+    assert 'for entry in "joshua_os/" "aim" "workspace/" "archive/"; do' in install_sh
     assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_agent_sh
+    assert 'for entry in "joshua_os/" "aim" "workspace/" "archive/"; do' in install_agent_sh
     assert "mkdir -p ~/my-project && cd ~/my-project" in readme
     assert "Customizing J.O.S.H.U.A. for Your New Project" in readme
+
+
+def test_ensure_consumer_gitignore_populates_and_skips_upstream(tmp_path):
+    import sys
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import aim_cli
+
+    consumer_dir = tmp_path / "aim-consumer"
+    consumer_dir.mkdir()
+    assert aim_cli.ensure_consumer_gitignore(str(consumer_dir)) is True
+    gi_text = (consumer_dir / ".gitignore").read_text(encoding="utf-8")
+    assert "joshua_os/" in gi_text
+    assert "aim" in gi_text
+    assert "workspace/" in gi_text
+    assert "archive/" in gi_text
+
+    # Second run is idempotent
+    assert aim_cli.ensure_consumer_gitignore(str(consumer_dir)) is False
+
+    # Upstream engine repo is skipped
+    upstream_dir = tmp_path / "aim-joshua"
+    upstream_dir.mkdir()
+    assert aim_cli.ensure_consumer_gitignore(str(upstream_dir)) is False
+    assert not (upstream_dir / ".gitignore").exists()
+
 
 
 

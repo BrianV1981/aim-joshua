@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.2] - 2026-10-20
+- Fix: Auto-populate consumer .gitignore with joshua_os/, aim, workspace/, and archive/ (Closes #96)
+
+
 ## [v0.7.1] - 2026-10-20
 - Fix: Harden install.sh and clarify README.md project onboarding & customization flow (Closes #95)
 

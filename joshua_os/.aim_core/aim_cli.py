@@ -572,6 +572,54 @@ from cli_memory import (
 )
 
 
+def is_upstream_engine_repo(project_root):
+    """Returns True if project_root is the upstream aim-joshua engine repository itself."""
+    if os.path.basename(os.path.abspath(project_root)) == "aim-joshua":
+        return True
+    try:
+        res = subprocess.run(
+            ["git", "config", "--get", "remote.origin.url"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+        )
+        if res.returncode == 0 and "aim-joshua" in res.stdout.strip():
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def ensure_consumer_gitignore(project_root):
+    """Ensures consumer projects ignore joshua_os/, aim, workspace/, and archive/ in .gitignore."""
+    if is_upstream_engine_repo(project_root):
+        return False
+    gitignore_path = os.path.join(project_root, ".gitignore")
+    existing_lines = []
+    if os.path.isfile(gitignore_path):
+        with open(gitignore_path, "r", encoding="utf-8", errors="ignore") as f:
+            existing_lines = f.read().splitlines()
+
+    normalized = {line.strip() for line in existing_lines if line.strip() and not line.strip().startswith("#")}
+    required = [
+        ("joshua_os/", {"joshua_os", "joshua_os/", "joshua_os/*", "/joshua_os", "/joshua_os/"}),
+        ("aim", {"aim", "/aim", "./aim"}),
+        ("workspace/", {"workspace", "workspace/", "workspace/*", "/workspace", "/workspace/"}),
+        ("archive/", {"archive", "archive/", "archive/*", "/archive", "/archive/"}),
+    ]
+    missing = [canonical for canonical, aliases in required if not (normalized & aliases)]
+    if not missing:
+        return False
+
+    with open(gitignore_path, "a", encoding="utf-8") as f:
+        if existing_lines and existing_lines[-1].strip() != "":
+            f.write("\n")
+        f.write("# --- J.O.S.H.U.A. OS Exoskeleton ---\n")
+        for item in missing:
+            f.write(f"{item}\n")
+    return True
+
+
 def cmd_update(args):
     """Safely pulls the latest A.I.M. core engine files into the local isolated project while preserving Co-Agent blueprint and tenant state."""
     print("--- A.I.M. SOVEREIGN ENGINE UPDATE ---")
@@ -642,6 +690,14 @@ def cmd_update(args):
         src_file = os.path.join(source_os_dir, fname)
         if os.path.isfile(src_file):
             shutil.copy2(src_file, os.path.join(OS_DIR, fname))
+
+    src_aim = os.path.join(os.path.dirname(source_os_dir), "aim")
+    dst_aim = os.path.join(BASE_DIR, "aim")
+    if os.path.isfile(src_aim):
+        shutil.copy2(src_aim, dst_aim)
+        os.chmod(dst_aim, 0o755)
+
+    ensure_consumer_gitignore(BASE_DIR)
 
     # Cleanup deprecated background daemons (Active Memory Protocol)
     deprecated_wiki_agents = os.path.join(OS_DIR, "memory-wiki", "AGENTS.md")

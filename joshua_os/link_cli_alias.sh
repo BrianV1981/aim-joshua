@@ -47,14 +47,19 @@ else
 fi
 
 WRAPPER="$PROJECT_ROOT/aim"
-if [[ ! -f "$WRAPPER" ]]; then
+if [[ ! -f "$WRAPPER" ]] || grep -q "aim-agy_os" "$WRAPPER" 2>/dev/null; then
   cat > "$WRAPPER" << 'WRAP'
 #!/usr/bin/env bash
 ROOT="$(dirname "$(readlink -f "$0")")"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=8192}"
-
-# 1. Execute Core Engine
-"$ROOT/joshua_os/venv/bin/python3" "$ROOT/joshua_os/.aim_core/aim_cli.py" "$@"
+# 1. Execute Core Engine (with worktree venv fallback)
+VENV_PY="$ROOT/joshua_os/venv/bin/python3"
+if [ ! -x "$VENV_PY" ] && [ -x "$ROOT/../../joshua_os/venv/bin/python3" ]; then
+    VENV_PY="$ROOT/../../joshua_os/venv/bin/python3"
+elif [ ! -x "$VENV_PY" ]; then
+    VENV_PY="python3"
+fi
+"$VENV_PY" "$ROOT/joshua_os/.aim_core/aim_cli.py" "$@"
 EXIT_CODE=$?
 
 # 2. Teardown Hook: Commit memory state to local ledger (Issue 15)
