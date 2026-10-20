@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.2] - 2026-10-19
+- Fix: Remove deprecated swarm CLI routes and parser from aim_cli.py (Closes #89)
+
+
 ## [v0.4.1] - 2026-10-19
 - Fix: Reconcile local Git and worktree drift (Closes #87)
 
