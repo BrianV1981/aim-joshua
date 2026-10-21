@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-20T15:42:30-04:00
-> **Updated by:** Antigravity (Session ID: 6c0e4f7b-6efc-4c01-b829-adf0d28bcd51)
-> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.0` Cross-Platform & Pure-Python Engine, `32/32` Pytest, Backlog Clear)
+> **Updated:** 2026-10-21T16:38:30-04:00
+> **Updated by:** Antigravity (Session ID: 3078de63-43ae-427e-8e31-f5698043c30a)
+> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.2` Direct-to-`main` Memory State & Cross-Platform Engine, `33/33` Pytest, Backlog Clear)
 > **Operator:** Brian Vasquez (`@BrianV1981`)
 
 ---
@@ -28,6 +28,8 @@
 | 6c0e4f7b | #99: Added dynamic `get_active_aim_root()` in `retriever.py` so `archive/cartridges` & `flashrank_cache` follow `lance_backend.LANCE_DB_PATH` during MCP queries (`32/32` pytest passing) | ✅ RESOLVED |
 | 6c0e4f7b | #100: Ingested `v0.8.0` cross-platform launchers, pure-Python push, MCP cartridge root, and default Project `#7` config into `memory-wiki/` (`3d715061`) | ✅ RESOLVED |
 | 6c0e4f7b | Lore Sync (`aim-knowledge`): Published *The Great Convergence* & *J.O.S.H.U.A. vs. Open-Source Harness Era* essays + updated `AIM_ECOSYSTEM_HISTORY.md` (`c6b4d63`) | ✅ RESOLVED |
+| 3078de63 | #101: Decoupled `memory-wiki/**` & `HANDOFF.md` from worktree GitOps (`AGENTS.md`, `aim-skill-library` `08511ae`), added Auto-Wiki Delta Check to `/aim-handoff`, and fixed `bootstrap_brain.py` root `memory-wiki/` indexing (`v0.8.1`, `b8f0b88a`, `33/33` pytest) | ✅ RESOLVED |
+| 3078de63 | #102: Aligned `COGNITIVE_ARCHITECTURE.md`, `GAMEPLAN_SOP.md`, `GITOPS_DEPLOYMENT.md`, `AIM_CLI_TOOLS.md`, `AGENTS_AMENDMENT_PROTOCOL.md`, `README.md`, `CONTRIBUTING.md`, and `memory-wiki/pages/` with direct-to-`main` memory state (`v0.8.2`, `cc9d13c0`) | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -81,8 +83,8 @@ Follow strict GitOps workflow for any future tasks:
 
 ## 5. THE CRITICAL TRAPS & WARNINGS
 > **⚠️ EPISTEMIC / OPERATIONAL WARNINGS**
-- **The Worktree Mandate:** NEVER perform development directly on `main`. You must use `aim fix <id>`. 
-- **The `aim-memory-wiki` Prerequisite:** You MUST run `/aim-memory-wiki` to synthesize new architecture changes *before* executing `/aim-handoff`.
+- **The Worktree Mandate (with Agent Memory Exemption):** NEVER perform application code/config development directly on `main` — always use `aim fix <id>`. Conversely, living Agent Memory (`memory-wiki/**` and `HANDOFF.md`) is explicitly exempt from GitHub Issues and worktrees: stage only `git add memory-wiki/` and/or `git add HANDOFF.md` (never `git add .` or `git commit -a`), commit, run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero prompts.
+- **Mid-Session `/aim-memory-wiki` & Closeout `/aim-handoff`:** `/aim-memory-wiki` runs as a fast (~15s) mid-session checkpoint directly on `main`. At session closeout, `/aim-handoff` automatically inspects `memory-wiki/log.md` first (Step 1 Idempotent Auto-Wiki Delta Check), updates `memory-wiki/` if needed, surgically updates `HANDOFF.md`, and pushes both to `origin/main` in a single atomic commit.
 - **The Blackbox Mandate:** Before an agent vessel dies, it MUST execute its vessel-specific vault command (e.g. `aim agy-blackbox --session-id <uuid>`) to extract raw session logs. 
 - **The Audit Protocol:** Do not close issues or claim success if the GitHub Actions smoke test is red.
 - **The Untracked File Safeguard:** `cmd_push` (`git_push_changes()` in `aim_cli.py`) runs `git add -u` by default for surgical safety, emits a `[NOTICE]` warning on `stderr` if untracked files exist, and supports `aim push --include-untracked "msg"` (or `-a`) or manual `git add <file>` before `aim push`.
@@ -97,7 +99,7 @@ Follow strict GitOps workflow for any future tasks:
 - `/home/kingb/aim-joshua/memory-wiki/`
 - `/home/kingb/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `/home/kingb/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `/home/kingb/aim-joshua/tests/` (`32/32` Pytest Coverage)
+- `/home/kingb/aim-joshua/tests/` (`33/33` Pytest Coverage)
 - `/home/kingb/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---

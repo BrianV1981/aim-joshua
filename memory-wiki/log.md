@@ -117,10 +117,11 @@
 - Authored two architectural essays in `/home/kingb/aim-knowledge/Philosophy_and_Concepts/` (*The Great Convergence: From Vessel Fragmentation to J.O.S.H.U.A.* and *J.O.S.H.U.A. vs. The Open-Source Harness Era*) and updated `AIM_ECOSYSTEM_HISTORY.md` (commit `c6b4d63`) documenting the Operator's origin story (`A.I.M.` named after Ayrianna, Isabella, and Michael; `J.O.S.H.U.A.` born from the `aim-ld-joshua` B2B field-sales pivot; and the X.com origin of the Forensic Blackbox Vault).
 - Updated `pages/architecture.md`, `pages/operations.md`, `pages/projects.md`, and `pages/handoff-and-retrieval.md` (#100).
 
-## [2026-10-21] ingest | Decouple Agent Memory (`memory-wiki/**` & `HANDOFF.md`) from Worktree GitOps (`v0.8.1`, #101)
-- Decoupled Agent Memory state (`memory-wiki/**` and `HANDOFF.md`) from application code worktree GitOps in `AGENTS.md` (§6, §8, §9), `joshua_os/joshua_os_docs/PERSISTENT_WIKI.md`, and `joshua_os/joshua_os_docs/HANDOFF_PROTOCOL.md`.
+## [2026-10-21] ingest | Decouple Agent Memory (`memory-wiki/**` & `HANDOFF.md`) from Worktree GitOps (`v0.8.1`–`v0.8.2`, #101–#102)
+- Decoupled Agent Memory state (`memory-wiki/**` and `HANDOFF.md`) from application code worktree GitOps in `AGENTS.md` (§6, §8, §9), `joshua_os/joshua_os_docs/PERSISTENT_WIKI.md`, and `joshua_os/joshua_os_docs/HANDOFF_PROTOCOL.md` (#101).
 - Configured `/aim-memory-wiki` across `aim-skill-library` (`skills/` and `vessels/agy/skills/`, commit `08511ae`) as a fast (~15s), autonomous mid-session "Save Game" checkpoint that commits and pushes `memory-wiki/` directly to `origin/main` (`git add memory-wiki/` + `git pull --rebase --autostash origin main` + `git push origin main`) with zero issues, zero worktrees, and zero confirmation prompts.
 - Added Step 1 **Idempotent Auto-Wiki Delta Check** and single atomic direct-to-`main` push (`git add memory-wiki/ HANDOFF.md`) to `/aim-handoff` across all vessels (`skills/`, `agy`, `grok`, `codex`, `opencode`).
 - Fixed `bootstrap_brain.py` (`foundation_targets`) to index `os.path.join(PROJECT_ROOT, "memory-wiki", "**", "*.md")` with file deduplication, and expanded `pytest` coverage to `33/33` passing tests.
+- Aligned all remaining repository and wiki documentation (`COGNITIVE_ARCHITECTURE.md`, `GAMEPLAN_SOP.md`, `GITOPS_DEPLOYMENT.md`, `AIM_CLI_TOOLS.md`, `AGENTS_AMENDMENT_PROTOCOL.md`, `README.md`, `CONTRIBUTING.md`, `pages/active-memory-protocol.md`, `pages/operations.md`, and `pages/architecture.md`) with the direct-to-`main` memory state exemption and `/aim-handoff` Auto-Wiki Delta architecture (`v0.8.2`, #102, commit `cc9d13c0`).
 
 
