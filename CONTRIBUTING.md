@@ -4,7 +4,7 @@ Welcome to the J.O.S.H.U.A. repository! We strictly enforce a GitOps-based workf
 
 ## The 3-Step GitOps Pipeline
 
-To contribute, you must use our native CLI tools to manage your workflow. **Do not develop directly on `main`**.
+To contribute application code, scripts, or engine configurations, you must use our native CLI tools to manage your workflow. **Do not develop code directly on `main`** *(Note: Agent Memory state in `memory-wiki/**` and `HANDOFF.md` is explicitly exempt and is committed/pushed directly to `origin/main` via `/aim-memory-wiki` and `/aim-handoff`)*.
 
 ### 1. `aim bug` (Report an Issue)
 If you find a bug or want to request a feature, use the `aim bug` command to create a tracked issue on the GitHub board.

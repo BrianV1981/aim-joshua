@@ -2,9 +2,9 @@
 
 This document defines the strict version control protocols that all A.I.M. agents must follow. To prevent autonomous agents from destroying the `main` branch or generating complex merge conflicts, A.I.M. enforces an "Atomic Deployment" architecture via specialized CLI commands.
 
-## 1. The Prime Directive
-**AI agents are strictly forbidden from executing raw `git commit` or `git push` commands.** 
-Every single bug fix, feature, or documentation update must be deployed immediately using the A.I.M. GitOps wrapper commands.
+## 1. The Prime Directive & Agent Memory Exemption
+*   **Application Code, Configs & Scripts:** AI agents must never develop code directly on `main`. Every bug fix, feature, or engine documentation update must be deployed through the isolated worktree pipeline (`aim bug` → `aim fix <id>` → `aim push` → `aim promote`).
+*   **Agent Memory Exemption (`memory-wiki/**` & `HANDOFF.md`):** Living OS memory state (`memory-wiki/**` and `HANDOFF.md`) is explicitly exempt from GitHub Issues and worktrees. When running `/aim-memory-wiki` (mid-session checkpoint) or `/aim-handoff` (end-of-session closeout), agents stage **only** the explicit memory paths (`git add memory-wiki/` and/or `git add HANDOFF.md` — strictly forbidding `git add .` or `git commit -a`), commit, run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero Operator confirmation prompts.
 
 ## 2. The Deployment Pipeline
 

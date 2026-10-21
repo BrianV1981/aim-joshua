@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.2] - 2026-10-21
+- Fix: align joshua_os_docs, README.md, CONTRIBUTING.md, and memory-wiki pages with direct-to-main memory state (Closes #102)
+
+
 ## [v0.8.1] - 2026-10-21
 - Fix: decouple memory-wiki and HANDOFF.md from worktree GitOps (Closes #101)
 

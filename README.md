@@ -77,8 +77,8 @@ J.O.S.H.U.A. provides a massive suite of tools to control, manage, and scale you
 *   **Headless Deployment:** Co-agents can be deployed securely into localized project repositories via the `install-agent.sh` Sovereign Node installer.
 *   **Embedded Local Memory:** The RAG database (LanceDB) is stored locally. In sandboxed mode, memory is strictly tenant-specific.
 *   **CLI-Agnostic Skill Injection:** Decoupled from any specific CLI. Tool parsing is modularized via the `aim-skill-library`.
-*   **GitOps Enforcement:** Agents must create issues, branch out, and deploy atomically.
-*   **Ephemeral Context Handoffs:** When the context window fills up, the `aim-handoff` skill automatically captures tactical state and teleports the context to a fresh vessel via `tmux`.
+*   **GitOps Enforcement (with Memory-State Exemption):** Application code and configuration changes strictly require GitHub Issues and isolated `workspace/issue-<id>` worktrees (`./aim fix` → TDD → `./aim promote`), while living Agent Memory (`memory-wiki/**` and `HANDOFF.md`) commits and pushes directly to `origin/main` with zero prompts.
+*   **Autonomous Memory Wiki & One-Command Handoffs:** `/aim-memory-wiki` runs as a ~15-second mid-session "Save Game" checkpoint directly to `main`, and `/aim-handoff` automatically checks `memory-wiki/log.md` for unlogged session deltas, surgically updates `HANDOFF.md` (`0–9` template), pushes both to `origin/main` in a single atomic commit, and optionally passes the baton to a fresh vessel via `tmux`.
 *   **Anti-Drift Shield:** A background hook continuously tracks autonomous tool calls.
 
 ---

@@ -8,10 +8,10 @@ If you are tasked with amending, adding, or modifying any rule inside the global
 If you fail to do this, newly spawned agents will operate with an outdated understanding of the system, and will hallucinate rules that no longer exist.
 
 ## The Protocol
-Whenever `AGENTS.md` is updated, you must execute the following command to completely wipe and rebuild the `memory_lance` vector database:
+Whenever `AGENTS.md` (or `memory-wiki/` / `joshua_os_docs/`) is updated, you must execute the following command to re-embed and rebuild the `memory_lance` vector and FTS index:
 
 ```bash
-python3 .aim_core/bootstrap_brain.py --clean
+./aim index
 ```
 
-This ensures the new constraints and amendments inside `AGENTS.md` are correctly vectorized, chunked, and indexed via Tantivy FTS, making them immediately available to the Hybrid Search Engine.
+This ensures the new constraints and amendments inside `AGENTS.md` and `memory-wiki/` are immediately vectorized, chunked, and indexed via Tantivy FTS for the Hybrid Search Engine (`search_lancedb` MCP and `./aim search`).

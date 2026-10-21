@@ -3,11 +3,12 @@
 ## The OS Framework
 J.O.S.H.U.A. is a CLI-agnostic operating system designed to serve as the foundational brain for autonomous AI agents. The framework has entirely decoupled from legacy "CLI vessels" (e.g., aim-grok, aim-opencode). 
 
-## Memory Synthesis
-The system utilizes a Just-In-Time (JIT) memory synthesis approach. 
+## Memory Synthesis & Direct-to-`main` State (#101)
+The system utilizes a Just-In-Time (JIT) memory synthesis approach where Agent Memory (`memory-wiki/**` and `HANDOFF.md`) is treated as living OS state exempt from code worktree GitOps:
 - The legacy `_ingest/` drop zone and background `session_summarizer.py` daemons have been abolished. 
-- Instead, Conscious Agents invoke the `aim-memory-wiki` skill synchronously to synthesize recent architectural changes and natively edit this persistent markdown wiki.
-- During system boot, the wiki is embedded directly into the `memory_lance` LanceDB RAM pool.
+- **Mid-Session "Save Game" (`/aim-memory-wiki`):** Conscious Agents invoke `aim-memory-wiki` synchronously to synthesize recent architectural changes into `memory-wiki/`, run `./aim index`, and push directly to `origin/main` (`git add memory-wiki/` + `git pull --rebase --autostash origin main` + `git push origin main`) with zero issues, zero worktrees, and zero prompts.
+- **One-Command Closeout (`/aim-handoff`):** At session closeout, `aim-handoff` performs an **Idempotent Auto-Wiki Delta Check** on `memory-wiki/log.md` (automatically updating `memory-wiki/` first if unlogged session work occurred), surgically updates `HANDOFF.md` (`0–9` template), and pushes both `memory-wiki/` and `HANDOFF.md` to `origin/main` in a single atomic commit.
+- During system boot or `./aim index`, the root `PROJECT_ROOT/memory-wiki/` and `AIM_ROOT/joshua_os_docs/` are embedded directly into the `memory_lance` LanceDB RAM pool.
 
 ### The Ingestion Engine (`bootstrap_brain.py`)
 The primary vector ingestion engine has been hardened against configuration drift. It correctly recursively parses (`**/*.md`) both the `memory-wiki/` and `joshua_os_docs/` trees to ensure zero blindspots during bootstrapping. Agents can trigger this explicitly by calling `aim index`.

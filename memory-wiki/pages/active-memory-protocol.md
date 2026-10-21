@@ -11,10 +11,8 @@ On July 26, 2026, the architecture was drastically simplified:
 
 This returns agency to the operator and drastically increases the signal-to-noise ratio in the persistent long-term memory.
 
-## GitOps Enforcement
-When maintaining the wiki via the `aim-memory-wiki` skill, agents are strictly mandated to follow a GitOps workflow:
-1. Open an Issue outlining the architectural update.
-2. Branch out into an isolated worktree using `aim fix <issue_id>`.
-3. Update the `memory-wiki/` repository within the isolated branch.
-4. Clean up and promote the branch securely via `aim promote`.
-Under no circumstances should the wiki be updated directly on the `main` branch.
+## Direct-to-`main` Memory State Exemption (#101)
+`memory-wiki/**` and `HANDOFF.md` are living OS memory state, **not** application code, and are explicitly exempt from GitHub Issues and `workspace/issue-*` worktrees:
+1. **Mid-Session Checkpoint (`/aim-memory-wiki`):** Runs as a fast (~15s), autonomous "Save Game" checkpoint directly in the root repository — updating `memory-wiki/index.md`, `memory-wiki/log.md`, and `memory-wiki/pages/*.md`, running `./aim index` if LanceDB is active, and pushing directly to `origin/main` (`git add memory-wiki/` + `git pull --rebase --autostash origin main` + `git push origin main`) with zero issues, zero worktrees, and zero confirmation prompts.
+2. **End-of-Session Closeout (`/aim-handoff`):** Performs an **Idempotent Auto-Wiki Delta Check** first (inspecting `memory-wiki/log.md` and automatically updating `memory-wiki/` if unlogged session work occurred), surgically updates `HANDOFF.md` (`0–9` template), and pushes both `memory-wiki/` and `HANDOFF.md` directly to `origin/main` in a single atomic commit (`git add memory-wiki/ HANDOFF.md`) with zero prompts.
+3. **Surgical Path-Scoped Staging Only:** Agents must never run `git add .` or `git commit -a` when committing memory state — only `git add memory-wiki/` and/or `git add HANDOFF.md`.

@@ -2,7 +2,8 @@
 
 ## Parallel Execution & GitOps
 J.O.S.H.U.A. enforces a highly parallel GitOps execution model, heavily formalized in `CONTRIBUTING.md`:
-- Agents must NOT code on the `main` branch. They use `aim fix <issue_id>` to spawn physically isolated `git worktree` sandboxes.
+- Agents must NOT develop application code on the `main` branch. They use `aim fix <issue_id>` to spawn physically isolated `git worktree` sandboxes.
+- **Agent Memory Exemption (#101):** Living OS memory state (`memory-wiki/**` and `HANDOFF.md`) is explicitly exempt from GitHub Issues and worktrees. Both `/aim-memory-wiki` (mid-session checkpoint) and `/aim-handoff` (end-of-session closeout with Auto-Wiki Delta Check) stage only the explicit memory paths (`git add memory-wiki/` and/or `git add HANDOFF.md`), commit, run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero Operator confirmation prompts.
 - The agent workspace loop uses `aim push "<msg>"` (implemented in pure Python via `git_push_changes` in `aim_cli.py`) to commit and push changes within the worktree. By default, `aim push` stages tracked changes (`git add -u`) and emits a `[NOTICE]` on `stderr` if untracked files are detected; pass `--include-untracked` (`-a`) or run `git add <file>` to stage new files.
 - Native cross-platform entrypoints (`./aim` for Bash, `aim.ps1` for PowerShell, and `aim.cmd` for Windows CMD) resolve both Unix (`venv/bin/python3`) and Windows (`venv\Scripts\python.exe`) virtual environments.
 - The atomic release process utilizes `aim promote` to safely archive `main`, merge the active worktree branch, deploy the final baseline to GitHub, and destroy the local workspace sandbox.

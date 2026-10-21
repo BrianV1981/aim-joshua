@@ -34,12 +34,14 @@ A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21).
 ## 3. Cognitive Teleportation & Checkpoints
 Long-running sessions experience context collapse (hallucinations) past 30% utilization.
 
+*   **`aim-memory-wiki` (Skill — Mid-Session "Save Game")**
+    *   *Usage:* Fast (~15s), autonomous mid-session checkpoint that synthesizes recent decisions into `memory-wiki/` (`index.md`, `log.md`, `pages/*.md`), runs `./aim index` if LanceDB is active, and pushes `memory-wiki/` directly to `origin/main` (`git add memory-wiki/` + `git pull --rebase --autostash origin main` + `git push origin main`) with zero issues, zero worktrees, and zero prompts.
 *   **`aim <vessel>-blackbox --session-id <uuid>`** (e.g., `aim agy-blackbox`)
     *   *Usage:* Extracts raw flight records and seals the session into the immutable Blackbox Vault.
     *   *Rule:* Must be executed before terminating a vessel to prevent amnesia.
-*   **`aim-handoff` (Skill)**
-    *   *Usage:* Teleports your active context, current intent, and task list to a fresh, unburdened agent session via a Tmux baton pass.
-    *   *Rule:* Execute this command the moment you feel lost, have completed a major task, or start thrashing. Do not overstay your welcome in a single terminal session.
+*   **`aim-handoff` (Skill — End-of-Session Closeout)**
+    *   *Usage:* Performs an **Idempotent Auto-Wiki Delta Check** on `memory-wiki/log.md` (automatically updating `memory-wiki/` first if unlogged session work occurred), surgically updates `HANDOFF.md` (`0–9` template), pushes both `memory-wiki/` and `HANDOFF.md` directly to `origin/main` in a single atomic commit with zero prompts, and optionally teleports context to a fresh agent session via Tmux.
+    *   *Rule:* Execute this command at session closeout or the moment context pressure builds.
 
 ## 4. The DataJack Swarm (Skill Injection)
 DataJack allows the instant injection of massive frameworks and cross-project knowledge via native Apache Arrow Parquet cartridges.
@@ -50,5 +52,5 @@ DataJack allows the instant injection of massive frameworks and cross-project kn
     *   *Usage:* Compiles raw markdown or text documentation into a highly compressed Parquet skill cartridge.
 
 ## 5. System Management
-*   **`aim update engine`**: Safely pulls the latest A.I.M. OS updates from GitHub without wiping your local LanceDB memory.
+*   **`aim update [--source <dir>] [--skip-deps]`**: Safely pulls the latest A.I.M. OS engine updates without overwriting tenant `AGENTS.md`, `TOOLS.md`, `memory-wiki/`, `CONFIG.json`, or local LanceDB memory.
 *   **`aim audit`**: Audits recent history to generate a Weekly Sitrep.

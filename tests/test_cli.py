@@ -315,6 +315,21 @@ def test_agent_memory_exemption_and_handoff_protocol_docs():
     assert "Idempotent Auto-Wiki Delta Check" in handoff_doc
     assert "git add memory-wiki/ HANDOFF.md" in handoff_doc
 
+    with open("memory-wiki/pages/active-memory-protocol.md", "r", encoding="utf-8") as f:
+        active_mem = f.read()
+    assert "Direct-to-`main` Memory State Exemption" in active_mem
+    assert "Under no circumstances should the wiki be updated directly on the `main` branch" not in active_mem
+
+    with open("joshua_os/joshua_os_docs/COGNITIVE_ARCHITECTURE.md", "r", encoding="utf-8") as f:
+        cog_arch = f.read()
+    assert "Idempotent Auto-Wiki Delta Check" in cog_arch
+    assert "REINCARNATION_GAMEPLAN.md" not in cog_arch
+
+    with open("joshua_os/joshua_os_docs/GITOPS_DEPLOYMENT.md", "r", encoding="utf-8") as f:
+        gitops_doc = f.read()
+    assert "Agent Memory Exemption" in gitops_doc
+
+
 
 
 
