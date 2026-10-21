@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.1] - 2026-10-21
+- Fix: decouple memory-wiki and HANDOFF.md from worktree GitOps (Closes #101)
+
+
 ## [v0.8.0] - 2026-10-20
 - Feature: Add Windows 10/11 launchers, pure-Python git_push_changes, and dynamic MCP cartridge root (Closes #98, Closes #99)
 

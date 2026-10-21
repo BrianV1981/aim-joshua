@@ -1,11 +1,11 @@
 # Handoff & Retrieval Protocols
 
-## The Handoff Pipeline
-When an agent's context window fills up, or a specific vessel is needed, the agent must undergo an **Agent Handoff** (previously referred to as "Reincarnation").
-1. **Memory Synthesis (`aim-memory-wiki`):** Before sealing the vault, the agent MUST run the `aim-memory-wiki` skill to synchronously extract and document recent architectural context into the memory wiki.
-2. **Blackbox Vault (Forensic Archive):** Before exiting the current session, the agent MUST seal the session into the immutable, Operator-locked blackbox vault by executing a vessel-specific blackbox command (e.g., `aim agy-blackbox --session-id <uuid>`, `aim grok-blackbox`, etc.). This extracts raw session history natively to prevent agent tampering. Operators can diagnose missing keys or the fallback file-key (`~/.aim/blackbox.key`) by running `aim vault doctor`.
-3. **`aim-handoff`:** The agent invokes the `aim-handoff` skill to write a highly structured `HANDOFF.md`.
-4. **Baton Pass:** The agent uses Tmux to spawn the next agent vessel and injects the handoff document directly into its prompt.
+## The Handoff Pipeline & Memory State Exemption
+Agent Memory (`memory-wiki/**` and `HANDOFF.md`) is treated as living OS memory state rather than application code, explicitly exempt from GitHub Issues and `workspace/issue-*` worktrees:
+1. **Mid-Session Checkpoint (`aim-memory-wiki`):** Can be run autonomously mid-session as a ~15-second "Save Game" that updates `memory-wiki/index.md`, `memory-wiki/log.md`, and `memory-wiki/pages/*.md`, runs `./aim index` if LanceDB is active, and pushes directly to `origin/main` (`git add memory-wiki/`, commit, `git pull --rebase --autostash origin main`, `git push origin main`) with zero prompts and without ending the session.
+2. **One-Command Session Closeout (`aim-handoff`):** When ending a session, `aim-handoff` executes an **Idempotent Auto-Wiki Delta Check** first (inspecting `memory-wiki/log.md` and automatically updating `memory-wiki/` if unlogged session work occurred), surgically updates `HANDOFF.md` (`0–9` template), and pushes both `memory-wiki/` and `HANDOFF.md` directly to `origin/main` in a single atomic commit (`git add memory-wiki/ HANDOFF.md`, commit, `git pull --rebase --autostash origin main`, `git push origin main`) with zero confirmation prompts.
+3. **Blackbox Vault (Forensic Archive):** Before exiting the current session, the agent MUST seal the session into the immutable, Operator-locked blackbox vault by executing a vessel-specific blackbox command (e.g., `aim agy-blackbox --session-id <uuid>`, `aim grok-blackbox`, etc.). Operators can diagnose missing keys or the fallback file-key (`~/.aim/blackbox.key`) by running `aim vault doctor`.
+4. **Baton Pass:** If requested, the agent uses Tmux to spawn the next agent vessel and injects the handoff document directly into its prompt.
 
 ## LanceDB Retrieval (Two-Tier Protocol)
 A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21). When an agent needs to retrieve factual knowledge, it must natively act as a retrieval agent using the Two-Tier Protocol:

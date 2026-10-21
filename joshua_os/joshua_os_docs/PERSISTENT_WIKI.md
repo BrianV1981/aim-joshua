@@ -12,9 +12,10 @@ A "Conscious Agent" (the agent the operator is actively using) is responsible fo
 *   **To Read:** Agents query the `memory-wiki/` folder natively or use `aim search`.
 *   **To Write:** Agents must invoke the `aim-memory-wiki` skill. The legacy `_ingest/` Drop Zone and background daemons have been abolished in favor of Just-In-Time (JIT) active-agent synthesis.
 
-## 3. Just-In-Time (JIT) Memory Synthesis
-Wiki maintenance is now handled synchronously by the active agent using the `aim-memory-wiki` skill.
-1.  **The Trigger:** The user invokes the `aim-memory-wiki` skill directly, or the agent determines a critical architectural milestone has been reached.
+## 3. Just-In-Time (JIT) Memory Synthesis (Direct-to-`main` "Save Game")
+Wiki maintenance is handled synchronously by the active agent using the `aim-memory-wiki` skill as a fast, autonomous mid-session checkpoint (or automatically via Step 1 of `aim-handoff` at session closeout):
+1.  **The Trigger:** The user invokes `/aim-memory-wiki` mid-session, or `/aim-handoff` detects unlogged session work in `memory-wiki/log.md`.
 2.  **Synthesis:** The agent synthesizes recent context, extracting tactical takeaways and architectural changes without copying raw transcripts.
 3.  **Surgical Edits:** The agent natively edits `memory-wiki/index.md`, appends an entry to `memory-wiki/log.md`, and surgically modifies or creates markdown files in `memory-wiki/pages/` using standard file edit tools.
-4.  **Vector Ingestion:** The updated wiki is continuously and natively re-embedded into the `memory_lance` RAM pool during the standard bootstrapping process, ensuring the database always reflects the live markdown files.
+4.  **Vector Ingestion:** If LanceDB is active, the agent runs `./aim index` so the `memory_lance` RAM pool immediately reflects the live `memory-wiki/` files.
+5.  **Direct-to-`main` Auto-Push (GitOps Exemption):** Because `memory-wiki/**` and `HANDOFF.md` represent living OS memory state rather than application code, wiki updates **never** open a GitHub Issue or spawn a `workspace/issue-*` worktree. The agent stages only `git add memory-wiki/` (never `git add .` or `git commit -a`), commits (`docs(wiki): ingest <summary>`), runs `git pull --rebase --autostash origin main`, and pushes directly to `origin/main` with zero Operator confirmation prompts.

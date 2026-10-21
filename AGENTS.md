@@ -42,9 +42,10 @@ When you run into ANY type of question, architectural issue, or test failure, yo
 ## 6. THE HANDOFF PIPELINE (BATON PASS)
 You are part of a continuous, multi-agent relay race. When your context window fills up (the "Amnesia Problem") or when a specific vessel is needed, you must execute an **Agent Handoff**.
 - When instructed to perform a handoff, invoke the `aim-handoff` skill from your skill library.
-- You must write a highly structured `HANDOFF.md` detailing the tactical state, execution queue, and next steps.
+- **Idempotent Auto-Wiki Delta Check:** `aim-handoff` automatically inspects `memory-wiki/log.md` first; if session work or architectural decisions occurred since the last `/aim-memory-wiki` checkpoint, it updates `memory-wiki/` automatically before updating `HANDOFF.md`.
+- Surgically update `HANDOFF.md` detailing the tactical state, execution queue, and next steps (`0–9` template), then stage and push both `memory-wiki/` and `HANDOFF.md` directly to `origin/main` (`git add memory-wiki/ HANDOFF.md`, commit, `git pull --rebase --autostash origin main`, `git push origin main`) with zero confirmation prompts.
 - Before exiting, you MUST seal your session into the immutable vault using your vessel-specific blackbox command (e.g. `aim agy-blackbox --session-id <uuid>`).
-- Use Tmux to spawn the next agent vessel and inject the handoff document directly into its prompt.
+- If requested, use Tmux to spawn the next agent vessel and inject the handoff document directly into its prompt.
 
 ## 7. DETACHED EXECUTION PROTOCOL (BACKGROUND ORCHESTRATION)
 A Sovereign OS agent should never paralyze its own primary execution loop by waiting synchronously for long-running tasks. 
@@ -52,9 +53,9 @@ A Sovereign OS agent should never paralyze its own primary execution loop by wai
 
 
 ## 8. THE GITOPS WORKFLOW (WORKTREES)
-You operate in a highly parallel, multi-agent environment. To prevent collisions, you must **never** perform development directly on the `main` branch. 
+You operate in a highly parallel, multi-agent environment. To prevent collisions, you must **never** perform application code development directly on the `main` branch (note: Agent Memory in `memory-wiki/**` and `HANDOFF.md` is explicitly exempt per §9).
 
-1. **Spawning the Sandbox (`aim fix`):** When assigned a task or issue, you must run `aim fix <issue_id>`. This commands the OS to spawn a physically isolated `git worktree` under the `workspace/` directory (e.g., `workspace/issue-42`). You will execute all your coding, testing, and staging exclusively inside this worktree folder.
+1. **Spawning the Sandbox (`aim fix`):** When assigned a code/config task or issue, you must run `aim fix <issue_id>`. This commands the OS to spawn a physically isolated `git worktree` under the `workspace/` directory (e.g., `workspace/issue-42`). You will execute all your coding, testing, and staging exclusively inside this worktree folder.
 2. **Surgical Staging:** Even within your worktree, never use `git add .` blindly. Stage specific files to avoid committing localized test artifacts.
 
 2.5. **The Agentic Gatekeeper (Pre-Flight Checks):** Before staging or promoting, J.O.S.H.U.A. acts as an automated gatekeeper. Ensure all TDD tests pass, code is secure, and architectural mandates from GEMINI.md are validated.
@@ -75,7 +76,7 @@ Config: `AIM_PROJECTS_NUMBER`, `AIM_PROJECTS_OWNER`, optional `AIM_PROJECTS_REPO
 The `memory-wiki/` directory is the persistent, compounding LLM knowledge base. 
 - You MUST explicitly invoke the `aim-memory-wiki` skill to document new architectural decisions, structural discoveries, or major workflow changes.
 - Do not let critical context die with your session. Extract tactical takeaways and integrate them into the wiki index and log before ending your shift.
-- You must follow a strict GitOps workflow when updating the wiki (open an issue, branch out, update, and promote).
+- **Agent Memory Exemption (Direct-to-`main`):** `memory-wiki/` and `HANDOFF.md` are living OS memory state, not application code. Do NOT open a GitHub issue or spawn a worktree for pure wiki/handoff updates. Stage only the explicit memory paths (`git add memory-wiki/` and/or `git add HANDOFF.md` — strictly forbidding `git add .` or `git commit -a`), commit, run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero Operator confirmation prompts.
 
 
 ## 10. PLAIN-TEXT & CLI ASCENDANCY

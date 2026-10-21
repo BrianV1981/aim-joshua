@@ -12,10 +12,18 @@ When an agent's context window fills up, or a specific vessel is needed, the age
 Before exiting the current session, the agent MUST seal the session into the immutable, Operator-locked blackbox vault. This extracts raw session history natively to prevent agents from tampering with or covering up their own mistakes.
 - **Action:** Execute the vessel-specific blackbox command (e.g., `aim agy-blackbox --session-id <uuid>`, `aim grok-blackbox`, etc.).
 
-### 2. The `aim-handoff` Skill
-The agent invokes the `aim-handoff` skill to write a highly structured `HANDOFF.md`.
-- **Prerequisite:** Before initiating the handoff, the agent or operator MUST ensure the `memory-wiki/` is up to date by synchronously running the `aim-memory-wiki` skill. *The legacy `_ingest/` asynchronous background daemons have been abolished in favor of this JIT synchronous synthesis.*
-- **Format:** The `HANDOFF.md` contains the tactical state, local constraints, and immediate next commands for the incoming agent.
+### 2. The `aim-handoff` Skill (One-Command Closeout with Auto-Wiki Delta)
+The agent invokes the `aim-handoff` skill to close out the session in a single turn:
+- **Step 1 — Idempotent Auto-Wiki Delta Check:** Before updating `HANDOFF.md`, the agent inspects `memory-wiki/log.md`. If work or architectural decisions occurred since the last `/aim-memory-wiki` checkpoint (or if `/aim-memory-wiki` was not run during the session), `aim-handoff` automatically synthesizes those updates into `memory-wiki/` first. If `memory-wiki/` is already current for the session, it skips straight to `HANDOFF.md`.
+- **Step 2 — Surgical `HANDOFF.md` Update:** The agent appends completed session work to `§0` and updates `§2` / `§9` for the incoming session using surgical edits (`0–9` gold-standard template).
+- **Step 3 — Single Atomic Push to `main` (Zero Prompts):** Both `memory-wiki/**` and `HANDOFF.md` are living OS memory state exempt from GitHub Issues and worktrees. The agent runs:
+  ```bash
+  git add memory-wiki/ HANDOFF.md
+  git diff --cached --quiet || git commit -m "docs(handoff): update memory-wiki and HANDOFF.md for session closeout"
+  git pull --rebase --autostash origin main
+  git push origin main
+  ```
+  *(Strictly forbidding `git add .` or `git commit -a`, and executing with zero Operator confirmation prompts).*
 
 ### 3. The Baton Pass
 The agent uses Tmux to spawn the next agent vessel and injects the handoff document directly into its prompt.

@@ -35,8 +35,10 @@ def test_bootstrap_foundation_default(mock_exists, mock_walk, mock_backend, mock
     
     bootstrap_foundation()
     
-    # verify that glob was called with recursive=True
+    # verify that glob was called with recursive=True and includes PROJECT_ROOT/memory-wiki
     assert mock_glob.call_args[1].get('recursive') is True
+    globbed_patterns = [call[0][0] for call in mock_glob.call_args_list]
+    assert any(os.path.join("memory-wiki", "**", "*.md") in p and "joshua_os" not in p for p in globbed_patterns)
     
     # verify that index_file was called
     assert mock_index_file.call_count > 0

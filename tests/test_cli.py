@@ -299,6 +299,23 @@ def test_cross_platform_windows_launchers_and_venv_resolution(tmp_path):
         assert resolved == str(win_py)
 
 
+def test_agent_memory_exemption_and_handoff_protocol_docs():
+    with open("AGENTS.md", "r", encoding="utf-8") as f:
+        agents_md = f.read()
+    assert "Agent Memory Exemption (Direct-to-`main`)" in agents_md
+    assert "git pull --rebase --autostash origin main" in agents_md
+    assert "open an issue, branch out, update, and promote" not in agents_md
+
+    with open("joshua_os/joshua_os_docs/PERSISTENT_WIKI.md", "r", encoding="utf-8") as f:
+        wiki_doc = f.read()
+    assert "Direct-to-`main` Auto-Push (GitOps Exemption)" in wiki_doc
+
+    with open("joshua_os/joshua_os_docs/HANDOFF_PROTOCOL.md", "r", encoding="utf-8") as f:
+        handoff_doc = f.read()
+    assert "Idempotent Auto-Wiki Delta Check" in handoff_doc
+    assert "git add memory-wiki/ HANDOFF.md" in handoff_doc
+
+
 
 
 

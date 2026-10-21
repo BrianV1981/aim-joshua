@@ -42,6 +42,7 @@ def bootstrap_foundation(target_dir=None):
     else:
         foundation_targets = [
             os.path.join(PROJECT_ROOT, "AGENTS.md"),
+            os.path.join(PROJECT_ROOT, "memory-wiki", "**", "*.md"),
             os.path.join(AIM_ROOT, "joshua_os_docs", "**", "*.md"),
             os.path.join(AIM_ROOT, "memory-wiki", "**", "*.md"),
         ]
@@ -49,9 +50,13 @@ def bootstrap_foundation(target_dir=None):
         foundry_dir = os.path.join(AIM_ROOT, "foundry")
         
         print("[1/2] Syncing Foundation Knowledge...")
+        seen_files = set()
         for pattern in foundation_targets:
             for file_path in glob.glob(pattern, recursive=True):
-                if "memory/archive" in file_path: continue
+                abs_fp = os.path.abspath(file_path)
+                if abs_fp in seen_files or "memory/archive" in file_path:
+                    continue
+                seen_files.add(abs_fp)
                 new_fragments += index_file(backend, file_path, "foundation_knowledge", ingest_only=False, use_embeddings=embeddings_active)
 
         print("[2/2] Melting down Foundry materials into Engrams...")
