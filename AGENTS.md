@@ -58,7 +58,7 @@ You operate in a highly parallel, multi-agent environment. To prevent collisions
 1. **Spawning the Sandbox (`aim fix`):** When assigned a code/config task or issue, you must run `aim fix <issue_id>`. This commands the OS to spawn a physically isolated `git worktree` under the `workspace/` directory (e.g., `workspace/issue-42`). You will execute all your coding, testing, and staging exclusively inside this worktree folder.
 2. **Surgical Staging:** Even within your worktree, never use `git add .` blindly. Stage specific files to avoid committing localized test artifacts.
 
-2.5. **The Agentic Gatekeeper (Pre-Flight Checks):** Before staging or promoting, J.O.S.H.U.A. acts as an automated gatekeeper. Ensure all TDD tests pass, code is secure, and architectural mandates from GEMINI.md are validated.
+2.5. **The Agentic Gatekeeper (Pre-Flight Checks):** Before staging or promoting, J.O.S.H.U.A. acts as an automated gatekeeper. Ensure all TDD tests pass, code is secure, and architectural mandates from `AGENTS.md` are validated.
 3. **The Teardown (`aim promote`):** Once your code is empirically proven to work, you must run `aim promote` from inside your worktree. This will automatically archive the main branch, safely merge your worktree's branch into main, and cleanly delete your isolated workspace directory.
 
 ## 8b. THE BOARD PROTOCOL (GITHUB PROJECTS)
