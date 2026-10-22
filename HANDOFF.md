@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-21T20:14:00-04:00
+> **Updated:** 2026-10-21T20:35:00-04:00
 > **Updated by:** Antigravity (Session ID: 3078de63-43ae-427e-8e31-f5698043c30a)
-> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.3` Direct-to-`main` Memory State, Onboarding Blueprint Guard & Cross-Platform Engine, `34/34` Pytest, Backlog Clear)
+> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.4` Direct-to-`main` Memory State, Onboarding Blueprint Guard & Cross-Platform Engine, `34/34` Pytest, Backlog Clear)
 > **Operator:** Brian Vasquez (`@BrianV1981`)
 
 ---
@@ -32,6 +32,7 @@
 | 3078de63 | #102: Aligned `COGNITIVE_ARCHITECTURE.md`, `GAMEPLAN_SOP.md`, `GITOPS_DEPLOYMENT.md`, `AIM_CLI_TOOLS.md`, `AGENTS_AMENDMENT_PROTOCOL.md`, `README.md`, `CONTRIBUTING.md`, and `memory-wiki/pages/` with direct-to-`main` memory state (`v0.8.2`, `cc9d13c0`) | ✅ RESOLVED |
 | 3078de63 | Fleet `AGENTS.md` Rollout: Upgraded 22 `AGENTS.md` files across all active `aim-*`, `aim-coagents`, and `aim-agents/*` repos to `v0.8.2` (`git commit --only`, preserving 100% of project domain rules) + deleted stray `/home/kingb/AGENTS.md` | ✅ RESOLVED |
 | 3078de63 | #103: Fixed `aim_init.py` 7-line `AGENTS.md` stub overwrite (`provision_agents_md` + `templates/default_AGENTS.md`), aligned `BOOTSTRAP.md`, added `$1` persona blueprint fetch to `install-agent.sh`, and standardized all 4 `install*.sh` scripts (`v0.8.3`, `4f950fbd`, `34/34` pytest) | ✅ RESOLVED |
+| 3078de63 | #104: Added `README.md` 3-option comparison table & `./aim init` guide, refreshed `default_lance` (`364 KB`, `58` `v0.8.4` fragments), fixed dynamic `LANCE_DB_PATH` binding in `VectorBackend()`, deduplicated `install-clean.sh`, and updated `aim-coagents` installer URLs (`v0.8.4`, `9a5b5cef` / `d5f52a6`) | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
