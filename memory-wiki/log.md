@@ -127,4 +127,11 @@
 - Resolved #103 (`v0.8.3`, commit `4f950fbd`): eliminated the 7-line `AGENTS.md` stub overwrite in `aim_init.py` (`provision_agents_md` + `joshua_os/.aim_core/templates/default_AGENTS.md`), aligned `BOOTSTRAP.md` with the `v0.8.3` `AGENTS.md` schema, added optional persona argument (`$1`) resolution from `aim-coagents` to `install-agent.sh`, standardized all 4 `install*.sh` scripts (`install.sh`, `install-agent.sh`, `install-clean.sh`, `install-core.sh`), and expanded `pytest` coverage to `34/34` passing tests.
 - Resolved #104 (`v0.8.4`, commit `9a5b5cef` & `aim-coagents` commit `d5f52a6`): added the 3-option installation comparison table and Turn-1 / `./aim init` personalization guide to `README.md`, rebuilt `joshua_os/assets/default_lance/` from scratch in a single compact transaction (`364 KB`, `58` fragments containing `v0.8.4` `AGENTS.md` and `joshua_os_docs/`), fixed `VectorBackend.__init__` in `lance_backend.py` to dynamically evaluate `LANCE_DB_PATH` when `path=None`, deduplicated `install-clean.sh` to delegate to `install.sh`, and updated `aim-coagents` (`README.md`, `SKILL.md`, `personas/README.md`) to point to `aim-joshua/main/joshua_os/install-agent.sh`.
 
+## [2026-10-22] ingest | `aim-tbsoftwash-content` Provisioning & Dual Content Co-Agent Blueprints (`content-node` vs. `content-wordpress`)
+- Scrapped the unused `/home/kingb/aim-agents/aim-tbsoftwash-blogger` directory, terminated its `tmux` session, and removed its alias from `~/.bashrc`.
+- Provisioned `/home/kingb/aim-agents/aim-tbsoftwash-content` via `joshua_os/install-agent.sh` (`v0.8.4`), linked `aim-skill-library` skills (`.gemini/skills/`, `.grok/skills/`, and `aim-youtube`), seeded `memory-wiki/pages/content/` and `data/affiliates.json` from `aim-tbsoftwash`, configured `content-vault/{queue,published}` + `scripts/drip_next_article.sh`, and indexed `179` fragments into `joshua_os/memory_lance/`.
+- Codified the two Content Co-Agent Blueprints in `/home/kingb/aim-coagents/blueprints/`:
+  - **`content-node`** (modeled on `aim-ld-content` for Node.js/Next.js Markdown sites with `npm run build` gate).
+  - **`content-wordpress`** (modeled on `aim-tbsoftwash-content` for WordPress PHP sites with Router SEO, zero inline `<style>`, local `1200px` WebP graphics, E-E-A-T auto-schema, and `test_guardrails.py` gate).
+
 
