@@ -28,21 +28,85 @@ VENV_PYTHON = os.path.join(OS_DIR, "venv/bin/python3")
 
 
 
-def _load_wiki_agents_template() -> str:
-    """Single source of truth: templates/memory_wiki_AGENTS.md (lockstep B)."""
-    tpl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "memory_wiki_AGENTS.md")
+def _load_default_agents_template() -> str:
+    """Single source of truth for the full 10-section J.O.S.H.U.A. AGENTS.md blueprint."""
+    tpl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "default_AGENTS.md")
     if os.path.isfile(tpl):
         with open(tpl, "r", encoding="utf-8") as f:
             return f.read()
-    # Fallback if template missing from package
-    return (
-        "<!-- Schema-Version: 1-interim -->\n"
-        "# 🧠 SUB-AGENT DIRECTIVE: WIKI MAINTAINER\n\n"
-        "Read this schema and index.md first.\n"
-    )
+    root_agents = os.path.join(BASE_DIR, "AGENTS.md")
+    if os.path.isfile(root_agents):
+        with open(root_agents, "r", encoding="utf-8") as f:
+            return f.read()
+    return "# 🤖 J.O.S.H.U.A. - Universal Operating System\n"
 
 
-T_WIKI_AGENT = _load_wiki_agents_template()
+def _resolve_persona_blueprint(persona_name: str) -> str | None:
+    """Resolves a Co-Agent persona blueprint from local ~/aim-coagents or GitHub without ever returning a 7-line stub."""
+    safe_name = os.path.basename(persona_name.strip())
+    if not safe_name:
+        return None
+    local_candidates = [
+        os.path.expanduser(f"~/aim-coagents/blueprints/{safe_name}/AGENTS.md"),
+        os.path.join(os.path.dirname(BASE_DIR), "aim-coagents", "blueprints", safe_name, "AGENTS.md"),
+    ]
+    for candidate in local_candidates:
+        if os.path.isfile(candidate):
+            with open(candidate, "r", encoding="utf-8") as f:
+                content = f.read()
+            if len(content.splitlines()) >= 15:
+                return content
+
+    import urllib.request
+    url = f"https://raw.githubusercontent.com/BrianV1981/aim-coagents/main/blueprints/{safe_name}/AGENTS.md"
+    try:
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            if resp.status == 200:
+                content = resp.read().decode("utf-8")
+                if len(content.splitlines()) >= 15:
+                    return content
+    except Exception:
+        pass
+    return None
+
+
+def provision_agents_md(base_dir: str, persona_name: str | None = None) -> str:
+    """Ensures base_dir/AGENTS.md contains a full J.O.S.H.U.A. or Co-Agent blueprint and never a truncated stub."""
+    agents_md_path = os.path.join(base_dir, "AGENTS.md")
+    default_tpl = _load_default_agents_template()
+
+    if persona_name:
+        blueprint = _resolve_persona_blueprint(persona_name)
+        if blueprint:
+            with open(agents_md_path, "w", encoding="utf-8") as f:
+                f.write(blueprint)
+            return "persona_blueprint"
+        # Fallback: preserve existing full AGENTS.md or install full default_AGENTS.md customized with persona designation
+        existing = ""
+        if os.path.isfile(agents_md_path):
+            with open(agents_md_path, "r", encoding="utf-8") as f:
+                existing = f.read()
+        if len(existing.splitlines()) < 15:
+            customized = default_tpl.replace(
+                "- **Designation:** J.O.S.H.U.A.",
+                f"- **Designation:** J.O.S.H.U.A. ({persona_name})",
+                1,
+            )
+            with open(agents_md_path, "w", encoding="utf-8") as f:
+                f.write(customized)
+            return "default_with_persona"
+        return "preserved_existing"
+
+    # Standard init (no persona): restore full default_AGENTS.md if missing or truncated stub (<15 lines)
+    existing = ""
+    if os.path.isfile(agents_md_path):
+        with open(agents_md_path, "r", encoding="utf-8") as f:
+            existing = f.read()
+    if len(existing.splitlines()) < 15:
+        with open(agents_md_path, "w", encoding="utf-8") as f:
+            f.write(default_tpl)
+        return "restored_default"
+    return "preserved_existing"
 
 
 
@@ -213,9 +277,10 @@ def init_workspace(args=None):
     
     # 1. Mechanical Provisioning (Folders & Settings)
     dirs = ["archive/raw", "archive/history", "archive/sync", "archive/cartridges",
-            "continuity/private", "continuity", "workstreams", "hooks", "scripts", "projects", "foundry", ".aim_core", "memory-wiki", "planning-artifacts", "workspace"]
+            "continuity/private", "continuity", "workstreams", "hooks", "scripts", "projects", "foundry", ".aim_core", "planning-artifacts", "workspace"]
     for d in dirs: os.makedirs(os.path.join(OS_DIR, d), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, ".gemini"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "memory-wiki", "pages"), exist_ok=True)
 
     is_light_mode = "--light" in args
     register_hooks(is_light_mode)
@@ -229,7 +294,6 @@ def init_workspace(args=None):
         ".geminiignore": """workspace/
 archive/
 memory_lance/
-memory-wiki/
 foundry/
 planning-artifacts/
 engrams/
@@ -242,30 +306,20 @@ engrams/
   }
 }
 """,
-        f"joshua_os/memory-wiki/.gemini/settings.json": """{
-  "context": {
-    "memoryBoundaryMarkers": ["AGENT.md"],
-    "discoveryMaxDirs": 0,
-    "fileName": ["AGENT.md"],
-    "ignoreGlobal": true
-  }
-}
-""",
-        f"joshua_os/memory-wiki/AGENTS.md": T_WIKI_AGENT,
         "joshua_os/.aim_core/CONFIG.json": json.dumps({
             "agent_identity": {
-                "name": "A.I.M.",
-                "role": "High-context technical lead and sovereign orchestrator.",
+                "name": "J.O.S.H.U.A.",
+                "role": "Universal Operating Agent and Systems Orchestrator.",
                 "version": "1.0.0"
             },
             "paths": {
                 "continuity_dir": os.path.join(OS_DIR, "continuity"),
                 "archive_dir": os.path.join(OS_DIR, "archive"),
                 "memory_dir": os.path.join(OS_DIR, "memory_lance"),
-                "wiki_dir": os.path.join(OS_DIR, "memory-wiki")
+                "wiki_dir": os.path.join(BASE_DIR, "memory-wiki")
             },
             "settings": {
-                "obsidian_vault_path": os.path.join(OS_DIR, "memory-wiki"),
+                "obsidian_vault_path": os.path.join(BASE_DIR, "memory-wiki"),
                 "allowed_root": BASE_DIR
             }
         }, indent=2) + "\n"
@@ -277,30 +331,29 @@ engrams/
         if not os.path.exists(full_path):
             with open(full_path, "w") as f: f.write(content)
 
-    # 1.5. Make A.I.M. OS Invisible (Append to .gitignore)
+    # 1.5. Ensure consumer .gitignore excludes OS exoskeleton (never ignoring memory-wiki/)
     gitignore_path = os.path.join(BASE_DIR, ".gitignore")
-    ignore_entries = "\n# --- A.I.M. OS Exoskeleton ---\n.gemini/\nAGENTS.md\njoshua_os/\n.grok/\n.opencode/\nmemory-wiki/\nworkspace/\n"
+    required_ignores = ["joshua_os/", "aim", "aim.ps1", "aim.cmd", "workspace/", "archive/"]
+    existing_lines = []
     if os.path.exists(gitignore_path):
-        with open(gitignore_path, "r") as f:
-            existing_ignore = f.read()
-        if "--- A.I.M. OS Exoskeleton ---" not in existing_ignore:
-            with open(gitignore_path, "a") as f:
-                f.write(ignore_entries)
-    else:
-        with open(gitignore_path, "w") as f:
-            f.write(ignore_entries.strip() + "\n")
+        with open(gitignore_path, "r", encoding="utf-8") as f:
+            existing_lines = [line.strip() for line in f.splitlines()]
+    missing = [e for e in required_ignores if e not in existing_lines and e.rstrip("/") not in existing_lines]
+    if missing:
+        with open(gitignore_path, "a", encoding="utf-8") as f:
+            if existing_lines and existing_lines[-1] != "":
+                f.write("\n")
+            for entry in missing:
+                f.write(f"{entry}\n")
+
+    # 1.6. Guarantee full AGENTS.md blueprint (never overwrite with a 7-line stub)
+    provision_status = provision_agents_md(BASE_DIR, persona_name=persona_name)
 
     # 2. Spawn the Agentic Interview (Or Headless Setup)
     if not is_interactive:
-        print(f"[SUCCESS] A.I.M. OS Headless Provisioning Complete.")
+        print(f"[SUCCESS] J.O.S.H.U.A. OS Headless Provisioning Complete ({provision_status}).")
         if persona_name:
-            print(f"[*] Downloading Persona Blueprint: {persona_name}")
-            # In a full production setup, this would fetch from aim-coagents
-            agents_md_path = os.path.join(BASE_DIR, "AGENTS.md")
-            persona_content = f"# 🤖 Sovereign Co-Agent: {persona_name.title()}\n\nThis is a headless background node.\n\n## 1. IDENTITY\n- **Role:** Autonomous {persona_name}\n- **Execution Mode:** YOLO\n"
-            with open(agents_md_path, "w") as f:
-                f.write(persona_content)
-            print(f"[SUCCESS] Persona '{persona_name}' linked and ready for autonomous execution.")
+            print(f"[SUCCESS] Persona '{persona_name}' provisioned in AGENTS.md.")
         return
 
     bootstrap_file = os.path.join(OS_DIR, "BOOTSTRAP.md")

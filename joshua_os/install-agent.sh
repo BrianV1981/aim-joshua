@@ -7,6 +7,7 @@ echo "--- J.O.S.H.U.A. SOVEREIGN CO-AGENT INSTALLER ---"
 
 CURRENT_DIR=$(pwd)
 CLI_NAME=$(basename "$CURRENT_DIR")
+PERSONA_NAME="${1:-}"
 
 if [ "$CURRENT_DIR" = "$HOME" ] || [ "$CURRENT_DIR" = "/" ]; then
     echo "[ERROR] Refusing to install directly in $CURRENT_DIR."
@@ -34,8 +35,23 @@ rm -rf joshua_os/tests/ joshua_os/benchmarks/ joshua_os/docs/ joshua_os/skills/
 
 cp -a joshua_os ../
 
+if [ -n "$PERSONA_NAME" ]; then
+    echo "    [*] Resolving Co-Agent Persona Blueprint: $PERSONA_NAME..."
+    if [ -f "$HOME/aim-coagents/blueprints/$PERSONA_NAME/AGENTS.md" ]; then
+        cp -n "$HOME/aim-coagents/blueprints/$PERSONA_NAME/AGENTS.md" ../AGENTS.md 2>/dev/null || true
+        [ -f "$HOME/aim-coagents/blueprints/$PERSONA_NAME/TOOLS.md" ] && cp -n "$HOME/aim-coagents/blueprints/$PERSONA_NAME/TOOLS.md" ../TOOLS.md 2>/dev/null || true
+    elif curl -fsSL "https://raw.githubusercontent.com/BrianV1981/aim-coagents/main/blueprints/$PERSONA_NAME/AGENTS.md" -o .persona_AGENTS.md 2>/dev/null && [ "$(wc -l < .persona_AGENTS.md)" -ge 15 ]; then
+        cp -n .persona_AGENTS.md ../AGENTS.md 2>/dev/null || true
+        curl -fsSL "https://raw.githubusercontent.com/BrianV1981/aim-coagents/main/blueprints/$PERSONA_NAME/TOOLS.md" -o .persona_TOOLS.md 2>/dev/null && cp -n .persona_TOOLS.md ../TOOLS.md 2>/dev/null || true
+    else
+        echo "    [!] Persona '$PERSONA_NAME' not found in aim-coagents; falling back to default J.O.S.H.U.A. AGENTS.md blueprint."
+    fi
+fi
+
 cp -n AGENTS.md ../ 2>/dev/null || true
 cp -n TOOLS.md ../ 2>/dev/null || true
+cp -n aim.ps1 ../ 2>/dev/null || true
+cp -n aim.cmd ../ 2>/dev/null || true
 
 cd ..
 rm -rf .aim_temp_clone
@@ -46,12 +62,16 @@ fi
 
 # Ensure J.O.S.H.U.A. OS exoskeleton is gitignored in consumer projects
 touch .gitignore
-for entry in "joshua_os/" "aim" "workspace/" "archive/"; do
+for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do
     base="${entry%/}"
     if ! grep -qxE "/?${base}(/|/\*)?" .gitignore 2>/dev/null; then
         echo "$entry" >> .gitignore
     fi
 done
+
+mkdir -p memory-wiki/pages
+[ ! -f memory-wiki/index.md ] && printf "# %s — Memory Wiki Index\n\n## Core Pages\n" "$CLI_NAME" > memory-wiki/index.md
+[ ! -f memory-wiki/log.md ] && printf "# %s — Memory Wiki Log\n" "$CLI_NAME" > memory-wiki/log.md
 
 [ ! -f README.md ] && echo "# My JOSHUA Project" > README.md
 

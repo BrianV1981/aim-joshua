@@ -203,9 +203,10 @@ def test_installers_have_home_guard_and_clean_readme_onboarding():
     assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_sh
     assert "cp -a joshua_os ../" in install_sh
     assert "cp -a * ../" not in install_sh
-    assert 'for entry in "joshua_os/" "aim" "workspace/" "archive/"; do' in install_sh
+    assert 'for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do' in install_sh
     assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_agent_sh
-    assert 'for entry in "joshua_os/" "aim" "workspace/" "archive/"; do' in install_agent_sh
+    assert 'PERSONA_NAME="${1:-}"' in install_agent_sh
+    assert 'for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do' in install_agent_sh
     assert "mkdir -p ~/my-project && cd ~/my-project" in readme
     assert "Customizing J.O.S.H.U.A. for Your New Project" in readme
 
@@ -328,6 +329,47 @@ def test_agent_memory_exemption_and_handoff_protocol_docs():
     with open("joshua_os/joshua_os_docs/GITOPS_DEPLOYMENT.md", "r", encoding="utf-8") as f:
         gitops_doc = f.read()
     assert "Agent Memory Exemption" in gitops_doc
+
+
+def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
+    import sys
+    from unittest.mock import patch
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import aim_init
+
+    # 1. Template parity check: default_AGENTS.md matches root AGENTS.md
+    with open("AGENTS.md", "r", encoding="utf-8") as f:
+        root_agents = f.read()
+    with open("joshua_os/.aim_core/templates/default_AGENTS.md", "r", encoding="utf-8") as f:
+        tpl_agents = f.read()
+    assert root_agents == tpl_agents
+
+    # 2. Restores full 10-section AGENTS.md when missing or truncated stub (<15 lines)
+    stub_file = tmp_path / "AGENTS.md"
+    stub_file.write_text("# 🤖 Sovereign Co-Agent: Test\n\nThis is a headless background node.\n", encoding="utf-8")
+    status = aim_init.provision_agents_md(str(tmp_path), persona_name=None)
+    assert status == "restored_default"
+    restored = stub_file.read_text(encoding="utf-8")
+    assert len(restored.splitlines()) >= 80
+    assert "## 9. THE MEMORY WIKI (PERSISTENT KNOWLEDGE)" in restored
+    assert "Agent Memory Exemption (Direct-to-`main`)" in restored
+
+    # 3. Unknown persona never overwrites a full AGENTS.md with a 7-line stub
+    with patch.object(aim_init, "_resolve_persona_blueprint", return_value=None):
+        status2 = aim_init.provision_agents_md(str(tmp_path), persona_name="nonexistent-persona")
+        assert status2 == "preserved_existing"
+        assert len(stub_file.read_text(encoding="utf-8").splitlines()) >= 80
+
+    # 4. BOOTSTRAP.md and installers are aligned with v0.8.3 AGENTS.md
+    with open("joshua_os/BOOTSTRAP.md", "r", encoding="utf-8") as f:
+        bootstrap_md = f.read()
+    assert "- **Operator Name:**" in bootstrap_md
+    assert "Reincarnation Pipeline" not in bootstrap_md
+    assert "NEVER overwrite the file with `write_file`" in bootstrap_md
+
 
 
 

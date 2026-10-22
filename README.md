@@ -25,11 +25,11 @@ my-project doctor
 ```
 
 ### Option B: Headless Co-Agent (Sovereign Node)
-Deploys a stripped-down, headless Sovereign Co-Agent node (ideal for specialist peers under `~/aim-agents/<node-name>` paired with a blueprint from `aim-coagents`).
+Deploys a stripped-down, headless Sovereign Co-Agent node (ideal for specialist peers under `~/aim-agents/<node-name>` paired with a blueprint from `aim-coagents`). Pass an optional persona name (`python-developer`, `aim-auditor`, `lead-analyst`, etc.) to pull that specialist `AGENTS.md` blueprint automatically, or omit it to use the default 10-section J.O.S.H.U.A. `AGENTS.md`.
 
 ```bash
 mkdir -p ~/aim-agents/my-agent && cd ~/aim-agents/my-agent
-curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash -s python-developer
 source ~/.bashrc
 my-agent doctor
 ```

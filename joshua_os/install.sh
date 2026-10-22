@@ -32,6 +32,8 @@ rm -rf joshua_os/tests/ joshua_os/benchmarks/ joshua_os/memory-wiki/
 cp -a joshua_os ../
 cp -n AGENTS.md ../ 2>/dev/null || true
 cp -n TOOLS.md ../ 2>/dev/null || true
+cp -n aim.ps1 ../ 2>/dev/null || true
+cp -n aim.cmd ../ 2>/dev/null || true
 
 cd ..
 rm -rf .aim_temp_clone
@@ -42,12 +44,16 @@ fi
 
 # Ensure J.O.S.H.U.A. OS exoskeleton is gitignored in consumer projects
 touch .gitignore
-for entry in "joshua_os/" "aim" "workspace/" "archive/"; do
+for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do
     base="${entry%/}"
     if ! grep -qxE "/?${base}(/|/\*)?" .gitignore 2>/dev/null; then
         echo "$entry" >> .gitignore
     fi
 done
+
+mkdir -p memory-wiki/pages
+[ ! -f memory-wiki/index.md ] && printf "# %s — Memory Wiki Index\n\n## Core Pages\n" "$CLI_NAME" > memory-wiki/index.md
+[ ! -f memory-wiki/log.md ] && printf "# %s — Memory Wiki Log\n" "$CLI_NAME" > memory-wiki/log.md
 
 [ ! -f README.md ] && echo "# $CLI_NAME" > README.md
 
