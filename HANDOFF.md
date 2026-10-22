@@ -1,6 +1,6 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-21T20:35:00-04:00
+> **Updated:** 2026-10-21T22:22:00-04:00
 > **Updated by:** Antigravity (Session ID: 3078de63-43ae-427e-8e31-f5698043c30a)
 > **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.4` Direct-to-`main` Memory State, Onboarding Blueprint Guard & Cross-Platform Engine, `34/34` Pytest, Backlog Clear)
 > **Operator:** Brian Vasquez (`@BrianV1981`)
@@ -92,6 +92,7 @@ Follow strict GitOps workflow for any future tasks:
 - **The Audit Protocol:** Do not close issues or claim success if the GitHub Actions smoke test is red.
 - **The Untracked File Safeguard:** `cmd_push` (`git_push_changes()` in `aim_cli.py`) runs `git add -u` by default for surgical safety, emits a `[NOTICE]` warning on `stderr` if untracked files exist, and supports `aim push --include-untracked "msg"` (or `-a`) or manual `git add <file>` before `aim push`.
 - **Consumer `.gitignore` & Atomic Launcher Replacement:** Downstream consumer projects must never track `joshua_os/` or root launchers (`aim`, `aim.ps1`, `aim.cmd`) in Git (`ensure_consumer_gitignore` in `aim_cli.py` and `install.sh` enforce this automatically). When updating launchers inside `cmd_update`, always use atomic `os.replace(tmp_file, dst_file)` rather than `shutil.copy2` so running `/bin/bash ./aim update` processes do not suffer inode byte-offset shifts.
+- **Onboarding `AGENTS.md` Protection (`#103`–`#104`):** `aim_init.provision_agents_md()` (`joshua_os/.aim_core/aim_init.py`) and `joshua_os/.aim_core/templates/default_AGENTS.md` must stay in lockstep with the root `AGENTS.md` (`test_aim_init_never_truncates_agents_md_to_stub` in `tests/test_cli.py` enforces exact equality). Never allow any onboarding or init script to overwrite `AGENTS.md` with a stub.
 - **Legacy `aim-agy_os/` Migration Sequence:** When migrating legacy `aim-agy_os/` repos to `joshua_os/`, copy the updated `joshua_os/.aim_core/config_utils.py` *before* running `./aim update` so `find_project_root()` does not walk up to `~/aim-agy_os`.
 
 ---
@@ -102,7 +103,7 @@ Follow strict GitOps workflow for any future tasks:
 - `/home/kingb/aim-joshua/memory-wiki/`
 - `/home/kingb/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `/home/kingb/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `/home/kingb/aim-joshua/tests/` (`33/33` Pytest Coverage)
+- `/home/kingb/aim-joshua/tests/` (`34/34` Pytest Coverage)
 - `/home/kingb/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---
