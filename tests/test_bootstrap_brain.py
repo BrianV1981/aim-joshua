@@ -35,13 +35,23 @@ def test_bootstrap_foundation_default(mock_exists, mock_walk, mock_backend, mock
     
     bootstrap_foundation()
     
-    # verify that glob was called with recursive=True and includes PROJECT_ROOT/memory-wiki
+    # verify that glob was called with recursive=True and includes PROJECT_ROOT/memory-wiki and artifacts/AUDIT_*.md
     assert mock_glob.call_args[1].get('recursive') is True
     globbed_patterns = [call[0][0] for call in mock_glob.call_args_list]
     assert any(os.path.join("memory-wiki", "**", "*.md") in p and "joshua_os" not in p for p in globbed_patterns)
+    assert any(os.path.join("artifacts", "AUDIT_*.md") in p for p in globbed_patterns)
     
     # verify that index_file was called
     assert mock_index_file.call_count > 0
+
+def test_local_ollama_uses_fast_connect_timeout():
+    from plugins.datajack import forensic_utils
+    with patch.object(forensic_utils, "PROVIDER_TYPE", "local"), \
+         patch.object(forensic_utils.requests, "post") as mock_post:
+        mock_post.side_effect = forensic_utils.requests.exceptions.ConnectionError("refused")
+        res = forensic_utils.get_embedding("test query")
+        assert res is None
+        assert mock_post.call_args[1].get("timeout") == (0.5, 15)
 
 @patch("bootstrap_brain.index_file")
 @patch("bootstrap_brain.verify_embedding_engine")

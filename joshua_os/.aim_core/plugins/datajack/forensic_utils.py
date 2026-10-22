@@ -110,7 +110,7 @@ def get_embedding(text, task_type='RETRIEVAL_DOCUMENT'):
         for attempt in range(max_retries):
             try:
                 payload = { "model": PROVIDER_MODEL, "prompt": text }
-                response = requests.post(PROVIDER_ENDPOINT, json=payload, timeout=15)
+                response = requests.post(PROVIDER_ENDPOINT, json=payload, timeout=(0.5, 15))
                 response.raise_for_status()
                 return response.json().get('embedding')
             except Exception as e:

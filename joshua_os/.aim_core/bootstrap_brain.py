@@ -42,6 +42,7 @@ def bootstrap_foundation(target_dir=None):
     else:
         foundation_targets = [
             os.path.join(PROJECT_ROOT, "AGENTS.md"),
+            os.path.join(PROJECT_ROOT, "artifacts", "AUDIT_*.md"),
             os.path.join(PROJECT_ROOT, "memory-wiki", "**", "*.md"),
             os.path.join(AIM_ROOT, "joshua_os_docs", "**", "*.md"),
             os.path.join(AIM_ROOT, "memory-wiki", "**", "*.md"),
