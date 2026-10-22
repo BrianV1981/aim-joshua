@@ -363,12 +363,31 @@ def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
         assert status2 == "preserved_existing"
         assert len(stub_file.read_text(encoding="utf-8").splitlines()) >= 80
 
-    # 4. BOOTSTRAP.md and installers are aligned with v0.8.3 AGENTS.md
+    # 4. BOOTSTRAP.md and installers are aligned with v0.8.4 AGENTS.md
     with open("joshua_os/BOOTSTRAP.md", "r", encoding="utf-8") as f:
         bootstrap_md = f.read()
     assert "- **Operator Name:**" in bootstrap_md
     assert "Reincarnation Pipeline" not in bootstrap_md
     assert "NEVER overwrite the file with `write_file`" in bootstrap_md
+
+    with open("joshua_os/install-clean.sh", "r", encoding="utf-8") as f:
+        install_clean_sh = f.read()
+    assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_clean_sh
+    assert 'exec bash "$SCRIPT_DIR/install.sh"' in install_clean_sh
+
+    with open("README.md", "r", encoding="utf-8") as f:
+        readme_md = f.read()
+    assert "| **Option A (Default)** | `joshua_os/install.sh` |" in readme_md
+    assert "Interactive Onboarding Interview (`./aim init`):" in readme_md
+
+    # 5. Pre-baked default_lance contains v0.8.4 AGENTS.md and Direct-to-main rules
+    import lance_backend
+    lance_backend.LANCE_DB_PATH = os.path.abspath("joshua_os/assets/default_lance")
+    vb = lance_backend.VectorBackend()
+    assert vb.path == os.path.abspath("joshua_os/assets/default_lance")
+    hits = vb.search(None, "Agent Memory Exemption", top_k=5)
+    assert len(hits) > 0
+
 
 
 

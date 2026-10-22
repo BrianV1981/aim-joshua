@@ -9,6 +9,12 @@ J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Python 3.10+, Node.js v20+,
 
 > **⚠️ IMPORTANT (Target Directory Rule):** All installers scaffold J.O.S.H.U.A. **directly into your current working directory (`pwd`)** and register a bash CLI alias matching the folder name (`basename $(pwd)`). Always create and `cd` into your target project directory **before** running the installer.
 
+| Option | Installer Script | Best For | `AGENTS.md` Installed | Upstream `.git` / `tests/` |
+|--------|------------------|----------|-----------------------|----------------------------|
+| **Option A (Default)** | `joshua_os/install.sh` | New or existing software projects | Full 10-section J.O.S.H.U.A. `AGENTS.md` (`cp -n`, never overwrites existing) | Stripped (clean project root) |
+| **Option B (Co-Agent)** | `joshua_os/install-agent.sh [persona]` | Specialist peer nodes under `~/aim-agents/<name>` | Specialist blueprint from `aim-coagents` if `[persona]` is passed; otherwise full 10-section `AGENTS.md` | Stripped (isolated node) |
+| **Option C (Contributor)** | `joshua_os/install-core.sh` | Developing the J.O.S.H.U.A. OS engine itself | Upstream `aim-joshua/AGENTS.md` | Preserved (`tests/`, `memory-wiki/`, `.git`) |
+
 ### Option A: Clean Project Installation (Default — New or Existing Projects)
 Installs the `joshua_os/` engine, local `./aim` wrapper, project-specific `memory_lance/` database, `search_lancedb` MCP server, and default `AGENTS.md` / `TOOLS.md` blueprints into your project directory without `aim-joshua` contributor history.
 
@@ -44,7 +50,9 @@ curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_o
 
 ### Customizing J.O.S.H.U.A. for Your New Project
 Once installed in your project directory:
-1. **Customize Identity & Rules (`AGENTS.md`):** Edit `AGENTS.md` (and `TOOLS.md`) in the project root to define your project's domain architecture, tech stack, and specific rules, or copy a specialist blueprint from [`aim-coagents`](https://github.com/BrianV1981/aim-coagents).
+1. **Personalize Identity & Rules (`AGENTS.md`):**
+   - **Automatic Turn-1 Prompt or Direct Edit:** The default `AGENTS.md` includes `- **Operator Name:** [ASK OPERATOR FOR THEIR NAME AND FILL IT IN HERE USING FILE EDIT TOOLS]`, instructing your agent on Turn 1 to ask your name and update `AGENTS.md` in place. You can also edit `AGENTS.md` (and `TOOLS.md`) directly to define your project's domain architecture, tech stack, and specific rules, or copy a specialist blueprint from [`aim-coagents`](https://github.com/BrianV1981/aim-coagents).
+   - **Interactive Onboarding Interview (`./aim init`):** Alternatively, run `./aim init` to launch the interactive Onboarding Architect (`joshua_os/BOOTSTRAP.md`) in a `tmux` session, which interviews you for your Operator Name, tech stack, and mission and updates `AGENTS.md` (`## 1` and `## 11`) while preserving all 10 core OS sections.
 2. **Initialize Project Knowledge (`memory-wiki/` & LanceDB):** Add project documentation in `memory-wiki/` (or any docs folder) and vectorize it into your project's isolated LanceDB database:
    ```bash
    ./aim index

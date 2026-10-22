@@ -110,8 +110,8 @@ class EntityIntersectionReranker(Reranker):
 
 
 class VectorBackend:
-    def __init__(self, path=LANCE_DB_PATH):
-        self.path = path
+    def __init__(self, path=None):
+        self.path = path or LANCE_DB_PATH
         self.db = lancedb.connect(self.path)
         self.table_name = "fragments"
         
@@ -189,7 +189,8 @@ class VectorBackend:
         results = execute_query(table)
         
         # Federated Querying against Parquet ROMs
-        cartridges_dir = os.path.join(AIM_ROOT, "archive", "cartridges")
+        active_root = os.path.dirname(os.path.abspath(self.path)) if self.path else AIM_ROOT
+        cartridges_dir = os.path.join(active_root, "archive", "cartridges")
         if os.path.exists(cartridges_dir):
             import pyarrow.dataset as ds
             import glob
