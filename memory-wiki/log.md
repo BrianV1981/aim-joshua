@@ -133,5 +133,6 @@
 - Codified the two Content Co-Agent Blueprints in `/home/kingb/aim-coagents/blueprints/`:
   - **`content-node`** (modeled on `aim-ld-content` for Node.js/Next.js Markdown sites with `npm run build` gate).
   - **`content-wordpress`** (modeled on `aim-tbsoftwash-content` for WordPress PHP sites with Router SEO, zero inline `<style>`, local `1200px` WebP graphics, E-E-A-T auto-schema, and `test_guardrails.py` gate).
+- Resolved #105 (`4c39858c`, `35/35` `pytest` passing in `14.87s`): changed local Ollama (`127.0.0.1:11434`) `timeout=15` to `timeout=(0.5, 15)` in `forensic_utils.py`, added `os.path.join(PROJECT_ROOT, "artifacts", "AUDIT_*.md")` to `foundation_targets` in `bootstrap_brain.py`, added the 4-point Live Production & Deploy Parity lens to `aim-coagents/personas/aim-auditor/PERSONA.md` (`a644fce`), and upgraded/indexed the 4 inactive `/home/kingb/aim-agents/` nodes (`aim-tbsoftwash-content` `f61bbb4`, `aim-tester` `6525cc1`, `aim-enricher` `f5822d6`, `aim-permits` `75064cc`).
 
 
