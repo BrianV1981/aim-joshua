@@ -337,7 +337,7 @@ engrams/
     existing_lines = []
     if os.path.exists(gitignore_path):
         with open(gitignore_path, "r", encoding="utf-8") as f:
-            existing_lines = [line.strip() for line in f.splitlines()]
+            existing_lines = [line.strip() for line in f.read().splitlines()]
     missing = [e for e in required_ignores if e not in existing_lines and e.rstrip("/") not in existing_lines]
     if missing:
         with open(gitignore_path, "a", encoding="utf-8") as f:

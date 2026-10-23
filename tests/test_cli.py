@@ -389,6 +389,33 @@ def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
     assert len(hits) > 0
 
 
+def test_aim_init_preserves_existing_gitignore(tmp_path, monkeypatch):
+    import sys
+    from unittest.mock import patch
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import aim_init
+
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text("__pycache__/\n~$*.docx\n", encoding="utf-8")
+
+    monkeypatch.setattr(aim_init, "BASE_DIR", str(tmp_path))
+    monkeypatch.setattr(aim_init, "OS_DIR", str(tmp_path / "joshua_os"))
+    with patch.object(aim_init, "register_hooks"):
+        aim_init.init_workspace(["aim_init.py", "--headless"])
+
+    updated = gitignore.read_text(encoding="utf-8").splitlines()
+    assert "__pycache__/" in updated
+    assert "~$*.docx" in updated
+    assert "joshua_os/" in updated
+    assert "aim" in updated
+    assert "workspace/" in updated
+    assert "archive/" in updated
+
+
+
 
 
 

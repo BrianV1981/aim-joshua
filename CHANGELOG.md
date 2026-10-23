@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.5] - 2026-10-23
+- Fix: aim_init.py f.read().splitlines() on existing .gitignore (Closes #107)
+
+
 ## [v0.8.2] - 2026-10-21
 - Fix: align joshua_os_docs, README.md, CONTRIBUTING.md, and memory-wiki pages with direct-to-main memory state (Closes #102)
 
