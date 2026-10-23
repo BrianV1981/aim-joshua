@@ -12,3 +12,4 @@
 - [Native OS Shift](pages/native-os-shift.md): The shift to the native operating system structure.
 - [CI/CD & Testing Architecture](pages/ci-testing.md): The testing and pipeline scaffolding (Pytest, Gitleaks, etc.).
 - [Living Audit Protocol](pages/audit-protocol.md): The A+ acceptance criteria and orchestrator FREEZE mechanics.
+- [Google Oct 1st People-First Content Doctrine](pages/google-oct1-people-first-content.md): First-party non-training data, interactive Main Content (MC) micro-tools, anti-LLM prose filter, and zero scaled templates across Content Co-Agents.

@@ -137,4 +137,16 @@
 - Provisioned `/home/kingb/aim-agents/aim-skorbane-content` (`9a330fc` / `a35dbd8`, `304` LanceDB fragments indexed) via `install-agent.sh content-wordpress` (`v0.8.4`) with `bvasquez@skorbane.com` / `brianv1981@gmail.com` Operator identity, Skorbane WaaS pricing/buyout/territory-ledger doctrine, 5 Golden Rules `.webp` photo standards, and `scripts/drip_next_article.sh` gated by `pytest /home/kingb/aim-skorbane/tests` (`67/67`), and standardized the canonical Operator email list across all 5 `aim-handoff/SKILL.md` files in `aim-skill-library` (`83c5a9e`).
 - Codified the **Hub-and-Spoke `aim-youtube` Co-Agent Delegation Protocol** (`aim-youtube` = Hub/Miner contacted via `aim-communicate` storing transcripts in `/home/kingb/aim-youtube/content_library/<project>/{idea_backlog,raw_transcripts,research_summaries}/`; `invoke_subagent` = strictly for internal subagents like `image-generator`) across `aim-skorbane-content` (`a35dbd8`), `aim-coagents` (`3af01d6`), `aim-skill-library` (`30db021`, also syncing the canonical Linux Tmux `aim-communicate/SKILL.md` and `scripts/tmux_send.sh` into `vessels/agy/skills/aim-communicate/`), and `aim-youtube/docs/AIM_YOUTUBE_SCOPE_SOP.md`.
 
+## [2026-10-23] ingest | Google Oct 1st People-First Content & First-Party Effort Doctrine (#106)
+- Analyzed Google's October 1st rewrite of *Creating Helpful, Reliable, People-First Content* and *Guidance on Generative AI Content* (`qMUAU7E3dCA` transcript + DOJ *U.S. v. Google* `RankEmbed BERT` rater-training exhibits + Matt Kenyon / Lily Ray / Crutchfield / Rilla Labs research).
+- Codified the **6 Non-Negotiable Content Co-Agent Guardrails** across `aim-skill-library` (`aim-mega-article`, `aim-mega-guide`), `aim-coagents` (`blueprints/content-node`, `blueprints/content-wordpress`, `personas/b2b-content-creator`, `personas/tbsoftwash-content-creator`), and the 3 active Content Co-Agents (`aim-ld-content`, `aim-skorbane-content`, `aim-tbsoftwash-content`):
+  1. **First-Party Non-Training Data Injection** (live LeadDeeds SQLite/Sunbiz/DBPR/Permit telemetry, real TBSoftWash chemical/field logs & jobsite photos, live Skorbane TTFB/territory telemetry — eliminating "Meat Proxy" public-transcript remixes).
+  2. **Interactive "Main Content" (MC) Micro-Tools** (embedded calculators, estimators, and interactive selectors to satisfy Google's Effort and Talent/Skill rater pillars).
+  3. **Zero Scaled Templated Pages** (strict uniqueness gate on city geo-mesh pages and the 67-County series).
+  4. **Anti-LLM Prose Filter** (banning formulaic *"It's not X, it's Y"* contrasts, hedging, and AI transition crutches).
+  5. **Real Verifiable Human Bylines & Zero Self-Serving Listicles** (`author: "Brian Vasquez"` / `"Jessica Lakins"` with clickable E-E-A-T bios; zero fake AI personas or `"Best X"` vendor listicles).
+  6. **Critical Metadata (`<title>`, `<meta description>`, `<img alt>`) & Live `HTTP 200` Outbound Citation Fact-Checking**.
+- Created `pages/google-oct1-people-first-content.md` and linked it in `index.md`.
+
+
 
