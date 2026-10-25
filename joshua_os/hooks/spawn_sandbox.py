@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
     
     # Define paths
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # /home/kingb/aim-joshua
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     sandbox_dir = os.path.join(base_dir, "sandboxes", args.tenant_id)
     
     # 1. Create the sandbox directory (Issue 1)

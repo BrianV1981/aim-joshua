@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.6] - 2026-10-24
+- Fix: remove hardcoded /home/kingb comments and add host-path regression test (Closes #108)
+
+
 ## [v0.8.5] - 2026-10-23
 - Fix: aim_init.py f.read().splitlines() on existing .gitignore (Closes #107)
 

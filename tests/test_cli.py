@@ -415,6 +415,17 @@ def test_aim_init_preserves_existing_gitignore(tmp_path, monkeypatch):
     assert "archive/" in updated
 
 
+def test_no_hardcoded_host_paths_in_engine_code():
+    import subprocess
+    res = subprocess.run(
+        ["git", "grep", "-n", "/home/kingb", "--", "joshua_os/", "aim", "aim.ps1", "aim.cmd"],
+        capture_output=True,
+        text=True,
+    )
+    assert res.stdout.strip() == "", f"Found hardcoded host paths in engine code:\n{res.stdout}"
+
+
+
 
 
 

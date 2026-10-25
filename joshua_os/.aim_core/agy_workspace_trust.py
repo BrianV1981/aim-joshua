@@ -150,7 +150,7 @@ def _sync_legacy_trusted_folders(path: str) -> None:
             data = {}
     if not isinstance(data, dict):
         data = {}
-    # TRUST_FOLDER on exact path; keep existing /home/kingb entry
+    # TRUST_FOLDER on exact path; preserve existing home directory entries
     data[str(Path(path).resolve())] = "TRUST_FOLDER"
     LEGACY_TRUSTED.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
