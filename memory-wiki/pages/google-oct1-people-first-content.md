@@ -9,22 +9,21 @@ Sworn DOJ antitrust trial testimony (*U.S. v. Google* — VP of Search Pandu Nay
 
 ## 2. The 6 Non-Negotiable Content Co-Agent Guardrails
 
-All A.I.M. Content Co-Agents (`aim-ld-content`, `aim-skorbane-content`, `aim-tbsoftwash-content`, and future `content-node` / `content-wordpress` instances) and content skills (`aim-mega-article`, `aim-mega-guide`) enforce the following 6 rules:
+All A.I.M. Content Co-Agents (`content-node` and `content-wordpress` instances) and content skills (`aim-mega-article`, `aim-mega-guide`) enforce the following 6 rules:
 
 1. **First-Party Non-Training Data Mandate ("No Meat Proxy Remixes"):**
    - Public YouTube transcripts and U.S. Census/Zillow statistics are secondary reinforcement—never the sole substance of an article or guide.
    - Every article MUST inject **proprietary first-party, non-training data** (Rilla Labs / Crutchfield standard):
-     - **`aim-ld-content`:** Live aggregated SQLite/Sunbiz/DBPR/ABT/Permits telemetry (`NAL` commercial parcel counts, `DBPR` plan review velocities, `MULTI_HIT` ratios, redacted Day-Zero intercepts).
-     - **`aim-tbsoftwash-content`:** Real Pinellas/Pasco/Hillsborough chemical metering ratios (`SH%`, Trident Protects coverage tests, `ASTM C-144` sand specs), real HOA/insurance field outcomes, and authentic `@tbsoftwash` jobsite photography/videos (`/home/kingb/tbsoftwash-content/`).
-     - **`aim-skorbane-content`:** Live `tbsoftwash.com` production telemetry (`< 0.4s` TTFB, `150+` verified reviews, 38-city geo-mesh benchmarks), real territory availability via `tools/territory_validator.py`, and 5 Golden Rules field visuals.
+     - **`content-node` (B2B Data Nodes):** Live aggregated SQLite/telemetry records, regulatory plan review velocities, and redacted first-party datasets.
+     - **`content-wordpress` (Field Service & WaaS Nodes):** Real field metering ratios, empirical coverage tests, municipal code compliance outcomes, live TTFB/Core Web Vitals telemetry, and authentic first-party jobsite photography/videos.
 
 2. **Interactive "Main Content" (MC) Micro-Tools (Effort & Talent/Skill):**
    - Google defines Main Content (MC) as anything on the page that helps fulfill its purpose—explicitly rewarding embedded interactive tools (calculators, selectors, interactive diagrams).
-   - Content agents must pair or embed functional interactive tools inside Main Content where supported (e.g., SH% batch dilution and Trident sealer sq-ft calculators on `tbsoftwash.com`; County Permit-to-Opening lag/ROI calculators on `leaddeeds.com`; 3-Year DIY Sitebuilder vs. Skorbane WaaS TCO calculators on `skorbane.com`).
+   - Content agents must pair or embed functional interactive tools inside Main Content where supported (e.g., batch dilution and sq-ft estimators, permit-to-opening lag/ROI calculators, or 3-year TCO calculators).
 
 3. **Zero Scaled Templated Pages (Geo-Mesh & County Series Uniqueness Gate):**
    - Scaled templated pages (programmatic city/county pages with minor word swaps) are Google's #1 spam target.
-   - Every city geo-mesh page (`aim-skorbane-content`, `aim-tbsoftwash-content`) or county report (`aim-ld-content` Issues `#420`–`#424`) must contain unique municipal code/ordinance rules, distinct local entity/permit data tables, and specific local architectural/environmental constraints.
+   - Every city geo-mesh page or county report must contain unique municipal code/ordinance rules, distinct local entity/permit data tables, and specific local architectural/environmental constraints.
 
 4. **Anti-LLM Prose Filter (Practitioner Voice):**
    - Strip out classic LLM structural tells that human raters and `RankEmbed BERT` penalize: formulaic contrasts (*"It's not X, it's Y"*, *"Not just X, but Y"*), throat-clearing intros, weak hedging, and AI transition crutches (*"Moreover"*, *"Furthermore"*, *"Crucially"*, *"Delve"*).

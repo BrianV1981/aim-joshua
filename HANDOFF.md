@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-23T00:40:45-04:00
-> **Updated by:** Antigravity (Session ID: 0eca3c90-269d-4889-b0a7-4851d19ac717)
-> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.4` Direct-to-`main` Memory State, Google Oct 1st People-First Content Doctrine `#106`, `35/35` Pytest, Backlog Clear)
+> **Updated:** 2026-10-24T22:53:00-04:00
+> **Updated by:** Antigravity (Session ID: 02feb6e8-2948-488b-8270-6d8c4b214024)
+> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.6` Direct-to-`main` Memory State, `37/37` Pytest, Backlog Clear)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -23,19 +23,21 @@
 | 513519c1 | #95: Hardened `install.sh`/`install-agent.sh` (`$HOME` guard, clean project scaffolding) & clarified `README.md` onboarding (`28/28` pytest passing) | ✅ RESOLVED |
 | 513519c1 | #96: Auto-populate consumer `.gitignore` (`joshua_os/`, `aim`, `workspace/`, `archive/`), atomic `os.replace` on `./aim` in `cmd_update` (`29/29` pytest passing) | ✅ RESOLVED |
 | 513519c1 | #97: Ingested `.gitignore` safeguards, atomic `./aim` updates, and 16-repo fleet upgrade into `memory-wiki/` (`v0.7.4`, `6d7a383b`) | ✅ RESOLVED |
-| 513519c1 | Fleet Rollout: Provisioned `aim-skorbane` and upgraded all 16 active `aim-*` & `aim-agents/*` repos to `v0.7.3+` (`./aim doctor` 100% green) | ✅ RESOLVED |
+| 513519c1 | Fleet Rollout: Upgraded all 16 active `~/aim-*` & `~/aim-agents/*` repos to `v0.7.3+` (`./aim doctor` 100% green) | ✅ RESOLVED |
 | 6c0e4f7b | #98: Added Windows 10/11 launchers (`aim.ps1`, `aim.cmd`), `resolve_venv_python()`, Windows root-drive guard, and pure-Python `git_push_changes()` with untracked warning & `--include-untracked` (`-a`) (`v0.8.0`, `67d5fb36`) | ✅ RESOLVED |
 | 6c0e4f7b | #99: Added dynamic `get_active_aim_root()` in `retriever.py` so `archive/cartridges` & `flashrank_cache` follow `lance_backend.LANCE_DB_PATH` during MCP queries (`32/32` pytest passing) | ✅ RESOLVED |
 | 6c0e4f7b | #100: Ingested `v0.8.0` cross-platform launchers, pure-Python push, MCP cartridge root, and default Project `#7` config into `memory-wiki/` (`3d715061`) | ✅ RESOLVED |
 | 6c0e4f7b | Lore Sync (`aim-knowledge`): Published *The Great Convergence* & *J.O.S.H.U.A. vs. Open-Source Harness Era* essays + updated `AIM_ECOSYSTEM_HISTORY.md` (`c6b4d63`) | ✅ RESOLVED |
 | 3078de63 | #101: Decoupled `memory-wiki/**` & `HANDOFF.md` from worktree GitOps (`AGENTS.md`, `aim-skill-library` `08511ae`), added Auto-Wiki Delta Check to `/aim-handoff`, and fixed `bootstrap_brain.py` root `memory-wiki/` indexing (`v0.8.1`, `b8f0b88a`, `33/33` pytest) | ✅ RESOLVED |
 | 3078de63 | #102: Aligned `COGNITIVE_ARCHITECTURE.md`, `GAMEPLAN_SOP.md`, `GITOPS_DEPLOYMENT.md`, `AIM_CLI_TOOLS.md`, `AGENTS_AMENDMENT_PROTOCOL.md`, `README.md`, `CONTRIBUTING.md`, and `memory-wiki/pages/` with direct-to-`main` memory state (`v0.8.2`, `cc9d13c0`) | ✅ RESOLVED |
-| 3078de63 | Fleet `AGENTS.md` Rollout: Upgraded 22 `AGENTS.md` files across all active `aim-*`, `aim-coagents`, and `aim-agents/*` repos to `v0.8.2` (`git commit --only`, preserving 100% of project domain rules) + deleted stray `/home/kingb/AGENTS.md` | ✅ RESOLVED |
+| 3078de63 | Fleet `AGENTS.md` Rollout: Upgraded 22 `AGENTS.md` files across all active `~/aim-*`, `aim-coagents`, and `~/aim-agents/*` repos to `v0.8.2` (`git commit --only`, preserving 100% of project domain rules) + deleted stray `~/AGENTS.md` | ✅ RESOLVED |
 | 3078de63 | #103: Fixed `aim_init.py` 7-line `AGENTS.md` stub overwrite (`provision_agents_md` + `templates/default_AGENTS.md`), aligned `BOOTSTRAP.md`, added `$1` persona blueprint fetch to `install-agent.sh`, and standardized all 4 `install*.sh` scripts (`v0.8.3`, `4f950fbd`, `34/34` pytest) | ✅ RESOLVED |
 | 3078de63 | #104: Added `README.md` 3-option comparison table & `./aim init` guide, refreshed `default_lance` (`364 KB`, `58` `v0.8.4` fragments), fixed dynamic `LANCE_DB_PATH` binding in `VectorBackend()`, deduplicated `install-clean.sh`, and updated `aim-coagents` installer URLs (`v0.8.4`, `9a5b5cef` / `d5f52a6`) | ✅ RESOLVED |
 | 3078de63 | #105: Set `timeout=(0.5, 15)` on local Ollama (`127.0.0.1:11434`) in `forensic_utils.py`, added `artifacts/AUDIT_*.md` to `bootstrap_brain.py`, added 4-point Live Production & Deploy Parity lens to `aim-coagents/personas/aim-auditor/PERSONA.md` (`a644fce`), and upgraded/indexed `aim-tester` (`6525cc1`), `aim-enricher` (`f5822d6`), and `aim-permits` (`75064cc`) (`4c39858c`, `35/35` pytest in `14.87s`) | ✅ RESOLVED |
-| 3078de63 | Content Co-Agents & `aim-youtube` Hub-and-Spoke Protocol: Scrapped `aim-tbsoftwash-blogger`; provisioned `aim-tbsoftwash-content` (`f61bbb4`) and `aim-skorbane-content` (`a35dbd8`); codified `blueprints/content-node` and `blueprints/content-wordpress` in `aim-coagents` (`3af01d6`); synced canonical Linux Tmux `aim-communicate` to `vessels/agy/skills/aim-communicate/`, standardized Operator emails (`83c5a9e`), and codified `aim-youtube` Hub-and-Spoke delegation in `aim-skill-library` (`30db021`) | ✅ RESOLVED |
-| 0eca3c90 | #106: Codified Google Oct 1st People-First Content & First-Party Effort Doctrine (`RankEmbed BERT` 4 Rater Pillars, First-Party Non-Training Data, Interactive Main Content Micro-Tools, Zero Scaled Templates, Anti-LLM Prose Filter, Full Human Bylines, `HTTP 200` + `<title>`/`<meta>`/`<img alt>` Fact-Checking) across `aim-skill-library` (`2e3edeb`), `aim-coagents` (`9ff5782`), `aim-joshua/memory-wiki/` (`01ae4d1b`), and re-indexed + verified live `aim-communicate` ACKs from `aim-ld-content` (`224ef0c`), `aim-skorbane-content`, and `aim-tbsoftwash-content` (`a8cd694` / `dcf18c9`) | ✅ RESOLVED |
+| 3078de63 | Content Co-Agents & `aim-youtube` Hub-and-Spoke Protocol: Codified `blueprints/content-node` and `blueprints/content-wordpress` in `aim-coagents` (`3af01d6`); synced canonical Linux Tmux `aim-communicate` to `vessels/agy/skills/aim-communicate/`, standardized Operator emails (`83c5a9e`), and codified `aim-youtube` Hub-and-Spoke delegation in `aim-skill-library` (`30db021`) | ✅ RESOLVED |
+| 0eca3c90 | #106: Codified Google Oct 1st People-First Content & First-Party Effort Doctrine (`RankEmbed BERT` 4 Rater Pillars, First-Party Non-Training Data, Interactive Main Content Micro-Tools, Zero Scaled Templates, Anti-LLM Prose Filter, Full Human Bylines, `HTTP 200` + `<title>`/`<meta>`/`<img alt>` Fact-Checking) across `aim-skill-library` (`2e3edeb`), `aim-coagents` (`9ff5782`), and `aim-joshua/memory-wiki/` (`01ae4d1b`) | ✅ RESOLVED |
+| 02feb6e8 | #107: Fixed `aim_init.py` `f.read().splitlines()` on pre-existing `.gitignore` files and added regression test (`v0.8.5`, `2c5d4bc4`, `36/36` pytest) | ✅ RESOLVED |
+| 02feb6e8 | #108: Removed hardcoded host path comments in `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`v0.8.6`, `71a0b086`, `37/37` pytest), sanitized `HANDOFF.md` & `memory-wiki/`, and pruned stale remote branches on `origin` | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -45,12 +47,12 @@
 J.O.S.H.U.A. is the CLI-agnostic OS brain for A.I.M. agents: nested `joshua_os/`, GitOps worktrees, LanceDB hybrid memory, blackbox vault, GitHub Projects CLI.
 
 ### Your Knowledge Base
-- `/home/kingb/aim-joshua/memory-wiki/index.md` (The active LLM Wiki Index)
-- `/home/kingb/aim-joshua/AGENTS.md` (The sovereign agent blueprint and OS rules)
-- `/home/kingb/aim-joshua/memory-wiki/pages/handoff-and-retrieval.md` (Retrieval mechanics)
-- `/home/kingb/aim-joshua/memory-wiki/pages/architecture.md` (Two-Tier MCP Protocol)
-- `/home/kingb/aim-joshua/memory-wiki/pages/dhh-agentic-philosophy.md` (Core Agentic Directives)
-- `/home/kingb/aim-joshua/memory-wiki/pages/google-oct1-people-first-content.md` (Google Oct 1st Main Content & First-Party Effort Doctrine)
+- `~/aim-joshua/memory-wiki/index.md` (The active LLM Wiki Index)
+- `~/aim-joshua/AGENTS.md` (The sovereign agent blueprint and OS rules)
+- `~/aim-joshua/memory-wiki/pages/handoff-and-retrieval.md` (Retrieval mechanics)
+- `~/aim-joshua/memory-wiki/pages/architecture.md` (Two-Tier MCP Protocol)
+- `~/aim-joshua/memory-wiki/pages/dhh-agentic-philosophy.md` (Core Agentic Directives)
+- `~/aim-joshua/memory-wiki/pages/google-oct1-people-first-content.md` (Google Oct 1st Main Content & First-Party Effort Doctrine)
 
 ---
 
@@ -102,13 +104,13 @@ Follow strict GitOps workflow for any future tasks:
 ---
 
 ## 6. KEY PATHS
-- `/home/kingb/aim-joshua/joshua_os/`
-- `/home/kingb/aim-joshua/aim`, `/home/kingb/aim-joshua/aim.ps1`, `/home/kingb/aim-joshua/aim.cmd` (Cross-Platform Launchers)
-- `/home/kingb/aim-joshua/memory-wiki/`
-- `/home/kingb/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
-- `/home/kingb/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `/home/kingb/aim-joshua/tests/` (`35/35` Pytest Coverage)
-- `/home/kingb/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
+- `~/aim-joshua/joshua_os/`
+- `~/aim-joshua/aim`, `~/aim-joshua/aim.ps1`, `~/aim-joshua/aim.cmd` (Cross-Platform Launchers)
+- `~/aim-joshua/memory-wiki/`
+- `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
+- `~/aim-joshua/joshua_os/.aim_core/retriever.py`
+- `~/aim-joshua/tests/` (`37/37` Pytest Coverage)
+- `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---
 
