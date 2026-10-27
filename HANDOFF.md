@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-24T22:53:00-04:00
+> **Updated:** 2026-10-26T21:59:00-04:00
 > **Updated by:** Antigravity (Session ID: 02feb6e8-2948-488b-8270-6d8c4b214024)
-> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.6` Direct-to-`main` Memory State, `37/37` Pytest, Backlog Clear)
+> **Priority Mission:** STANDBY / Awaiting Directives (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.6` Direct-to-`main` Memory State, `37/37` Pytest, `aim-office` `#1–#10` Complete on `:5175`)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -38,6 +38,8 @@
 | 0eca3c90 | #106: Codified Google Oct 1st People-First Content & First-Party Effort Doctrine (`RankEmbed BERT` 4 Rater Pillars, First-Party Non-Training Data, Interactive Main Content Micro-Tools, Zero Scaled Templates, Anti-LLM Prose Filter, Full Human Bylines, `HTTP 200` + `<title>`/`<meta>`/`<img alt>` Fact-Checking) across `aim-skill-library` (`2e3edeb`), `aim-coagents` (`9ff5782`), and `aim-joshua/memory-wiki/` (`01ae4d1b`) | ✅ RESOLVED |
 | 02feb6e8 | #107: Fixed `aim_init.py` `f.read().splitlines()` on pre-existing `.gitignore` files and added regression test (`v0.8.5`, `2c5d4bc4`, `36/36` pytest) | ✅ RESOLVED |
 | 02feb6e8 | #108: Removed hardcoded host path comments in `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`v0.8.6`, `71a0b086`, `37/37` pytest), sanitized `HANDOFF.md` & `memory-wiki/`, and pruned stale remote branches on `origin` | ✅ RESOLVED |
+| 02feb6e8 | `aim-connect` `#209`–`#212`: Shipped Fleet Panes Telemetry (`/api/fleet/panes`), Swarm Activity (`/api/swarm/activity`), Session Forensics (`/api/forensics/{session}`), and Workspace Context (`/api/workspace/context`) endpoints on Project `#6` | ✅ RESOLVED |
+| 02feb6e8 | `aim-office` `#1`–`#10`: Provisioned `~/aim-office` (`BrianV1981/aim-office`, Project `#14` `10/10` `Done`, `d1e17b4`, live on `http://localhost:5175`), sliced all 20 Sovereign Character `2x2` sprite sheets (`80` directional PNGs), built 3-theme pack engine (`sovereign-war-room`, `cutaway-agency`, `classic-command`) with `v4` bottom-anchor-compensated pod coordinates, floating draggable 2-column Agent Cockpit (`AgentInspectorDrawer.tsx`), and live per-agent Kanban switching (`SESSION_PROJECT_MAP` + `parseHandoffKanbanForSession` + 60s cache in `officeBridge.ts`, `13/13` Vitest + `2/2` Pytest) | ✅ RESOLVED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -53,6 +55,7 @@ J.O.S.H.U.A. is the CLI-agnostic OS brain for A.I.M. agents: nested `joshua_os/`
 - `~/aim-joshua/memory-wiki/pages/architecture.md` (Two-Tier MCP Protocol)
 - `~/aim-joshua/memory-wiki/pages/dhh-agentic-philosophy.md` (Core Agentic Directives)
 - `~/aim-joshua/memory-wiki/pages/google-oct1-people-first-content.md` (Google Oct 1st Main Content & First-Party Effort Doctrine)
+- `~/aim-joshua/memory-wiki/pages/aim-office-cockpit.md` (AIM-Office 2.5D Isometric Multi-Vessel Fleet Cockpit & Telemetry Bridge)
 
 ---
 
@@ -111,6 +114,7 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py`
 - `~/aim-joshua/tests/` (`37/37` Pytest Coverage)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
+- `~/aim-office/` (2.5D Isometric Multi-Vessel Fleet Cockpit, live in `tmux` window `aim-office:server` on `http://localhost:5175`)
 
 ---
 

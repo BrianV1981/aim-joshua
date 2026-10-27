@@ -149,6 +149,15 @@
 - Resolved #107 (`v0.8.5`, commit `2c5d4bc4`): fixed `f.read().splitlines()` on pre-existing `.gitignore` files in `aim_init.py` with regression coverage in `tests/test_cli.py`.
 - Resolved #108 (`v0.8.6`, commit `71a0b086`): removed hardcoded `/home/kingb` comments from `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`37/37` `pytest` passing), sanitized host paths and private client references in `HANDOFF.md` and `memory-wiki/` while preserving all architectural wiki pages and `joshua_os/assets/default_lance/`, and pruned stale remote branches on `origin`.
 
+## [2026-10-26] ingest | AIM-Office 2.5D Isometric Multi-Vessel Fleet Cockpit (`#1`–`#10`) & AIM-Connect Telemetry Bridge (`#209`–`#212`)
+- Provisioned `~/aim-office` (`BrianV1981/aim-office`, GitHub Project `#14`, MIT License) with J.O.S.H.U.A. `v0.8.6` and shipped `aim-connect` Issues `#209`–`#212` (`/api/fleet/panes`, `/api/swarm/activity`, `/api/forensics/{session}`, `/api/workspace/context` on `BrianV1981/aim-connect` Project `#6`).
+- Shipped `aim-office` Phase 1 (`#1`–`#4`), Phase 2 (`#5`–`#7`), and Multi-Theme + Per-Agent Kanban (`#8`–`#10`, commit `d1e17b4`, `10/10` `Done` on Project `#14`, `13/13` Vitest + `2/2` Pytest passing):
+  - **20-Character Sovereign Roster (`80` Directional PNGs):** Generated and sliced 20 `2x2` turnaround sprite sheets (`scripts/slice_sprite_sheet.py`) into `public/sprites/characters/` covering every active A.I.M. vessel and specialist Co-Agent.
+  - **3-Theme Pack Architecture & `v4` Bottom-Anchor Compensation:** Built `sovereign-war-room` (Subterranean Command Bunker with AI Neural Core Reactor, WOPR Telemetry Wall, Central Holographic Globe Table, `wallBoardRect: null`, and tactical gunmetal desk color-grading), `cutaway-agency` (3-Alcove Cutaway Floorplan with flat `skewDeg: 0` Strategy Wing Whiteboard and 4 woven rugs), and `classic-command` (`skewDeg: 25.6` dry-erase whiteboard), with `v4` pod coordinates compensating for the `-5.3%` vertical shift of bottom-anchored sprites.
+  - **Floating 2-Column Cockpit & Live Per-Agent Kanban Switching:** Converted `AgentInspectorDrawer.tsx` into a floating, draggable `560px` overlay card with live `tmux` scrollback, TTS, Mic STT, macro pills, and a 1-click `aim-communicate` broker; wired `SESSION_PROJECT_MAP` + `parseHandoffKanbanForSession` + 60s caching in `src/server/officeBridge.ts` so clicking any agent immediately updates `WallTaskBoard.tsx`, `TopCommandBar.tsx`, and `WhiteboardModal.tsx`.
+- Created `pages/aim-office-cockpit.md` and linked it in `index.md`.
+
+
 
 
 
