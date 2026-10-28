@@ -166,12 +166,12 @@
 - Orchestrated `aim-ld` Issue `#469` (`759fdcf` on `aim-ld`, `904a397` on `aim-enricher`): added `--project ephemeral-pipeline` + `finally` block `cleanup_ephemeral_agy_sessions()` to `parse_news_llm.py` and `run_enricher.py`, and purged `2,785` 2-step scraper rows from `~/.gemini/antigravity-cli/conversation_summaries.db` plus `351` `.db`/`brain` directories (freeing `355` slots below `agy`'s 500-session eviction ceiling).
 - Upgraded all `22` active `joshua_os` repositories to `v0.8.7`, salvaged all surviving top-level project transcripts into each project's `.raw_jsonl_blackbox/`, and backfilled `joshua_os/archive/history.db` across the entire fleet.
 
-## [2026-10-28] ingest | Spoken Summary (`🔊`) Mandate & Fleet Neural TTS Rollout (`#111`, `v0.8.8`)
-- Resolved `aim-joshua` `#111` (`v0.8.8`, `65d2d4ad`, `39/39` Pytest passing):
-  - Codified the **Spoken Summary (`🔊`)** mandate under `## 1. IDENTITY & PRIMARY DIRECTIVE` in `AGENTS.md` and `joshua_os/.aim_core/templates/default_AGENTS.md` so every agent turn concludes with `🔊 <1-2 sentence natural spoken summary>` in plain conversational English for `aim-connect` Neural TTS (`#222` & `#223`, local `piper-tts` ONNX + cloud `edge-tts` + bottom-up `extract_spoken_summary` scanner).
-  - Rebuilt `joshua_os/assets/default_lance` (`58` fragments) with the `v0.8.8` `AGENTS.md` and added regression assertions in `tests/test_cli.py`.
-- Updated all `6` Co-Agent blueprints in `~/aim-coagents/blueprints/*/AGENTS.md` (`aim-auditor`, `book-coauthor`, `content-node`, `content-wordpress`, `lead-analyst`, `python-developer`, commit `7d83ad2`).
-- Upgraded all `22` active `joshua_os` repositories (`~/aim-*`, `~/aim-agents/*`, `~/tbsoftwash-ai-book`) to `v0.8.8` and surgically injected the `Spoken Summary (🔊)` mandate into each repository's `AGENTS.md` (`git commit --only AGENTS.md`), preserving 100% of custom domain rules.
+## [2026-10-28] ingest | Spoken Summary (`🔊`) Mandate & Fleet Neural TTS Rollout (`#111`–`#112`, `v0.8.8`–`v0.8.9`)
+- Resolved `aim-joshua` `#111` (`v0.8.8`, `65d2d4ad`) and `#112` (`v0.8.9`, `23e4f752`, `39/39` Pytest passing):
+  - Codified and expanded the **Spoken Summary (`🔊`)** mandate under `## 1. IDENTITY & PRIMARY DIRECTIVE` in `AGENTS.md` and `joshua_os/.aim_core/templates/default_AGENTS.md` so every agent turn concludes with a `🔊 <spoken summary>` block in plain conversational English (1–2 sentences for routine status updates; 3–6+ sentences or multi-paragraph blocks when elaborating or explaining architecture), matching `aim-connect` `#222`–`#224` start-to-prompt delimiter capture (`-S -120`, `4,000` char limit, local `piper-tts` ONNX + cloud `edge-tts`).
+  - Rebuilt `joshua_os/assets/default_lance` (`60` fragments) with the `v0.8.9` `AGENTS.md` and added regression assertions in `tests/test_cli.py`.
+- Updated all `6` Co-Agent blueprints in `~/aim-coagents/blueprints/*/AGENTS.md` (`aim-auditor`, `book-coauthor`, `content-node`, `content-wordpress`, `lead-analyst`, `python-developer`, commits `7d83ad2` & `955f467`).
+- Upgraded all `22` active `joshua_os` repositories (`~/aim-*`, `~/aim-agents/*`, `~/tbsoftwash-ai-book`) to `v0.8.9` and surgically updated the `Spoken Summary (🔊)` mandate in each repository's `AGENTS.md` (`git commit --only AGENTS.md`), preserving 100% of custom domain rules.
 - Updated `pages/dhh-agentic-philosophy.md` to document the Spoken Summary (`🔊`) Mandate and Neural TTS integration.
 
 
