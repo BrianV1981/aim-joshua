@@ -157,6 +157,16 @@
   - **Floating 2-Column Cockpit & Live Per-Agent Kanban Switching:** Converted `AgentInspectorDrawer.tsx` into a floating, draggable `560px` overlay card with live `tmux` scrollback, TTS, Mic STT, macro pills, and a 1-click `aim-communicate` broker; wired `SESSION_PROJECT_MAP` + `parseHandoffKanbanForSession` + 60s caching in `src/server/officeBridge.ts` so clicking any agent immediately updates `WallTaskBoard.tsx`, `TopCommandBar.tsx`, and `WhiteboardModal.tsx`.
 - Created `pages/aim-office-cockpit.md` and linked it in `index.md`.
 
+## [2026-10-28] ingest | Fleet Blackbox Restoration, `/aim-sessions` Project Notebook & Ephemeral Pipeline Cleanup (`#110`, `v0.8.7`)
+- Resolved `aim-joshua` `#110` (`v0.8.7`, `2da8423a`, `39/39` Pytest passing):
+  - Fixed `blackbox_vault.py` (`get_candidate_keys()` + `audit_vault()`) to try both OS `keyring` and `~/.aim/blackbox.key` (prioritizing `manifest.jsonl` `key_source`), restoring `100%` decryption across all `996` encrypted `.enc` blobs across the fleet (`0` failures).
+  - Added `index_session_to_history()` and `sync_vault_to_history()` in `blackbox_vault.py` and upgraded `cmd_sessions` / `cmd_search_sessions` in `cli_memory.py` so every sealed session is automatically rendered to `joshua_os/archive/history/<date>_<sid>.md` and indexed into `joshua_os/archive/history.db` (`history` + `history_fts` FTS5 tables) with unlimited retention (`4,000+` sessions).
+  - Fixed `tests/test_aplus.py::test_vault_hermetic_decrypt` to use `tmp_path` instead of `os.getcwd()`, and added `cleanup_ephemeral_agy_sessions()` (`--project ephemeral-internal`) in `reasoning_utils.py`.
+- Updated `aim-skill-library` (`e5fb9fe`): enforced `./aim agy-blackbox --session-id <uuid>` in `vessels/agy/skills/aim-handoff/SKILL.md` Step 6 and created the `/aim-sessions` project-scoped session notebook skill (`skills/aim-sessions/SKILL.md`).
+- Orchestrated `aim-ld` Issue `#469` (`759fdcf` on `aim-ld`, `904a397` on `aim-enricher`): added `--project ephemeral-pipeline` + `finally` block `cleanup_ephemeral_agy_sessions()` to `parse_news_llm.py` and `run_enricher.py`, and purged `2,785` 2-step scraper rows from `~/.gemini/antigravity-cli/conversation_summaries.db` plus `351` `.db`/`brain` directories (freeing `355` slots below `agy`'s 500-session eviction ceiling).
+- Upgraded all `22` active `joshua_os` repositories to `v0.8.7`, salvaged all surviving top-level project transcripts into each project's `.raw_jsonl_blackbox/`, and backfilled `joshua_os/archive/history.db` across the entire fleet.
+
+
 
 
 

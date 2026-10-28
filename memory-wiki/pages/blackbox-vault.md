@@ -20,5 +20,8 @@ aim <vessel>-blackbox --session-id <uuid>
 
 This command extracts the raw `.jsonl` or SQLite transcripts directly from the CLI's internal hidden cache, encrypts them using the system keyring (or a fallback key), and locks them into the vault. Once sealed, the agent has no ability to alter the record.
 
-## Audit & Verification
-If an Operator suspects an agent has entered a hallucinatory loop or tampered with project files, the Operator can decrypt the Vault to review the exact, unadulterated thought processes and tool calls the agent made during that session.
+## Audit, Multi-Key Decryption & Session Notebook (`#110`, `v0.8.7`)
+If an Operator suspects an agent has entered a hallucinatory loop or wants to review past project sessions without global `/resume` clutter or `agy`'s 500-session global LRU eviction:
+1. **Multi-Key Decryption (`get_candidate_keys()` in `blackbox_vault.py`):** `audit_vault()` automatically checks both OS `keyring` (`aim-system:blackbox-key`) and the host file key (`~/.aim/blackbox.key`, prioritizing `manifest.jsonl`'s `key_source`) so sessions sealed in either interactive or headless/venv environments always decrypt reliably.
+2. **Automatic Project Session Notebook (`index_session_to_history` & `sync_vault_to_history`):** Every sealed session is automatically rendered into a clean Markdown Flight Record at `<project>/joshua_os/archive/history/<YYYY-MM-DD>_<session_id>.md` and indexed into `<project>/joshua_os/archive/history.db` (`history` + `history_fts` FTS5 tables) with unlimited retention (4,000+ sessions per project).
+3. **`/aim-sessions` Skill & CLI (`./aim sessions`, `./aim search-sessions`, `./aim recall`):** Lists, searches, and synthesizes all handed-off sessions strictly scoped to the current project.
