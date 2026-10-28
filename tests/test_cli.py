@@ -357,6 +357,7 @@ def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
     assert "## 9. THE MEMORY WIKI (PERSISTENT KNOWLEDGE)" in restored
     assert "Agent Memory Exemption (Direct-to-`main`)" in restored
     assert "**Spoken Summary (`🔊`):**" in restored
+    assert "terminal prompt border" in restored
 
     # 3. Unknown persona never overwrites a full AGENTS.md with a 7-line stub
     with patch.object(aim_init, "_resolve_persona_blueprint", return_value=None):

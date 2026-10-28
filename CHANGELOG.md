@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.9] - 2026-10-28
+- Fix: expand Spoken Summary (🔊) mandate for multi-paragraph TTS capture (Closes #112)
+
+
 ## [v0.8.8] - 2026-10-28
 - Fix: codify Spoken Summary (🔊) mandate in AGENTS.md and default_AGENTS.md (Closes #111)
 
