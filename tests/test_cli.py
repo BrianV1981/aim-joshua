@@ -356,6 +356,7 @@ def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
     assert len(restored.splitlines()) >= 80
     assert "## 9. THE MEMORY WIKI (PERSISTENT KNOWLEDGE)" in restored
     assert "Agent Memory Exemption (Direct-to-`main`)" in restored
+    assert "**Spoken Summary (`🔊`):**" in restored
 
     # 3. Unknown persona never overwrites a full AGENTS.md with a 7-line stub
     with patch.object(aim_init, "_resolve_persona_blueprint", return_value=None):
@@ -380,13 +381,15 @@ def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
     assert "| **Option A (Default)** | `joshua_os/install.sh` |" in readme_md
     assert "Interactive Onboarding Interview (`./aim init`):" in readme_md
 
-    # 5. Pre-baked default_lance contains v0.8.4 AGENTS.md and Direct-to-main rules
+    # 5. Pre-baked default_lance contains v0.8.8 AGENTS.md and Direct-to-main rules
     import lance_backend
     lance_backend.LANCE_DB_PATH = os.path.abspath("joshua_os/assets/default_lance")
     vb = lance_backend.VectorBackend()
     assert vb.path == os.path.abspath("joshua_os/assets/default_lance")
     hits = vb.search(None, "Agent Memory Exemption", top_k=5)
     assert len(hits) > 0
+    tts_hits = vb.search(None, "Spoken Summary", top_k=5)
+    assert len(tts_hits) > 0
 
 
 def test_aim_init_preserves_existing_gitignore(tmp_path, monkeypatch):

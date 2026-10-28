@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.8] - 2026-10-28
+- Fix: codify Spoken Summary (🔊) mandate in AGENTS.md and default_AGENTS.md (Closes #111)
+
+
 ## [v0.8.7] - 2026-10-28
 - Fix: multi-key blackbox decrypt, auto-index handoffs to history.db, and ./aim sessions notebook (Closes #110)
 
