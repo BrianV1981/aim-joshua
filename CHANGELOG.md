@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.7] - 2026-10-28
+- Fix: multi-key blackbox decrypt, auto-index handoffs to history.db, and ./aim sessions notebook (Closes #110)
+
+
 ## [v0.8.6] - 2026-10-24
 - Fix: remove hardcoded /home/kingb comments and add host-path regression test (Closes #108)
 

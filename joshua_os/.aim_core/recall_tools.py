@@ -21,7 +21,13 @@ def run_recall(query, limit=5):
     """
     base_dir = get_base_dir()
     db_path = os.path.join(base_dir, "archive/history.db")
-    
+    if not os.path.exists(db_path):
+        try:
+            from blackbox_vault import sync_vault_to_history
+            sync_vault_to_history()
+        except Exception:
+            pass
+
     if not os.path.exists(db_path):
         print(f"Error: Database not found at {db_path}")
         return None

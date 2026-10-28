@@ -425,6 +425,106 @@ def test_no_hardcoded_host_paths_in_engine_code():
     assert res.stdout.strip() == "", f"Found hardcoded host paths in engine code:\n{res.stdout}"
 
 
+def test_blackbox_multi_key_decrypt_and_history_db_indexing(tmp_path, monkeypatch):
+    import json
+    import sqlite3
+    import sys
+    from cryptography.fernet import Fernet
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import blackbox_vault
+
+    vessel = tmp_path / "mock-project"
+    (vessel / "joshua_os" / ".aim_core").mkdir(parents=True)
+    key_file = tmp_path / "file_blackbox.key"
+    file_key = Fernet.generate_key()
+    key_file.write_bytes(file_key)
+
+    cfg = {"settings": {"blackbox_key_path": str(key_file)}}
+    (vessel / "joshua_os" / ".aim_core" / "CONFIG.json").write_text(json.dumps(cfg), encoding="utf-8")
+
+    # Simulate sealing under file key (keyring unavailable during headless seal)
+    monkeypatch.setattr(blackbox_vault, "keyring", None)
+    sid = "session-110-alpha"
+    raw_file = tmp_path / f"{sid}.jsonl"
+    raw_payload = (
+        json.dumps({"role": "user", "content": "Verify NotebookLM blackbox indexing for project"}) + "\n"
+        + json.dumps({"role": "assistant", "content": "Blackbox indexed into history.db successfully."}) + "\n"
+    )
+    raw_file.write_text(raw_payload, encoding="utf-8")
+
+    assert blackbox_vault.vault_session(str(raw_file), session_id=sid, vessel_root=str(vessel), reason="reincarnate")
+
+    # Now simulate decrypting when OS keyring returns a DIFFERENT (older) key
+    class _MockKeyring:
+        @staticmethod
+        def get_password(service, account):
+            return Fernet.generate_key().decode("utf-8")
+
+    monkeypatch.setattr(blackbox_vault, "keyring", _MockKeyring)
+    decrypted = blackbox_vault.audit_vault(sid, vessel_root=str(vessel), to_stdout=False)
+    assert decrypted is not None
+    assert b"Verify NotebookLM blackbox indexing" in decrypted
+
+    # Verify history.db and archive/history/*.md were automatically populated
+    hist_db = vessel / "joshua_os" / "archive" / "history.db"
+    assert hist_db.is_file()
+    conn = sqlite3.connect(str(hist_db))
+    rows = conn.execute("SELECT session_id, turn_count FROM history WHERE session_id = ?", (sid,)).fetchall()
+    fts_rows = conn.execute("SELECT session_id FROM history_fts WHERE history_fts MATCH 'NotebookLM'").fetchall()
+    conn.close()
+    assert rows == [(sid, 2)]
+    assert fts_rows == [(sid,)]
+
+
+def test_sync_vault_to_history_and_cmd_sessions(tmp_path, monkeypatch, capsys):
+    import argparse
+    import json
+    import sys
+    from cryptography.fernet import Fernet
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import blackbox_vault
+    import cli_memory
+
+    vessel = tmp_path / "sync-project"
+    os_dir = vessel / "joshua_os"
+    (os_dir / ".aim_core").mkdir(parents=True)
+    key_file = tmp_path / "sync_key.key"
+    f_key = Fernet.generate_key()
+    key_file.write_bytes(f_key)
+    (os_dir / ".aim_core" / "CONFIG.json").write_text(
+        json.dumps({"settings": {"blackbox_key_path": str(key_file)}}), encoding="utf-8"
+    )
+
+    # Create a pre-existing .enc file without history.db
+    bb_dir = vessel / "archive" / ".raw_jsonl_blackbox"
+    bb_dir.mkdir(parents=True)
+    sid = "backfill-uuid-9999"
+    raw_bytes = (
+        json.dumps({"role": "user", "content": "Backfill historical vault test"}) + "\n"
+        + json.dumps({"role": "assistant", "content": "Indexed via sync_vault_to_history."}) + "\n"
+    ).encode("utf-8")
+    (bb_dir / f"{sid}.enc").write_bytes(Fernet(f_key).encrypt(raw_bytes))
+
+    monkeypatch.setattr(cli_memory, "BASE_DIR", str(vessel))
+    monkeypatch.setattr(cli_memory, "OS_DIR", str(os_dir))
+
+    cli_memory.cmd_sessions(argparse.Namespace())
+    out = capsys.readouterr().out
+    assert sid in out
+    assert "PROJECT SESSIONS: sync-project" in out
+
+    cli_memory.cmd_search_sessions(argparse.Namespace(query=["Backfill"]))
+    search_out = capsys.readouterr().out
+    assert sid in search_out
+
+
+
 
 
 

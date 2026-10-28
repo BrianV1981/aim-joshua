@@ -69,23 +69,18 @@ def test_vault_hermetic_decrypt(tmp_path):
     transcript = tmp_path / "raw.jsonl"
     transcript.write_text(json.dumps({"type": "USER_INPUT", "content": marker}) + "\n")
     sid = f"hermetic-{uuid.uuid4().hex[:8]}"
-    vessel = os.getcwd()
-    try:
-        seal = _aim(
-            "vault",
-            "seal",
-            "--path",
-            str(transcript),
-            "--session-id",
-            sid,
-            "--vessel",
-            vessel,
-        )
-        assert seal.returncode == 0, seal.stdout + seal.stderr
-        audit = _aim("vault", "audit", sid, "--vessel", vessel)
-        assert audit.returncode == 0, audit.stdout + audit.stderr
-        assert marker in audit.stdout
-    finally:
-        blob = Path(vessel) / "archive" / ".raw_jsonl_blackbox" / f"{sid}.enc"
-        if blob.is_file():
-            blob.unlink()
+    vessel = str(tmp_path)
+    seal = _aim(
+        "vault",
+        "seal",
+        "--path",
+        str(transcript),
+        "--session-id",
+        sid,
+        "--vessel",
+        vessel,
+    )
+    assert seal.returncode == 0, seal.stdout + seal.stderr
+    audit = _aim("vault", "audit", sid, "--vessel", vessel)
+    assert audit.returncode == 0, audit.stdout + audit.stderr
+    assert marker in audit.stdout

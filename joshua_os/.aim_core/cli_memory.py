@@ -77,9 +77,80 @@ def cmd_mail(args):
     _run_script(os.path.join(AIM_CORE_DIR, "sync_mail.py"), [])
 
 
+def _ensure_history_synced():
+    """Syncs the project's Blackbox Vault (.enc) into joshua_os/archive/history.db."""
+    try:
+        from blackbox_vault import sync_vault_to_history
+        sync_vault_to_history(BASE_DIR)
+    except Exception:
+        pass
+
+
 def cmd_sessions(args):
-    """Lists recent cleaned historical sessions."""
-    _run_script(os.path.join(AIM_CORE_DIR, "handoff_pulse_generator.py"), [])
+    """Lists all handed-off / vaulted sessions for this project (unlimited retention)."""
+    _ensure_history_synced()
+    history_db = os.path.join(OS_DIR, "archive/history.db")
+    if not os.path.exists(history_db):
+        try:
+            subprocess.run(
+                [_resolve_venv_python(), os.path.join(AIM_CORE_DIR, "handoff_pulse_generator.py")],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            _ensure_history_synced()
+        except Exception:
+            pass
+        if not os.path.exists(history_db):
+            print("No historical sessions found for this project.")
+            return
+
+    conn = sqlite3.connect(history_db)
+    c = conn.cursor()
+    cols = {r[1] for r in c.execute("PRAGMA table_info(history)").fetchall()}
+    has_turns = "turn_count" in cols
+    has_title = "title" in cols
+    select_sql = (
+        f"SELECT session_id, timestamp, "
+        f"{'COALESCE(turn_count, 0)' if has_turns else '0'}, "
+        f"{'COALESCE(title, \"\")' if has_title else '\"\"'} "
+        f"FROM history ORDER BY timestamp DESC LIMIT 4000"
+    )
+    rows = c.execute(select_sql).fetchall()
+    conn.close()
+
+    if not rows:
+        print("No historical sessions found for this project.")
+        return
+
+    agy_conv_dir = os.path.expanduser("~/.gemini/antigravity-cli/conversations")
+    agy_brain_dir = os.path.expanduser("~/.gemini/antigravity-cli/brain")
+    project_name = os.path.basename(BASE_DIR)
+
+    print(f"\n=== PROJECT SESSIONS: {project_name} ({len(rows)} archived) ===")
+    print(f"{'DATE (UTC)':<19} | {'STATUS':<10} | {'TURNS':<6} | {'SESSION ID':<36} | TITLE / SUMMARY")
+    print("-" * 115)
+    for sid, ts, turns, title in rows:
+        ts_short = (ts or "")[:19].replace("T", " ")
+        is_live = (
+            os.path.isfile(os.path.join(agy_conv_dir, f"{sid}.db"))
+            or os.path.isdir(os.path.join(agy_brain_dir, sid))
+        )
+        status = "LIVE+VAULT" if is_live else "VAULTED"
+        clean_title = (title or "Archived Session").replace("\n", " ").strip()[:40]
+        print(f"{ts_short:<19} | {status:<10} | {str(turns):<6} | {sid:<36} | {clean_title}")
+    print("-" * 115)
+    print("Commands:")
+    print("  • Resume a LIVE session : agy --conversation <SESSION_ID>")
+    print("  • Search transcripts    : ./aim search-sessions \"<keyword>\"")
+    print("  • NotebookLM Q&A recall : ./aim recall \"<question>\"")
+    print(f"  • Markdown Flight Logs  : {os.path.join(OS_DIR, 'archive/history/')}")
+
+
+def cmd_search_sessions(args):
+    """Searches the full project session history database via FTS5."""
+    query = " ".join(args.query)
+    _ensure_history_synced()
     history_db = os.path.join(OS_DIR, "archive/history.db")
     if not os.path.exists(history_db):
         print("No historical sessions found.")
@@ -87,27 +158,7 @@ def cmd_sessions(args):
 
     conn = sqlite3.connect(history_db)
     c = conn.cursor()
-    c.execute("SELECT session_id, timestamp FROM history ORDER BY timestamp DESC LIMIT 20")
-    rows = c.fetchall()
-    print("\n--- RECENT SESSIONS ---")
-    for r in rows:
-        print(f"[{r[1]}] {r[0][:8]}")
-    conn.close()
-
-
-def cmd_search_sessions(args):
-    """Searches the full session history database."""
-    query = " ".join(args.query)
-    history_db = os.path.join(OS_DIR, "archive/history.db")
-    if not os.path.exists(history_db):
-        _run_script(os.path.join(AIM_CORE_DIR, "handoff_pulse_generator.py"), [])
-        if not os.path.exists(history_db):
-            print("No historical sessions found.")
-            return
-
-    conn = sqlite3.connect(history_db)
-    c = conn.cursor()
-    sql = "SELECT session_id, timestamp, snippet(history_fts, 2, '...', '...', '...', 10) FROM history_fts WHERE history_fts MATCH ? ORDER BY rank LIMIT 10"
+    sql = "SELECT session_id, timestamp, snippet(history_fts, 2, '...', '...', '...', 15) FROM history_fts WHERE history_fts MATCH ? ORDER BY rank LIMIT 20"
     try:
         c.execute(sql, (query,))
         rows = c.fetchall()
@@ -115,7 +166,7 @@ def cmd_search_sessions(args):
         if not rows:
             print("No matches found.")
         for r in rows:
-            print(f"\nSession: {r[0][:8]} ({r[1]})")
+            print(f"\nSession: {r[0]} ({r[1][:19].replace('T', ' ')})")
             print(f"Match: {r[2]}")
     except Exception as e:
         traceback.print_exc()

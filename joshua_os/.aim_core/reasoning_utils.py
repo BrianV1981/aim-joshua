@@ -69,6 +69,47 @@ def generate_reasoning(prompt, system_instruction="You are a helpful assistant."
 
     return "Error: Unsupported Provider Configuration."
 
+def cleanup_ephemeral_agy_sessions(project_ids=("ephemeral-internal", "ephemeral-pipeline", "ephemeral-batch")):
+    """Purges headless ephemeral AGY sessions from conversation_summaries.db, conversations/, and brain/."""
+    import shutil
+    import sqlite3
+
+    agy_dir = os.path.expanduser("~/.gemini/antigravity-cli")
+    summary_db = os.path.join(agy_dir, "conversation_summaries.db")
+    if not os.path.isfile(summary_db):
+        return 0
+    purged = 0
+    try:
+        conn = sqlite3.connect(summary_db, timeout=10)
+        placeholders = ",".join("?" for _ in project_ids)
+        rows = conn.execute(
+            f"SELECT conversation_id FROM conversation_summaries WHERE project_id IN ({placeholders})",
+            tuple(project_ids),
+        ).fetchall()
+        cids = [r[0] for r in rows if r and r[0]]
+        if cids:
+            conn.executemany(
+                "DELETE FROM conversation_summaries WHERE conversation_id = ?",
+                [(cid,) for cid in cids],
+            )
+            conn.commit()
+        conn.close()
+        for cid in cids:
+            db_file = os.path.join(agy_dir, "conversations", f"{cid}.db")
+            if os.path.isfile(db_file):
+                try:
+                    os.remove(db_file)
+                except OSError:
+                    pass
+            brain_path = os.path.join(agy_dir, "brain", cid)
+            if os.path.isdir(brain_path):
+                shutil.rmtree(brain_path, ignore_errors=True)
+            purged += 1
+    except Exception:
+        pass
+    return purged
+
+
 def execute_google(prompt, system_instruction, model, auth_type="API Key", timeout=45, brain_type="default_reasoning"):
     """Executes reasoning via the Antigravity API (Cloud) or Native CLI bridge."""
 
@@ -87,7 +128,7 @@ def execute_google(prompt, system_instruction, model, auth_type="API Key", timeo
         # Increase timeout for Pro models
         effective_timeout = 120 if "pro" in model else timeout
 
-        cmd = ["agy", "-p", "-", "-o", "json", "-y", "--dangerously-skip-permissions"]
+        cmd = ["agy", "-p", "-", "-o", "json", "-y", "--dangerously-skip-permissions", "--project", "ephemeral-internal"]
         if model and model != "default":
             cmd.extend(["-m", model])
 
@@ -134,6 +175,8 @@ def execute_google(prompt, system_instruction, model, auth_type="API Key", timeo
             return f"Error: No valid JSON payload found in CLI output. STDERR: {res.stderr.strip()[:100]}"
         except Exception as e:
             return f"Native CLI Exception: {e}"
+        finally:
+            cleanup_ephemeral_agy_sessions()
             
     # Route 2: Standard REST API (For pure API Key users)
     api_key = keyring.get_password("aim-system", "google-api-key")
