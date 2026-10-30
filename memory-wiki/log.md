@@ -178,4 +178,13 @@
 - Evaluated and rejected building a dedicated `./aim fleet` CLI / `~/.aim/fleet.json` parser as unnecessary feature creep, reaffirming the DHH Agentic Doctrine that heterogeneous Markdown surgery across projects and Co-Agents belongs to the LLM agent combined with single-repo `./aim update`.
 - Codified the 4-step **Fleet-Wide Rollout Checklist** in `pages/operations.md` (dynamic `joshua_os/.aim_core` + `~/aim-coagents/blueprints/*/AGENTS.md` discovery, `./aim update --source ~/aim-joshua --skip-deps`, surgical `AGENTS.md` patching, and dirty-worktree-safe `git commit --only AGENTS.md` + dynamic `main`/`master`/`local-only` push).
 
+## [2026-10-30] ingest | Pre-`v1.0.0` Hygiene: LanceDB `list_lance_tables()` Fix (`#114`), Branch Sweep & `26.03 GiB` Host Archive Dehydration (`#113`, `v0.8.10`)
+- Resolved `aim-joshua` `#114` (`v0.8.10`, `b3bddb0b`, `40/40` Pytest passing with `0` warnings):
+  - Added forward/backward-compatible `list_lance_tables(db)` in `lance_backend.py` (unwrapping modern LanceDB `ListTablesResponse.tables` while preserving iterable and legacy `table_names()` fallbacks) and wired it across `lance_backend.py`, `retriever.py`, and `joshua_os/handoff/embed_store.py`.
+  - Pruned all `8` stale remote `archive-fix/*` / `fix/issue-*` branches on `origin` and `12` local `archive-fix/*` branches so only `main` (`origin/main`) remains.
+- Resolved `aim-joshua` `#113` (Host Pre-J.O.S.H.U.A. Legacy Archive Dehydration):
+  - Created and verified (`git bundle verify`) cold-vault `.git.bundle` archives and dirty-worktree tarballs across `18` retired pre-J.O.S.H.U.A. vessels and sandboxes inside `~/aim_legacy_archive/cold_vault_20261030/` (`MANIFEST.json`), including archiving and removing the redundant `~/aim-joshua.bak-rsync-seed` directory.
+  - Verified identical SHA256 (`656110d31168f6cc…`) across all `3` copies of `longmemeval_s.engram` (`941.4 MB` each) and replaced the two duplicate copies with symlinks to `~/aim_legacy_archive/engrams/longmemeval_s.engram`.
+  - Dehydrated `203` inactive `venv`/`node_modules`/cache directories across `24` retired vessel and OS sandbox folders, reclaiming **`26.03 GiB`** total (`df -h` free space increased from `385G` to `410G`) with zero source or `.git` loss.
+
 
