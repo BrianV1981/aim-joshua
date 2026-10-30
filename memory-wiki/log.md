@@ -174,4 +174,8 @@
 - Upgraded all `22` active `joshua_os` repositories (`~/aim-*`, `~/aim-agents/*`, `~/tbsoftwash-ai-book`) to `v0.8.9` and surgically updated the `Spoken Summary (🔊)` mandate in each repository's `AGENTS.md` (`git commit --only AGENTS.md`), preserving 100% of custom domain rules.
 - Updated `pages/dhh-agentic-philosophy.md` to document the Spoken Summary (`🔊`) Mandate and Neural TTS integration.
 
+## [2026-10-29] ingest | Fleet-Wide Rollout Checklist in `operations.md` (Anti-Feature-Creep Decision)
+- Evaluated and rejected building a dedicated `./aim fleet` CLI / `~/.aim/fleet.json` parser as unnecessary feature creep, reaffirming the DHH Agentic Doctrine that heterogeneous Markdown surgery across projects and Co-Agents belongs to the LLM agent combined with single-repo `./aim update`.
+- Codified the 4-step **Fleet-Wide Rollout Checklist** in `pages/operations.md` (dynamic `joshua_os/.aim_core` + `~/aim-coagents/blueprints/*/AGENTS.md` discovery, `./aim update --source ~/aim-joshua --skip-deps`, surgical `AGENTS.md` patching, and dirty-worktree-safe `git commit --only AGENTS.md` + dynamic `main`/`master`/`local-only` push).
+
 
