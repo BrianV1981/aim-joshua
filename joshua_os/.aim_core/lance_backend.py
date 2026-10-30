@@ -109,6 +109,16 @@ class EntityIntersectionReranker(Reranker):
         return pa.Table.from_pandas(combined_df)
 
 
+def list_lance_tables(db):
+    """Forward/backward-compatible LanceDB table listing (supports ListTablesResponse.tables, iterables, and legacy table_names())."""
+    if hasattr(db, "list_tables"):
+        res = db.list_tables()
+        if hasattr(res, "tables"):
+            return list(res.tables)
+        return list(res)
+    return list(db.table_names())
+
+
 class VectorBackend:
     def __init__(self, path=None):
         self.path = path or LANCE_DB_PATH
@@ -116,7 +126,7 @@ class VectorBackend:
         self.table_name = "fragments"
         
     def ensure_table(self):
-        if self.table_name not in self.db.table_names():
+        if self.table_name not in list_lance_tables(self.db):
             schema = pa.schema([
                 pa.field("fragment_id", pa.int64()),
                 pa.field("session_id", pa.string()),
@@ -198,7 +208,7 @@ class VectorBackend:
             for parquet_file in glob.glob(os.path.join(cartridges_dir, "*.parquet")):
                 try:
                     table_name = os.path.basename(parquet_file)
-                    if table_name not in mem_db.table_names():
+                    if table_name not in list_lance_tables(mem_db):
                         dataset = ds.dataset(parquet_file)
                         t = mem_db.create_table(table_name, data=dataset)
                         try:

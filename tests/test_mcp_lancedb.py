@@ -111,4 +111,27 @@ def test_retriever_active_aim_root_follows_lance_db_path(tmp_path):
             lance_backend.LANCE_DB_PATH = orig_path
 
 
+def test_list_lance_tables_zero_deprecation_warnings(tmp_path):
+    """Issue #114: VectorBackend.ensure_table() and list_lance_tables() emit zero table_names() DeprecationWarnings."""
+    import warnings
+    import lance_backend
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", DeprecationWarning)
+        vb = lance_backend.VectorBackend(path=str(tmp_path / "lance_test"))
+        vb.ensure_table()
+        tables = lance_backend.list_lance_tables(vb.db)
+
+    dep_msgs = [str(w.message) for w in caught if issubclass(w.category, DeprecationWarning) and "table_names" in str(w.message)]
+    assert dep_msgs == []
+    assert "fragments" in tables
+
+    class LegacyConn:
+        def table_names(self):
+            return ["legacy_tbl"]
+
+    assert lance_backend.list_lance_tables(LegacyConn()) == ["legacy_tbl"]
+
+
+
 

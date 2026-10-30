@@ -92,7 +92,8 @@ def store_chunks(
         ]
         names = set()
         try:
-            names = set(db.list_tables())  # type: ignore[attr-defined]
+            res = db.list_tables()  # type: ignore[attr-defined]
+            names = set(res.tables if hasattr(res, "tables") else res)
         except Exception:
             try:
                 names = set(db.table_names())

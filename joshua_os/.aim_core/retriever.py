@@ -139,6 +139,7 @@ def expand_sandwich_context(results):
         
     import pyarrow.dataset as ds
     import lancedb
+    from lance_backend import list_lance_tables
 
     mem_db = lancedb.connect("memory://")
 
@@ -151,7 +152,7 @@ def expand_sandwich_context(results):
                 return []
             try:
                 table_name = os.path.basename(parquet_path)
-                if table_name not in mem_db.table_names():
+                if table_name not in list_lance_tables(mem_db):
                     dataset = ds.dataset(parquet_path)
                     t = mem_db.create_table(table_name, data=dataset)
                 else:

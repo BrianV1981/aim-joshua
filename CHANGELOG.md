@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.10] - 2026-10-30
+- Fix: replace deprecated table_names() with list_lance_tables() for LanceDB forward-compatibility (Closes #114)
+
+
 ## [v0.8.9] - 2026-10-28
 - Fix: expand Spoken Summary (🔊) mandate for multi-paragraph TTS capture (Closes #112)
 
