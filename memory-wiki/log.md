@@ -187,4 +187,11 @@
   - Verified identical SHA256 (`656110d31168f6cc…`) across all `3` copies of `longmemeval_s.engram` (`941.4 MB` each) and replaced the two duplicate copies with symlinks to `~/aim_legacy_archive/engrams/longmemeval_s.engram`.
   - Dehydrated `203` inactive `venv`/`node_modules`/cache directories across `24` retired vessel and OS sandbox folders, reclaiming **`26.03 GiB`** total (`df -h` free space increased from `385G` to `410G`) with zero source or `.git` loss.
 
+## [2026-10-30] ingest | J.O.S.H.U.A. `v1.0.0` General Availability Release (`#115`)
+- Shipped `aim-joshua` `#115` (`v1.0.0`, commit `480511b0`, `41/41` Pytest passing with `0` warnings):
+  - Graduated `README.md` from `"Alpha, trenches-first."` to `"v1.0 — Production-tested, trenches-first."` and documented the Forensic Blackbox Vault & `/aim-sessions` FTS5 Project Notebook under Core Capabilities.
+  - Bumped `VERSION` to `v1.0.0`, prepended the `## [v1.0.0] - 2026-10-30` General Availability milestone entry to `CHANGELOG.md`, and added `test_semver_ga_posture()` in `tests/test_cli.py` enforcing SemVer `major >= 1` and non-Alpha `README.md` posture.
+  - Published the inaugural official GitHub Release (`v1.0.0 — J.O.S.H.U.A. General Availability`) on `BrianV1981/aim-joshua` organized around the 5 core capability pillars, 10-second Quickstart, A.I.M. Ecosystem companion repositories, and full `CHANGELOG.md` history.
+
+
 

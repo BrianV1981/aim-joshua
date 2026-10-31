@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-30T19:44:00-04:00
+> **Updated:** 2026-10-30T20:06:00-04:00
 > **Updated by:** Antigravity (Session ID: 2e735b20-372f-4d65-b5b7-a2904d9c2e9f)
-> **Priority Mission:** READY FOR `v1.0.0` RELEASE (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v0.8.10`, `0` Open Issues, `40/40` Pytest w/ `0` Warnings, `26.03 GiB` Legacy Bloat Reclaimed)
+> **Priority Mission:** STANDBY — `v1.0.0` GENERAL AVAILABILITY SHIPPED (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v1.0.0` GitHub Release Live, `0` Open Issues, `41/41` Pytest w/ `0` Warnings, `26.03 GiB` Legacy Bloat Reclaimed)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -43,6 +43,7 @@
 | 2e735b20 | #110: Fixed multi-key `audit_vault()` decrypt (`get_candidate_keys()`), added `index_session_to_history()` & `sync_vault_to_history()` auto-populating `joshua_os/archive/history.db` (FTS5), upgraded `./aim sessions` & `./aim search-sessions`, created `/aim-sessions` skill & enforced `agy-blackbox` in `aim-handoff` (`aim-skill-library` `e5fb9fe`), orchestrated `aim-ld` `#469` (`759fdcf` / `904a397`) to stop `parse_news_llm.py` & `run_enricher.py` session spam (purging `2,785` 2-step rows & `351` `.db`/`brain` dirs), and upgraded/backfilled all 22 active `joshua_os` repos to `v0.8.7` (`2da8423a`, `39/39` pytest) | ✅ RESOLVED |
 | 2e735b20 | #111–#112: Codified and expanded the multi-paragraph `Spoken Summary (🔊)` mandate in `AGENTS.md`, `joshua_os/.aim_core/templates/default_AGENTS.md`, and `joshua_os/assets/default_lance` (`v0.8.8`–`v0.8.9`, `23e4f752`, `39/39` pytest); updated all 6 `aim-coagents` blueprints (`955f467`); and rolled out `v0.8.9` + surgical `Spoken Summary (🔊)` `AGENTS.md` updates across all 22 active `joshua_os` repositories for `aim-connect` start-to-prompt Neural TTS (`#222`–`#224`) | ✅ RESOLVED |
 | 2e735b20 | #113–#114: Added forward-compatible `list_lance_tables(db)` across `lance_backend.py`, `retriever.py`, and `embed_store.py` (`v0.8.10`, `b3bddb0b`, `40/40` pytest w/ `0` warnings); pruned all stale remote/local archive branches; verified cold-vault `.git.bundle` + dirty worktree snapshots (`~/aim_legacy_archive/cold_vault_20261030/`), symlink-deduped `longmemeval_s.engram`, and dehydrated `203` retired `venv`/`node_modules` dirs reclaiming **`26.03 GiB`** (`385G` → `410G` free) | ✅ RESOLVED |
+| 2e735b20 | #115: Graduated `README.md` to `v1.0 — Production-tested, trenches-first.`, bumped `VERSION` to `v1.0.0`, updated `CHANGELOG.md`, added `test_semver_ga_posture()` (`480511b0`, `41/41` pytest w/ `0` warnings), and published the inaugural official `v1.0.0` GitHub Release on `BrianV1981/aim-joshua` | ✅ SHIPPED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -115,7 +116,7 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/memory-wiki/`
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `~/aim-joshua/tests/` (`40/40` Pytest Coverage, `0` Warnings)
+- `~/aim-joshua/tests/` (`41/41` Pytest Coverage, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 - `~/aim-office/` (2.5D Isometric Multi-Vessel Fleet Cockpit, live in `tmux` window `aim-office:server` on `http://localhost:5175`)
 
