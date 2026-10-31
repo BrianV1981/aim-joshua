@@ -1,7 +1,7 @@
 # J.O.S.H.U.A.
 **Joint Operational Systems for Heuristic User Automation**
 
-J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve as the foundational brain, memory, and infrastructure for autonomous AI coding agents. External LanceDB (RAG) memory, GitOps guardrails, Parquet "Datajack" knowledge cartridges. Alpha, trenches-first.
+J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve as the foundational brain, memory, and infrastructure for autonomous AI coding agents. External LanceDB (RAG) memory, GitOps guardrails, forensic Blackbox session continuity, and Parquet "Datajack" knowledge cartridges. v1.0 — Production-tested, trenches-first.
 
 ## 🚀 Quickstart & Installation
 
@@ -87,6 +87,7 @@ J.O.S.H.U.A. provides a massive suite of tools to control, manage, and scale you
 *   **CLI-Agnostic Skill Injection:** Decoupled from any specific CLI. Tool parsing is modularized via the `aim-skill-library`.
 *   **GitOps Enforcement (with Memory-State Exemption):** Application code and configuration changes strictly require GitHub Issues and isolated `workspace/issue-<id>` worktrees (`./aim fix` → TDD → `./aim promote`), while living Agent Memory (`memory-wiki/**` and `HANDOFF.md`) commits and pushes directly to `origin/main` with zero prompts.
 *   **Autonomous Memory Wiki & One-Command Handoffs:** `/aim-memory-wiki` runs as a ~15-second mid-session "Save Game" checkpoint directly to `main`, and `/aim-handoff` automatically checks `memory-wiki/log.md` for unlogged session deltas, surgically updates `HANDOFF.md` (`0–9` template), pushes both to `origin/main` in a single atomic commit, and optionally passes the baton to a fresh vessel via `tmux`.
+*   **Forensic Blackbox Vault & Session Notebook:** Multi-key AES-GCM encrypted session sealing (`./aim agy-blackbox`) paired with an automatic SQLite FTS5 project session notebook (`./aim sessions`, `./aim search-sessions`) immune to CLI session-cap eviction.
 *   **Anti-Drift Shield:** A background hook continuously tracks autonomous tool calls.
 
 ---

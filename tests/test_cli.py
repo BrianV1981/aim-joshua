@@ -528,14 +528,20 @@ def test_sync_vault_to_history_and_cmd_sessions(tmp_path, monkeypatch, capsys):
     assert sid in search_out
 
 
+def test_semver_ga_posture():
+    with open("VERSION", "r", encoding="utf-8") as f:
+        version_str = f.read().strip()
+    assert version_str.startswith("v")
+    major, minor, patch = map(int, version_str[1:].split("."))
+    assert major >= 1
 
+    with open("README.md", "r", encoding="utf-8") as f:
+        readme = f.read()
+    assert "Alpha, trenches-first." not in readme
+    assert "Production-tested, trenches-first." in readme
 
-
-
-
-
-
-
-
+    with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+        changelog = f.read()
+    assert "## [v1.0.0]" in changelog
 
 
