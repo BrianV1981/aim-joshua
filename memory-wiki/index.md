@@ -2,15 +2,15 @@
 
 ## Core Concepts
 - [DHH Agentic Philosophy](pages/dhh-agentic-philosophy.md): The core agentic engineering directives (Outcome-Oriented, Operator Taste, Agentic Gatekeeper, CLI Ascendancy, Direct Execution Protocol).
-- [Architecture](pages/architecture.md): The core architecture of the J.O.S.H.U.A. Operating System.
-- [Operations](pages/operations.md): GitOps, Parallel Worktrees, and Installation.
+- [Architecture](pages/architecture.md): The core `v1.0.0` architecture of J.O.S.H.U.A. (Two-Tier MCP, `list_lance_tables`, modular CLI router, `default_lance`).
+- [Operations](pages/operations.md): GitOps worktrees, Installation pathways, Fleet-Wide Rollout Checklist, SemVer GitHub Release SOP, and Cold-Vault Dehydration.
 - [Project Management (Kanban)](pages/projects.md): The `aim projects` CLI wrapper and agent board protocol.
 - [Active Memory Protocol](pages/active-memory-protocol.md): Protocol for ingesting and tracking memory.
-- [Handoff & Retrieval Protocols](pages/handoff-and-retrieval.md): Agent handoffs, the Blackbox vault, and LanceDB queries.
-- [Blackbox Vault (Anti-Tampering)](pages/blackbox-vault.md): The forensic, Operator-locked archive.
+- [Handoff & Retrieval Protocols](pages/handoff-and-retrieval.md): Agent handoffs, the Blackbox vault, `/aim-sessions` FTS5 recall, and LanceDB queries.
+- [Blackbox Vault (Anti-Tampering)](pages/blackbox-vault.md): Multi-key forensic archive and automatic SQLite FTS5 Project Session Notebook (`history.db`).
 - [Bwrap Forge Skill](pages/bwrap-forge-skill.md): Guide on the isolated sandbox forge.
 - [Native OS Shift](pages/native-os-shift.md): The shift to the native operating system structure.
-- [CI/CD & Testing Architecture](pages/ci-testing.md): The testing and pipeline scaffolding (Pytest, Gitleaks, etc.).
+- [CI/CD & Testing Architecture](pages/ci-testing.md): The `41/41` (`0` warnings) Pytest suite, E2E worktree harness, host-path hygiene, and Gitleaks CI gates.
 - [Living Audit Protocol](pages/audit-protocol.md): The A+ acceptance criteria and orchestrator FREEZE mechanics.
 - [Google Oct 1st People-First Content Doctrine](pages/google-oct1-people-first-content.md): First-party non-training data, interactive Main Content (MC) micro-tools, anti-LLM prose filter, and zero scaled templates across Content Co-Agents.
 - [AIM-Office 2.5D Isometric Fleet Cockpit](pages/aim-office-cockpit.md): Clean-sheet React 19 + TS 2.5D isometric multi-vessel command center (`~/aim-office`), 20-character sprite pipeline, 3-theme architecture (War Room, Cutaway Agency, Classic Studio), and per-agent Kanban & `tmux` telemetry bridge.

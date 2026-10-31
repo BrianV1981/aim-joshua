@@ -34,3 +34,21 @@ Fleet-wide rollouts intentionally rely on the orchestrating LLM agent + single-r
 3. **Surgical `AGENTS.md` Patching**: Because `aim update` intentionally preserves tenant `AGENTS.md` files, apply constitution updates surgically by matching headings or `- **Key:**` bullets in place — never overwrite custom domain sections (`## 11+`), Co-Agent persona sections (`## 2–7`), or `## Gemini Added Memories`.
 4. **Dirty-Worktree-Safe Git Push**: Stage and commit strictly via `git add AGENTS.md && git commit --only AGENTS.md -m "..."` so unstaged files or active worktrees in sibling `tmux` sessions are never swept in; dynamically detect `origin` and the active branch (`main` vs. `master`), run `git pull --rebase --autostash origin <branch> && git push origin <branch>`, and gracefully skip `local-only` Co-Agent folders without remotes.
 
+## Semantic Versioning & Official GitHub Release SOP (`v1.0.0`, `#115`)
+- **Automated vs. Curated `cmd_push` SemVer Bumps (`aim_cli.py`)**: `cmd_push` inspects the commit message prefix against `VERSION`:
+  - `BREAKING CHANGE:` increments `major` (`x+1.0.0`) and prepends `CHANGELOG.md`.
+  - `Feature:` / `feat:` increments `minor` (`x.y+1.0`) and prepends `CHANGELOG.md`.
+  - `Fix:` / `fix:` increments `patch` (`x.y.z+1`) and prepends `CHANGELOG.md`.
+  - **Milestone / Curated Releases (`Release: ...`)**: Any non-auto-bump prefix leaves manually edited `VERSION` and `CHANGELOG.md` files untouched while committing `Version: <VERSION>`, enabling exact milestone cuts (such as `v1.0.0`) without forcing a `"BREAKING CHANGE:"` commit title.
+- **GitHub Release Cut Sequence**:
+  1. Execute `VERSION`, `CHANGELOG.md`, and `README.md` updates inside an isolated `aim fix <id>` worktree, pass full `pytest` (`0` warnings), promote to `main`, prune temporary `archive-fix/*` / `fix/issue-*` branches, and sync `memory-wiki/` + `HANDOFF.md` on `main`.
+  2. Wait until both GitHub Actions workflows (`Minimal Smoke Test` + `gitleaks`) report green (`✓`) on the target `main` commit before cutting the tag.
+  3. Publish via `gh release create <tag> --target main --title "..." --notes-file ...` using a 5-part curated release notes structure (Executive Hook, Capability Pillars, tag-pinned Quickstart, Ecosystem Companion Links, Verification & `CHANGELOG.md` link) rather than dumping raw commit logs.
+
+## Cold-Vault Host Archive Dehydration (`#113`)
+When retiring legacy pre-J.O.S.H.U.A. vessels or inactive sandboxes to reclaim host disk space without losing git history or uncommitted work:
+1. Create a full git bundle (`git bundle create <name>.git.bundle --all`) and run `git bundle verify` inside a dated cold-vault directory (`~/aim_legacy_archive/cold_vault_<YYYYMMDD>/` with `MANIFEST.json`).
+2. Snapshot any dirty/untracked worktree files (excluding `venv/`, `node_modules/`, `.cache/`) into compressed `.tar.gz` archives alongside the bundle.
+3. Deduplicate identical large `.engram` / Parquet artifacts via SHA256 verification + symlinks, then strip rebuildable `venv/`, `.venv/`, and `node_modules/` trees from inactive archive folders.
+
+

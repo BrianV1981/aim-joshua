@@ -193,5 +193,12 @@
   - Bumped `VERSION` to `v1.0.0`, prepended the `## [v1.0.0] - 2026-10-30` General Availability milestone entry to `CHANGELOG.md`, and added `test_semver_ga_posture()` in `tests/test_cli.py` enforcing SemVer `major >= 1` and non-Alpha `README.md` posture.
   - Published the inaugural official GitHub Release (`v1.0.0 — J.O.S.H.U.A. General Availability`) on `BrianV1981/aim-joshua` organized around the 5 core capability pillars, 10-second Quickstart, A.I.M. Ecosystem companion repositories, and full `CHANGELOG.md` history.
 
+## [2026-10-30] ingest | Entity Page Consolidation for `v1.0.0` GA, Release SOP & Testing Architecture
+- Synchronized `index.md`, `pages/architecture.md`, `pages/operations.md`, `pages/ci-testing.md`, and `pages/handoff-and-retrieval.md` with `v1.0.0` General Availability state:
+  - Updated `pages/architecture.md` to reflect the `60`-fragment `v1.0.0` `default_lance` snapshot, forward-compatible `list_lance_tables(db)` (`#114`), and `cmd_sessions` / `cmd_search_sessions` in `cli_memory.py` (`#110`).
+  - Purged stale `aim_push.sh` references in `pages/ci-testing.md` in favor of pure-Python `git_push_changes()` (`#98`) and documented the `41/41` (`0` warnings) `v1.0.0` Pytest regression gates.
+  - Added the **Semantic Versioning & Official GitHub Release SOP** (`cmd_push` prefix vs. curated `Release:` mechanics, green-CI tagging gate, 5-part release notes standard) and **Cold-Vault Host Archive Dehydration** protocol (`#113`) to `pages/operations.md`, and interlinked `/aim-sessions` FTS5 recall + `cleanup_ephemeral_agy_sessions()` in `pages/handoff-and-retrieval.md`.
+
+
 
 
