@@ -12,5 +12,3 @@
 - [Native OS Shift](pages/native-os-shift.md): The shift to the native operating system structure.
 - [CI/CD & Testing Architecture](pages/ci-testing.md): The `41/41` (`0` warnings) Pytest suite, E2E worktree harness, host-path hygiene, and Gitleaks CI gates.
 - [Living Audit Protocol](pages/audit-protocol.md): The A+ acceptance criteria and orchestrator FREEZE mechanics.
-- [Google Oct 1st People-First Content Doctrine](pages/google-oct1-people-first-content.md): First-party non-training data, interactive Main Content (MC) micro-tools, anti-LLM prose filter, and zero scaled templates across Content Co-Agents.
-- [AIM-Office 2.5D Isometric Fleet Cockpit](pages/aim-office-cockpit.md): Clean-sheet React 19 + TS 2.5D isometric multi-vessel command center (`~/aim-office`), 20-character sprite pipeline, 3-theme architecture (War Room, Cutaway Agency, Classic Studio), and per-agent Kanban & `tmux` telemetry bridge.

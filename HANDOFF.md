@@ -1,6 +1,6 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-30T20:06:00-04:00
+> **Updated:** 2026-10-31T00:10:00-04:00
 > **Updated by:** Antigravity (Session ID: 2e735b20-372f-4d65-b5b7-a2904d9c2e9f)
 > **Priority Mission:** STANDBY — `v1.0.0` GENERAL AVAILABILITY SHIPPED (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v1.0.0` GitHub Release Live, `0` Open Issues, `41/41` Pytest w/ `0` Warnings, `26.03 GiB` Legacy Bloat Reclaimed)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
@@ -33,15 +33,11 @@
 | 3078de63 | Fleet `AGENTS.md` Rollout: Upgraded 22 `AGENTS.md` files across all active `~/aim-*`, `aim-coagents`, and `~/aim-agents/*` repos to `v0.8.2` (`git commit --only`, preserving 100% of project domain rules) + deleted stray `~/AGENTS.md` | ✅ RESOLVED |
 | 3078de63 | #103: Fixed `aim_init.py` 7-line `AGENTS.md` stub overwrite (`provision_agents_md` + `templates/default_AGENTS.md`), aligned `BOOTSTRAP.md`, added `$1` persona blueprint fetch to `install-agent.sh`, and standardized all 4 `install*.sh` scripts (`v0.8.3`, `4f950fbd`, `34/34` pytest) | ✅ RESOLVED |
 | 3078de63 | #104: Added `README.md` 3-option comparison table & `./aim init` guide, refreshed `default_lance` (`364 KB`, `58` `v0.8.4` fragments), fixed dynamic `LANCE_DB_PATH` binding in `VectorBackend()`, deduplicated `install-clean.sh`, and updated `aim-coagents` installer URLs (`v0.8.4`, `9a5b5cef` / `d5f52a6`) | ✅ RESOLVED |
-| 3078de63 | #105: Set `timeout=(0.5, 15)` on local Ollama (`127.0.0.1:11434`) in `forensic_utils.py`, added `artifacts/AUDIT_*.md` to `bootstrap_brain.py`, added 4-point Live Production & Deploy Parity lens to `aim-coagents/personas/aim-auditor/PERSONA.md` (`a644fce`), and upgraded/indexed `aim-tester` (`6525cc1`), `aim-enricher` (`f5822d6`), and `aim-permits` (`75064cc`) (`4c39858c`, `35/35` pytest in `14.87s`) | ✅ RESOLVED |
-| 3078de63 | Content Co-Agents & `aim-youtube` Hub-and-Spoke Protocol: Codified `blueprints/content-node` and `blueprints/content-wordpress` in `aim-coagents` (`3af01d6`); synced canonical Linux Tmux `aim-communicate` to `vessels/agy/skills/aim-communicate/`, standardized Operator emails (`83c5a9e`), and codified `aim-youtube` Hub-and-Spoke delegation in `aim-skill-library` (`30db021`) | ✅ RESOLVED |
-| 0eca3c90 | #106: Codified Google Oct 1st People-First Content & First-Party Effort Doctrine (`RankEmbed BERT` 4 Rater Pillars, First-Party Non-Training Data, Interactive Main Content Micro-Tools, Zero Scaled Templates, Anti-LLM Prose Filter, Full Human Bylines, `HTTP 200` + `<title>`/`<meta>`/`<img alt>` Fact-Checking) across `aim-skill-library` (`2e3edeb`), `aim-coagents` (`9ff5782`), and `aim-joshua/memory-wiki/` (`01ae4d1b`) | ✅ RESOLVED |
+| 3078de63 | #105: Set `timeout=(0.5, 15)` on local Ollama (`127.0.0.1:11434`) in `forensic_utils.py` and added `artifacts/AUDIT_*.md` to `bootstrap_brain.py` (`4c39858c`, `35/35` pytest in `14.87s`) | ✅ RESOLVED |
 | 02feb6e8 | #107: Fixed `aim_init.py` `f.read().splitlines()` on pre-existing `.gitignore` files and added regression test (`v0.8.5`, `2c5d4bc4`, `36/36` pytest) | ✅ RESOLVED |
 | 02feb6e8 | #108: Removed hardcoded host path comments in `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`v0.8.6`, `71a0b086`, `37/37` pytest), sanitized `HANDOFF.md` & `memory-wiki/`, and pruned stale remote branches on `origin` | ✅ RESOLVED |
-| 02feb6e8 | `aim-connect` `#209`–`#212`: Shipped Fleet Panes Telemetry (`/api/fleet/panes`), Swarm Activity (`/api/swarm/activity`), Session Forensics (`/api/forensics/{session}`), and Workspace Context (`/api/workspace/context`) endpoints on Project `#6` | ✅ RESOLVED |
-| 02feb6e8 | `aim-office` `#1`–`#10`: Provisioned `~/aim-office` (`BrianV1981/aim-office`, Project `#14` `10/10` `Done`, `d1e17b4`, live on `http://localhost:5175`), sliced all 20 Sovereign Character `2x2` sprite sheets (`80` directional PNGs), built 3-theme pack engine (`sovereign-war-room`, `cutaway-agency`, `classic-command`) with `v4` bottom-anchor-compensated pod coordinates, floating draggable 2-column Agent Cockpit (`AgentInspectorDrawer.tsx`), and live per-agent Kanban switching (`SESSION_PROJECT_MAP` + `parseHandoffKanbanForSession` + 60s cache in `officeBridge.ts`, `13/13` Vitest + `2/2` Pytest) | ✅ RESOLVED |
-| 2e735b20 | #110: Fixed multi-key `audit_vault()` decrypt (`get_candidate_keys()`), added `index_session_to_history()` & `sync_vault_to_history()` auto-populating `joshua_os/archive/history.db` (FTS5), upgraded `./aim sessions` & `./aim search-sessions`, created `/aim-sessions` skill & enforced `agy-blackbox` in `aim-handoff` (`aim-skill-library` `e5fb9fe`), orchestrated `aim-ld` `#469` (`759fdcf` / `904a397`) to stop `parse_news_llm.py` & `run_enricher.py` session spam (purging `2,785` 2-step rows & `351` `.db`/`brain` dirs), and upgraded/backfilled all 22 active `joshua_os` repos to `v0.8.7` (`2da8423a`, `39/39` pytest) | ✅ RESOLVED |
-| 2e735b20 | #111–#112: Codified and expanded the multi-paragraph `Spoken Summary (🔊)` mandate in `AGENTS.md`, `joshua_os/.aim_core/templates/default_AGENTS.md`, and `joshua_os/assets/default_lance` (`v0.8.8`–`v0.8.9`, `23e4f752`, `39/39` pytest); updated all 6 `aim-coagents` blueprints (`955f467`); and rolled out `v0.8.9` + surgical `Spoken Summary (🔊)` `AGENTS.md` updates across all 22 active `joshua_os` repositories for `aim-connect` start-to-prompt Neural TTS (`#222`–`#224`) | ✅ RESOLVED |
+| 2e735b20 | #110: Fixed multi-key `audit_vault()` decrypt (`get_candidate_keys()`), added `index_session_to_history()` & `sync_vault_to_history()` auto-populating `joshua_os/archive/history.db` (FTS5), upgraded `./aim sessions` & `./aim search-sessions`, added `cleanup_ephemeral_agy_sessions()` in `reasoning_utils.py`, and upgraded active consumer repos to `v0.8.7` (`2da8423a`, `39/39` pytest) | ✅ RESOLVED |
+| 2e735b20 | #111–#112: Codified and expanded the multi-paragraph `Spoken Summary (🔊)` mandate in `AGENTS.md`, `joshua_os/.aim_core/templates/default_AGENTS.md`, and `joshua_os/assets/default_lance` (`v0.8.8`–`v0.8.9`, `23e4f752`, `39/39` pytest), and rolled out `v0.8.9` + surgical `Spoken Summary (🔊)` `AGENTS.md` updates across the fleet | ✅ RESOLVED |
 | 2e735b20 | #113–#114: Added forward-compatible `list_lance_tables(db)` across `lance_backend.py`, `retriever.py`, and `embed_store.py` (`v0.8.10`, `b3bddb0b`, `40/40` pytest w/ `0` warnings); pruned all stale remote/local archive branches; verified cold-vault `.git.bundle` + dirty worktree snapshots (`~/aim_legacy_archive/cold_vault_20261030/`), symlink-deduped `longmemeval_s.engram`, and dehydrated `203` retired `venv`/`node_modules` dirs reclaiming **`26.03 GiB`** (`385G` → `410G` free) | ✅ RESOLVED |
 | 2e735b20 | #115: Graduated `README.md` to `v1.0 — Production-tested, trenches-first.`, bumped `VERSION` to `v1.0.0`, updated `CHANGELOG.md`, added `test_semver_ga_posture()` (`480511b0`, `41/41` pytest w/ `0` warnings), and published the inaugural official `v1.0.0` GitHub Release on `BrianV1981/aim-joshua` | ✅ SHIPPED |
 
@@ -58,8 +54,7 @@ J.O.S.H.U.A. is the CLI-agnostic OS brain for A.I.M. agents: nested `joshua_os/`
 - `~/aim-joshua/memory-wiki/pages/handoff-and-retrieval.md` (Retrieval mechanics)
 - `~/aim-joshua/memory-wiki/pages/architecture.md` (Two-Tier MCP Protocol)
 - `~/aim-joshua/memory-wiki/pages/dhh-agentic-philosophy.md` (Core Agentic Directives)
-- `~/aim-joshua/memory-wiki/pages/google-oct1-people-first-content.md` (Google Oct 1st Main Content & First-Party Effort Doctrine)
-- `~/aim-joshua/memory-wiki/pages/aim-office-cockpit.md` (AIM-Office 2.5D Isometric Multi-Vessel Fleet Cockpit & Telemetry Bridge)
+- `~/aim-joshua/memory-wiki/pages/operations.md` (GitOps, Installers, Fleet Rollout & SemVer Release SOP)
 
 ---
 
@@ -118,7 +113,6 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py`
 - `~/aim-joshua/tests/` (`41/41` Pytest Coverage, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
-- `~/aim-office/` (2.5D Isometric Multi-Vessel Fleet Cockpit, live in `tmux` window `aim-office:server` on `http://localhost:5175`)
 
 ---
 

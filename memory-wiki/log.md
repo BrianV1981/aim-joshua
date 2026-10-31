@@ -127,51 +127,25 @@
 - Resolved #103 (`v0.8.3`, commit `4f950fbd`): eliminated the 7-line `AGENTS.md` stub overwrite in `aim_init.py` (`provision_agents_md` + `joshua_os/.aim_core/templates/default_AGENTS.md`), aligned `BOOTSTRAP.md` with the `v0.8.3` `AGENTS.md` schema, added optional persona argument (`$1`) resolution from `aim-coagents` to `install-agent.sh`, standardized all 4 `install*.sh` scripts (`install.sh`, `install-agent.sh`, `install-clean.sh`, `install-core.sh`), and expanded `pytest` coverage to `34/34` passing tests.
 - Resolved #104 (`v0.8.4`, commit `9a5b5cef` & `aim-coagents` commit `d5f52a6`): added the 3-option installation comparison table and Turn-1 / `./aim init` personalization guide to `README.md`, rebuilt `joshua_os/assets/default_lance/` from scratch in a single compact transaction (`364 KB`, `58` fragments containing `v0.8.4` `AGENTS.md` and `joshua_os_docs/`), fixed `VectorBackend.__init__` in `lance_backend.py` to dynamically evaluate `LANCE_DB_PATH` when `path=None`, deduplicated `install-clean.sh` to delegate to `install.sh`, and updated `aim-coagents` (`README.md`, `SKILL.md`, `personas/README.md`) to point to `aim-joshua/main/joshua_os/install-agent.sh`.
 
-## [2026-10-22] ingest | Content Co-Agent Provisioning & Dual Blueprints (`content-node` vs. `content-wordpress`)
-- Codified the two Content Co-Agent Blueprints in `~/aim-coagents/blueprints/`:
-  - **`content-node`** (for Node.js/Next.js Markdown sites with `npm run build` gate).
-  - **`content-wordpress`** (for WordPress PHP sites with Router SEO, zero inline `<style>`, local `1200px` WebP graphics, E-E-A-T auto-schema, and `test_guardrails.py` gate).
-- Resolved #105 (`4c39858c`, `35/35` `pytest` passing in `14.87s`): changed local Ollama (`127.0.0.1:11434`) `timeout=15` to `timeout=(0.5, 15)` in `forensic_utils.py`, added `os.path.join(PROJECT_ROOT, "artifacts", "AUDIT_*.md")` to `foundation_targets` in `bootstrap_brain.py`, added the 4-point Live Production & Deploy Parity lens to `aim-coagents/personas/aim-auditor/PERSONA.md` (`a644fce`), and upgraded/indexed inactive `~/aim-agents/` nodes (`aim-tester`, `aim-enricher`, `aim-permits`, and content nodes).
-- Codified the **Hub-and-Spoke `aim-youtube` Co-Agent Delegation Protocol** (`aim-youtube` = Hub/Miner contacted via `aim-communicate` storing transcripts in `~/aim-youtube/content_library/<project>/{idea_backlog,raw_transcripts,research_summaries}/`; `invoke_subagent` = strictly for internal subagents like `image-generator`) across `aim-coagents` (`3af01d6`), `aim-skill-library` (`30db021`, also syncing the canonical Linux Tmux `aim-communicate/SKILL.md` and `scripts/tmux_send.sh` into `vessels/agy/skills/aim-communicate/`), and `aim-youtube/docs/AIM_YOUTUBE_SCOPE_SOP.md`.
-
-## [2026-10-23] ingest | Google Oct 1st People-First Content & First-Party Effort Doctrine (#106)
-- Analyzed Google's October 1st rewrite of *Creating Helpful, Reliable, People-First Content* and *Guidance on Generative AI Content* (`qMUAU7E3dCA` transcript + DOJ *U.S. v. Google* `RankEmbed BERT` rater-training exhibits + Matt Kenyon / Lily Ray / Crutchfield / Rilla Labs research).
-- Codified the **6 Non-Negotiable Content Co-Agent Guardrails** across `aim-skill-library` (`aim-mega-article`, `aim-mega-guide`), `aim-coagents` (`blueprints/content-node`, `blueprints/content-wordpress`), and the active Content Co-Agents:
-  1. **First-Party Non-Training Data Injection** (live SQLite/regulatory telemetry, empirical field logs & jobsite photos, live TTFB/Core Web Vitals telemetry — eliminating "Meat Proxy" public-transcript remixes).
-  2. **Interactive "Main Content" (MC) Micro-Tools** (embedded calculators, estimators, and interactive selectors to satisfy Google's Effort and Talent/Skill rater pillars).
-  3. **Zero Scaled Templated Pages** (strict uniqueness gate on city geo-mesh pages and county series).
-  4. **Anti-LLM Prose Filter** (banning formulaic *"It's not X, it's Y"* contrasts, hedging, and AI transition crutches).
-  5. **Real Verifiable Human Bylines & Zero Self-Serving Listicles** (clickable E-E-A-T bios; zero fake AI personas or `"Best X"` vendor listicles).
-  6. **Critical Metadata (`<title>`, `<meta description>`, `<img alt>`) & Live `HTTP 200` Outbound Citation Fact-Checking**.
-- Created `pages/google-oct1-people-first-content.md` and linked it in `index.md` (`01ae4d1b`), committed and pushed `aim-skill-library` (`2e3edeb`) and `aim-coagents` (`9ff5782`), and re-indexed all active Content Co-Agents.
+## [2026-10-22] ingest | Ollama Fast-Fail Timeout & Audit Artifact Indexing (#105)
+- Resolved #105 (`4c39858c`, `35/35` `pytest` passing in `14.87s`): changed local Ollama (`127.0.0.1:11434`) `timeout=15` to `timeout=(0.5, 15)` in `forensic_utils.py` and added `os.path.join(PROJECT_ROOT, "artifacts", "AUDIT_*.md")` to `foundation_targets` in `bootstrap_brain.py`.
 
 ## [2026-10-24] ingest | Onboarding `.gitignore` Fix (#107) & Host Path / Branch Hygiene (#108, `v0.8.6`)
 - Resolved #107 (`v0.8.5`, commit `2c5d4bc4`): fixed `f.read().splitlines()` on pre-existing `.gitignore` files in `aim_init.py` with regression coverage in `tests/test_cli.py`.
-- Resolved #108 (`v0.8.6`, commit `71a0b086`): removed hardcoded `/home/kingb` comments from `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`37/37` `pytest` passing), sanitized host paths and private client references in `HANDOFF.md` and `memory-wiki/` while preserving all architectural wiki pages and `joshua_os/assets/default_lance/`, and pruned stale remote branches on `origin`.
-
-## [2026-10-26] ingest | AIM-Office 2.5D Isometric Multi-Vessel Fleet Cockpit (`#1`–`#10`) & AIM-Connect Telemetry Bridge (`#209`–`#212`)
-- Provisioned `~/aim-office` (`BrianV1981/aim-office`, GitHub Project `#14`, MIT License) with J.O.S.H.U.A. `v0.8.6` and shipped `aim-connect` Issues `#209`–`#212` (`/api/fleet/panes`, `/api/swarm/activity`, `/api/forensics/{session}`, `/api/workspace/context` on `BrianV1981/aim-connect` Project `#6`).
-- Shipped `aim-office` Phase 1 (`#1`–`#4`), Phase 2 (`#5`–`#7`), and Multi-Theme + Per-Agent Kanban (`#8`–`#10`, commit `d1e17b4`, `10/10` `Done` on Project `#14`, `13/13` Vitest + `2/2` Pytest passing):
-  - **20-Character Sovereign Roster (`80` Directional PNGs):** Generated and sliced 20 `2x2` turnaround sprite sheets (`scripts/slice_sprite_sheet.py`) into `public/sprites/characters/` covering every active A.I.M. vessel and specialist Co-Agent.
-  - **3-Theme Pack Architecture & `v4` Bottom-Anchor Compensation:** Built `sovereign-war-room` (Subterranean Command Bunker with AI Neural Core Reactor, WOPR Telemetry Wall, Central Holographic Globe Table, `wallBoardRect: null`, and tactical gunmetal desk color-grading), `cutaway-agency` (3-Alcove Cutaway Floorplan with flat `skewDeg: 0` Strategy Wing Whiteboard and 4 woven rugs), and `classic-command` (`skewDeg: 25.6` dry-erase whiteboard), with `v4` pod coordinates compensating for the `-5.3%` vertical shift of bottom-anchored sprites.
-  - **Floating 2-Column Cockpit & Live Per-Agent Kanban Switching:** Converted `AgentInspectorDrawer.tsx` into a floating, draggable `560px` overlay card with live `tmux` scrollback, TTS, Mic STT, macro pills, and a 1-click `aim-communicate` broker; wired `SESSION_PROJECT_MAP` + `parseHandoffKanbanForSession` + 60s caching in `src/server/officeBridge.ts` so clicking any agent immediately updates `WallTaskBoard.tsx`, `TopCommandBar.tsx`, and `WhiteboardModal.tsx`.
-- Created `pages/aim-office-cockpit.md` and linked it in `index.md`.
+- Resolved #108 (`v0.8.6`, commit `71a0b086`): removed hardcoded host-path comments from `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`37/37` `pytest` passing), sanitized host paths and private client references in `HANDOFF.md` and `memory-wiki/` while preserving all architectural wiki pages and `joshua_os/assets/default_lance/`, and pruned stale remote branches on `origin`.
 
 ## [2026-10-28] ingest | Fleet Blackbox Restoration, `/aim-sessions` Project Notebook & Ephemeral Pipeline Cleanup (`#110`, `v0.8.7`)
 - Resolved `aim-joshua` `#110` (`v0.8.7`, `2da8423a`, `39/39` Pytest passing):
-  - Fixed `blackbox_vault.py` (`get_candidate_keys()` + `audit_vault()`) to try both OS `keyring` and `~/.aim/blackbox.key` (prioritizing `manifest.jsonl` `key_source`), restoring `100%` decryption across all `996` encrypted `.enc` blobs across the fleet (`0` failures).
+  - Fixed `blackbox_vault.py` (`get_candidate_keys()` + `audit_vault()`) to try both OS `keyring` and `~/.aim/blackbox.key` (prioritizing `manifest.jsonl` `key_source`), restoring `100%` decryption across all encrypted `.enc` blobs (`0` failures).
   - Added `index_session_to_history()` and `sync_vault_to_history()` in `blackbox_vault.py` and upgraded `cmd_sessions` / `cmd_search_sessions` in `cli_memory.py` so every sealed session is automatically rendered to `joshua_os/archive/history/<date>_<sid>.md` and indexed into `joshua_os/archive/history.db` (`history` + `history_fts` FTS5 tables) with unlimited retention (`4,000+` sessions).
   - Fixed `tests/test_aplus.py::test_vault_hermetic_decrypt` to use `tmp_path` instead of `os.getcwd()`, and added `cleanup_ephemeral_agy_sessions()` (`--project ephemeral-internal`) in `reasoning_utils.py`.
-- Updated `aim-skill-library` (`e5fb9fe`): enforced `./aim agy-blackbox --session-id <uuid>` in `vessels/agy/skills/aim-handoff/SKILL.md` Step 6 and created the `/aim-sessions` project-scoped session notebook skill (`skills/aim-sessions/SKILL.md`).
-- Orchestrated `aim-ld` Issue `#469` (`759fdcf` on `aim-ld`, `904a397` on `aim-enricher`): added `--project ephemeral-pipeline` + `finally` block `cleanup_ephemeral_agy_sessions()` to `parse_news_llm.py` and `run_enricher.py`, and purged `2,785` 2-step scraper rows from `~/.gemini/antigravity-cli/conversation_summaries.db` plus `351` `.db`/`brain` directories (freeing `355` slots below `agy`'s 500-session eviction ceiling).
-- Upgraded all `22` active `joshua_os` repositories to `v0.8.7`, salvaged all surviving top-level project transcripts into each project's `.raw_jsonl_blackbox/`, and backfilled `joshua_os/archive/history.db` across the entire fleet.
+- Upgraded active consumer repositories to `v0.8.7` and backfilled `joshua_os/archive/history.db` across the fleet.
 
 ## [2026-10-28] ingest | Spoken Summary (`🔊`) Mandate & Fleet Neural TTS Rollout (`#111`–`#112`, `v0.8.8`–`v0.8.9`)
 - Resolved `aim-joshua` `#111` (`v0.8.8`, `65d2d4ad`) and `#112` (`v0.8.9`, `23e4f752`, `39/39` Pytest passing):
-  - Codified and expanded the **Spoken Summary (`🔊`)** mandate under `## 1. IDENTITY & PRIMARY DIRECTIVE` in `AGENTS.md` and `joshua_os/.aim_core/templates/default_AGENTS.md` so every agent turn concludes with a `🔊 <spoken summary>` block in plain conversational English (1–2 sentences for routine status updates; 3–6+ sentences or multi-paragraph blocks when elaborating or explaining architecture), matching `aim-connect` `#222`–`#224` start-to-prompt delimiter capture (`-S -120`, `4,000` char limit, local `piper-tts` ONNX + cloud `edge-tts`).
+  - Codified and expanded the **Spoken Summary (`🔊`)** mandate under `## 1. IDENTITY & PRIMARY DIRECTIVE` in `AGENTS.md` and `joshua_os/.aim_core/templates/default_AGENTS.md` so every agent turn concludes with a `🔊 <spoken summary>` block in plain conversational English (1–2 sentences for routine status updates; 3–6+ sentences or multi-paragraph blocks when elaborating or explaining architecture) for start-to-prompt Neural TTS readback.
   - Rebuilt `joshua_os/assets/default_lance` (`60` fragments) with the `v0.8.9` `AGENTS.md` and added regression assertions in `tests/test_cli.py`.
-- Updated all `6` Co-Agent blueprints in `~/aim-coagents/blueprints/*/AGENTS.md` (`aim-auditor`, `book-coauthor`, `content-node`, `content-wordpress`, `lead-analyst`, `python-developer`, commits `7d83ad2` & `955f467`).
-- Upgraded all `22` active `joshua_os` repositories (`~/aim-*`, `~/aim-agents/*`, `~/tbsoftwash-ai-book`) to `v0.8.9` and surgically updated the `Spoken Summary (🔊)` mandate in each repository's `AGENTS.md` (`git commit --only AGENTS.md`), preserving 100% of custom domain rules.
+- Upgraded active consumer repositories to `v0.8.9` and surgically updated the `Spoken Summary (🔊)` mandate in each repository's `AGENTS.md` (`git commit --only AGENTS.md`), preserving 100% of custom domain rules.
 - Updated `pages/dhh-agentic-philosophy.md` to document the Spoken Summary (`🔊`) Mandate and Neural TTS integration.
 
 ## [2026-10-29] ingest | Fleet-Wide Rollout Checklist in `operations.md` (Anti-Feature-Creep Decision)
@@ -191,13 +165,18 @@
 - Shipped `aim-joshua` `#115` (`v1.0.0`, commit `480511b0`, `41/41` Pytest passing with `0` warnings):
   - Graduated `README.md` from `"Alpha, trenches-first."` to `"v1.0 — Production-tested, trenches-first."` and documented the Forensic Blackbox Vault & `/aim-sessions` FTS5 Project Notebook under Core Capabilities.
   - Bumped `VERSION` to `v1.0.0`, prepended the `## [v1.0.0] - 2026-10-30` General Availability milestone entry to `CHANGELOG.md`, and added `test_semver_ga_posture()` in `tests/test_cli.py` enforcing SemVer `major >= 1` and non-Alpha `README.md` posture.
-  - Published the inaugural official GitHub Release (`v1.0.0 — J.O.S.H.U.A. General Availability`) on `BrianV1981/aim-joshua` organized around the 5 core capability pillars, 10-second Quickstart, A.I.M. Ecosystem companion repositories, and full `CHANGELOG.md` history.
+  - Published the inaugural official GitHub Release (`v1.0.0 — J.O.S.H.U.A. General Availability`) on `BrianV1981/aim-joshua` organized around the 5 core capability pillars, 10-second Quickstart, standardized single `aim-ecosystem` pointer, and full `CHANGELOG.md` history.
 
 ## [2026-10-30] ingest | Entity Page Consolidation for `v1.0.0` GA, Release SOP & Testing Architecture
 - Synchronized `index.md`, `pages/architecture.md`, `pages/operations.md`, `pages/ci-testing.md`, and `pages/handoff-and-retrieval.md` with `v1.0.0` General Availability state:
   - Updated `pages/architecture.md` to reflect the `60`-fragment `v1.0.0` `default_lance` snapshot, forward-compatible `list_lance_tables(db)` (`#114`), and `cmd_sessions` / `cmd_search_sessions` in `cli_memory.py` (`#110`).
   - Purged stale `aim_push.sh` references in `pages/ci-testing.md` in favor of pure-Python `git_push_changes()` (`#98`) and documented the `41/41` (`0` warnings) `v1.0.0` Pytest regression gates.
   - Added the **Semantic Versioning & Official GitHub Release SOP** (`cmd_push` prefix vs. curated `Release:` mechanics, green-CI tagging gate, 5-part release notes standard) and **Cold-Vault Host Archive Dehydration** protocol (`#113`) to `pages/operations.md`, and interlinked `/aim-sessions` FTS5 recall + `cleanup_ephemeral_agy_sessions()` in `pages/handoff-and-retrieval.md`.
+
+## [2026-10-31] ingest | Strict OS Kernel Wiki Scope & Single `aim-ecosystem` Pointer
+- Removed non-kernel sibling-repository pages (`pages/aim-office-cockpit.md` and `pages/google-oct1-people-first-content.md`) and client/sibling domain entries from `memory-wiki/` and `HANDOFF.md` so `aim-joshua/memory-wiki/` stays 100% scoped to the J.O.S.H.U.A. OS kernel (while each sibling repository maintains its own `memory-wiki/`).
+- Standardized the `v1.0.0` GitHub Release Notes ecosystem section to the single `aim-ecosystem` directory link and registered `aim-office` in `aim-ecosystem/README.md`.
+
 
 
 
