@@ -189,4 +189,11 @@
   - Added `scripts/install.py` (`--mode auto|symlink|copy` with `WinError 1314` copy fallback) and `scripts/install.ps1` to `aim-skill-library`, promoted the universal skill pack across `agy`, `grok`, `codex`, and `opencode`, documented the **Tier 1 Universal Core vs. Tier 2 POSIX Swarm** capability matrix in `README.md`, and deprecated/archived standalone `BrianV1981/agy-joshua` with a redirect to `aim-joshua`.
 - Updated `index.md`, `pages/architecture.md`, `pages/operations.md`, and `pages/ci-testing.md`.
 
+## [2026-11-01] ingest | Steward Cross-Link Audit for `v1.1.0` Tier 1/Tier 2 Parity
+- Audited `c1ae7ad8` across all `memory-wiki/` pages following `aim-connect`'s `v1.1.0` cross-platform sync dispatch:
+  - Updated `pages/handoff-and-retrieval.md` with Tier 2 POSIX scoping for `tmux` baton passes, multi-harness `register_mcp.py` registration, `_uri_to_local_path()` Windows `file:///C:/...` URI normalization, and cross-platform CLI search fallbacks (`./aim`, `.\aim.ps1`).
+  - Cross-linked `pages/bwrap-forge-skill.md` and `pages/native-os-shift.md` with the `v1.1.0` Tier 1 Universal Core vs. Tier 2 POSIX Swarm boundary and `BrianV1981/agy-joshua` archival.
+  - Aligned `pages/operations.md` `ensure_consumer_gitignore` and atomic `os.replace` bullets with `aim.ps1`/`aim.cmd` launchers and recorded `v1.1.0` `main` vs. `v1.0.0` GitHub Release tag status.
+
+
 

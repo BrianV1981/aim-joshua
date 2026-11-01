@@ -22,8 +22,8 @@ All three installation modes share a unified pure-Python engine (`joshua_os/.aim
 - Preserves `.aim_core/CONFIG.json` across `.aim_core` directory replacement.
 - Never overwrites tenant root files (`AGENTS.md`, `TOOLS.md`, `manifest.json`, `memory-wiki/`, `artifacts/`, or `joshua_os/memory_lance/`).
 - Guards optional subdirectories (such as `scripts/`) with existence checks prior to `shutil.copytree`, syncs cross-platform installer shims (`install*.sh` and `install*.ps1`), and rebuilds engine dependencies on both Windows and POSIX via `bootstrap_install.build_engine_venv()` (unless `--skip-deps` is passed).
-- **Consumer `.gitignore` Safeguard (`ensure_consumer_gitignore`)**: Automatically ensures `joshua_os/`, `aim`, `workspace/`, and `archive/` are ignored in downstream consumer projects' `.gitignore` files while skipping the upstream `aim-joshua` repository (`is_upstream_engine_repo`).
-- **Atomic `./aim` Wrapper Refresh**: Uses `os.replace(tmp_aim, dst_aim)` rather than in-place `shutil.copy2` when refreshing the root `./aim` bash wrapper so that an actively executing `/bin/bash ./aim update` process continues reading its original inode without a byte-offset shift.
+- **Consumer `.gitignore` Safeguard (`ensure_consumer_gitignore`)**: Automatically ensures `joshua_os/`, `aim`, `aim.ps1`, `aim.cmd`, `workspace/`, and `archive/` are ignored in downstream consumer projects' `.gitignore` files while skipping the upstream `aim-joshua` repository (`is_upstream_engine_repo`).
+- **Atomic Launcher Refresh**: Uses `os.replace(tmp_file, dst_file)` rather than in-place `shutil.copy2` when refreshing root launchers (`./aim`, `aim.ps1`, `aim.cmd`) so that an actively executing `/bin/bash ./aim update` process continues reading its original inode without a byte-offset shift.
 - **Legacy `aim-agy_os/` → `joshua_os/` Migration Pitfall**: When migrating legacy `aim-agy_os/` repositories to `joshua_os/`, copy the new `.aim_core/config_utils.py` *before* running `./aim update`; otherwise, the legacy `find_project_root()` walks up to `$HOME` if `~/aim-agy_os` exists and misroutes `PROJECT_ROOT`.
 
 ## Fleet-Wide Rollout Checklist (Agent-Driven, Zero Custom CLI)
@@ -42,7 +42,7 @@ Fleet-wide rollouts intentionally rely on the orchestrating LLM agent + single-r
 - **GitHub Release Cut Sequence**:
   1. Execute `VERSION`, `CHANGELOG.md`, and `README.md` updates inside an isolated `aim fix <id>` worktree, pass full `pytest` (`0` warnings), promote to `main`, prune temporary `archive-fix/*` / `fix/issue-*` branches, and sync `memory-wiki/` + `HANDOFF.md` on `main`.
   2. Wait until both GitHub Actions workflows (`Minimal Smoke Test` + `gitleaks`) report green (`✓`) on the target `main` commit before cutting the tag.
-  3. Publish via `gh release create <tag> --target main --title "..." --notes-file ...` using a 5-part curated release notes structure (Executive Hook, Capability Pillars, tag-pinned Quickstart, Ecosystem Companion Links, Verification & `CHANGELOG.md` link) rather than dumping raw commit logs.
+  3. Publish via `gh release create <tag> --target main --title "..." --notes-file ...` using a 5-part curated release notes structure (Executive Hook, Capability Pillars, tag-pinned Quickstart, Ecosystem Companion Links, Verification & `CHANGELOG.md` link) rather than dumping raw commit logs. *(Note: `v1.0.0` is currently the latest published GitHub Release tag; `v1.1.0` (`2207caf4`) is live and CI-green on `main` awaiting Operator directive if an official `v1.1.0` GitHub Release tag is desired).*
 
 ## Cold-Vault Host Archive Dehydration (`#113`)
 When retiring legacy pre-J.O.S.H.U.A. vessels or inactive sandboxes to reclaim host disk space without losing git history or uncommitted work:
