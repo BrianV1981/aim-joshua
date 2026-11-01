@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-10-31T00:10:00-04:00
+> **Updated:** 2026-11-01T12:29:00-05:00
 > **Updated by:** Antigravity (Session ID: 2e735b20-372f-4d65-b5b7-a2904d9c2e9f)
-> **Priority Mission:** STANDBY — `v1.0.0` GENERAL AVAILABILITY SHIPPED (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v1.0.0` GitHub Release Live, `0` Open Issues, `41/41` Pytest w/ `0` Warnings, `26.03 GiB` Legacy Bloat Reclaimed)
+> **Priority Mission:** STANDBY — `v1.0.0` GENERAL AVAILABILITY SHIPPED (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v1.0.0` GitHub Release Live, `0` Open Issues, `41/41` Pytest w/ `0` Warnings, `27.15 GiB` Legacy Bloat Reclaimed)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -38,8 +38,8 @@
 | 02feb6e8 | #108: Removed hardcoded host path comments in `agy_workspace_trust.py` and `spawn_sandbox.py`, added `test_no_hardcoded_host_paths_in_engine_code` (`v0.8.6`, `71a0b086`, `37/37` pytest), sanitized `HANDOFF.md` & `memory-wiki/`, and pruned stale remote branches on `origin` | ✅ RESOLVED |
 | 2e735b20 | #110: Fixed multi-key `audit_vault()` decrypt (`get_candidate_keys()`), added `index_session_to_history()` & `sync_vault_to_history()` auto-populating `joshua_os/archive/history.db` (FTS5), upgraded `./aim sessions` & `./aim search-sessions`, added `cleanup_ephemeral_agy_sessions()` in `reasoning_utils.py`, and upgraded active consumer repos to `v0.8.7` (`2da8423a`, `39/39` pytest) | ✅ RESOLVED |
 | 2e735b20 | #111–#112: Codified and expanded the multi-paragraph `Spoken Summary (🔊)` mandate in `AGENTS.md`, `joshua_os/.aim_core/templates/default_AGENTS.md`, and `joshua_os/assets/default_lance` (`v0.8.8`–`v0.8.9`, `23e4f752`, `39/39` pytest), and rolled out `v0.8.9` + surgical `Spoken Summary (🔊)` `AGENTS.md` updates across the fleet | ✅ RESOLVED |
-| 2e735b20 | #113–#114: Added forward-compatible `list_lance_tables(db)` across `lance_backend.py`, `retriever.py`, and `embed_store.py` (`v0.8.10`, `b3bddb0b`, `40/40` pytest w/ `0` warnings); pruned all stale remote/local archive branches; verified cold-vault `.git.bundle` + dirty worktree snapshots (`~/aim_legacy_archive/cold_vault_20261030/`), symlink-deduped `longmemeval_s.engram`, and dehydrated `203` retired `venv`/`node_modules` dirs reclaiming **`26.03 GiB`** (`385G` → `410G` free) | ✅ RESOLVED |
-| 2e735b20 | #115: Graduated `README.md` to `v1.0 — Production-tested, trenches-first.`, bumped `VERSION` to `v1.0.0`, updated `CHANGELOG.md`, added `test_semver_ga_posture()` (`480511b0`, `41/41` pytest w/ `0` warnings), and published the inaugural official `v1.0.0` GitHub Release on `BrianV1981/aim-joshua` | ✅ SHIPPED |
+| 2e735b20 | #113–#114: Added forward-compatible `list_lance_tables(db)` across `lance_backend.py`, `retriever.py`, and `embed_store.py` (`v0.8.10`, `b3bddb0b`, `40/40` pytest w/ `0` warnings); pruned all stale remote/local archive branches; verified cold-vault `.git.bundle` + dirty worktree snapshots (`~/aim_legacy_archive/cold_vault_20261030/`), symlink-deduped `longmemeval_s.engram`, resolved `aim-auditor`'s dotfile/root-tarball delta, and dehydrated `203` retired `venv`/`node_modules` dirs reclaiming **`27.15 GiB`** total | ✅ RESOLVED |
+| 2e735b20 | #115: Graduated `README.md` to `v1.0 — Production-tested, trenches-first.`, bumped `VERSION` to `v1.0.0`, updated `CHANGELOG.md`, added `test_semver_ga_posture()` (`480511b0`, `41/41` pytest w/ `0` warnings), published the inaugural official `v1.0.0` GitHub Release on `BrianV1981/aim-joshua` (standardized to single `aim-ecosystem` link), scoped `memory-wiki/` strictly to the J.O.S.H.U.A. OS kernel (`9ecaf496`), and documented local `install-agent.sh <blueprint>` Co-Agent provisioning mechanics in `operations.md` | ✅ SHIPPED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -102,6 +102,7 @@ Follow strict GitOps workflow for any future tasks:
 - **Consumer `.gitignore` & Atomic Launcher Replacement:** Downstream consumer projects must never track `joshua_os/` or root launchers (`aim`, `aim.ps1`, `aim.cmd`) in Git (`ensure_consumer_gitignore` in `aim_cli.py` and `install.sh` enforce this automatically). When updating launchers inside `cmd_update`, always use atomic `os.replace(tmp_file, dst_file)` rather than `shutil.copy2` so running `/bin/bash ./aim update` processes do not suffer inode byte-offset shifts.
 - **Onboarding `AGENTS.md` Protection (`#103`–`#104`):** `aim_init.provision_agents_md()` (`joshua_os/.aim_core/aim_init.py`) and `joshua_os/.aim_core/templates/default_AGENTS.md` must stay in lockstep with the root `AGENTS.md` (`test_aim_init_never_truncates_agents_md_to_stub` in `tests/test_cli.py` enforces exact equality). Never allow any onboarding or init script to overwrite `AGENTS.md` with a stub.
 - **Legacy `aim-agy_os/` Migration Sequence:** When migrating legacy `aim-agy_os/` repos to `joshua_os/`, copy the updated `joshua_os/.aim_core/config_utils.py` *before* running `./aim update` so `find_project_root()` does not walk up to `~/aim-agy_os`.
+- **Strict OS Kernel Scope & Single `aim-ecosystem` Pointer:** Keep `aim-joshua/memory-wiki/` and `HANDOFF.md` strictly scoped to the J.O.S.H.U.A. OS kernel — never ingest sibling or client repository domain lore here (each sibling repo maintains its own `memory-wiki/`). In `README.md` and release notes, point external readers to the single standardized `aim-ecosystem` hub rather than hardcoding evolving sibling repository lists.
 
 ---
 

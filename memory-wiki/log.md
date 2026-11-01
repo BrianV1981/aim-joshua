@@ -177,7 +177,7 @@
 - Removed non-kernel sibling-repository pages (`pages/aim-office-cockpit.md` and `pages/google-oct1-people-first-content.md`) and client/sibling domain entries from `memory-wiki/` and `HANDOFF.md` so `aim-joshua/memory-wiki/` stays 100% scoped to the J.O.S.H.U.A. OS kernel (while each sibling repository maintains its own `memory-wiki/`).
 - Standardized the `v1.0.0` GitHub Release Notes ecosystem section to the single `aim-ecosystem` directory link and registered `aim-office` in `aim-ecosystem/README.md`.
 
-
-
-
+## [2026-11-01] ingest | `#113` Audit Delta Closeout (`27.15 GiB` Total Reclaimed) & Local `install-agent.sh` Provisioning Notes
+- Closed `aim-auditor`'s `#113` dotfile/root-tarball audit delta: verified bundle parity and removed a `1.2 GB` hidden `.aim_temp_clone` directory, verified `tar -ztf` integrity and relocated a `121.6 MB` root backup tarball into `~/aim_legacy_archive/cold_vault_20261030/`, and updated `MANIFEST.json` (`27.15 GiB` total reclaimed).
+- Documented local `install-agent.sh <blueprint>` Co-Agent scaffolding sequence (`./aim` wrapper copy, `git branch -m main`, dual-vessel `aim-skill-library` symlink install, and clean `joshua_os/memory_lance/*` re-index after customizing `AGENTS.md`) and dotfile/tarball sweep guidance in `pages/operations.md`.
 
