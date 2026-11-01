@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-01T12:29:00-05:00
-> **Updated by:** Antigravity (Session ID: 2e735b20-372f-4d65-b5b7-a2904d9c2e9f)
-> **Priority Mission:** STANDBY — `v1.0.0` GENERAL AVAILABILITY SHIPPED (`AUDIT_AIM_JOSHUA.md` Grade **A+**, `v1.0.0` GitHub Release Live, `0` Open Issues, `41/41` Pytest w/ `0` Warnings, `27.15 GiB` Legacy Bloat Reclaimed)
+> **Updated:** 2026-11-01T14:10:00-05:00
+> **Updated by:** Antigravity (Session ID: b1b9864e-5fb2-4e99-9dad-6f67abc7c9cd)
+> **Priority Mission:** STANDBY — `v1.1.0` SHIPPED (`#116` Universal Cross-Platform Installer & Multi-Harness MCP Registration + `aim-skill-library#21`, `agy-joshua` Deprecated/Archived, `0` Open Issues, `46/46` Pytest w/ `0` Warnings)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -40,6 +40,7 @@
 | 2e735b20 | #111–#112: Codified and expanded the multi-paragraph `Spoken Summary (🔊)` mandate in `AGENTS.md`, `joshua_os/.aim_core/templates/default_AGENTS.md`, and `joshua_os/assets/default_lance` (`v0.8.8`–`v0.8.9`, `23e4f752`, `39/39` pytest), and rolled out `v0.8.9` + surgical `Spoken Summary (🔊)` `AGENTS.md` updates across the fleet | ✅ RESOLVED |
 | 2e735b20 | #113–#114: Added forward-compatible `list_lance_tables(db)` across `lance_backend.py`, `retriever.py`, and `embed_store.py` (`v0.8.10`, `b3bddb0b`, `40/40` pytest w/ `0` warnings); pruned all stale remote/local archive branches; verified cold-vault `.git.bundle` + dirty worktree snapshots (`~/aim_legacy_archive/cold_vault_20261030/`), symlink-deduped `longmemeval_s.engram`, resolved `aim-auditor`'s dotfile/root-tarball delta, and dehydrated `203` retired `venv`/`node_modules` dirs reclaiming **`27.15 GiB`** total | ✅ RESOLVED |
 | 2e735b20 | #115: Graduated `README.md` to `v1.0 — Production-tested, trenches-first.`, bumped `VERSION` to `v1.0.0`, updated `CHANGELOG.md`, added `test_semver_ga_posture()` (`480511b0`, `41/41` pytest w/ `0` warnings), published the inaugural official `v1.0.0` GitHub Release on `BrianV1981/aim-joshua` (standardized to single `aim-ecosystem` link), scoped `memory-wiki/` strictly to the J.O.S.H.U.A. OS kernel (`9ecaf496`), and documented local `install-agent.sh <blueprint>` Co-Agent provisioning mechanics in `operations.md` | ✅ SHIPPED |
+| b1b9864e | #116 (`v1.1.0`, `2207caf4`) + `aim-skill-library#21` (`c018f85`): Shipped pure-Python `bootstrap_install.py` + thin Windows 10/11 PowerShell shims (`install.ps1`, `install-agent.ps1`, `install-core.ps1`), multi-harness `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) with stale-binary self-healing, `_uri_to_local_path()` Windows `file:///C:/...` decoding in `mcp_lancedb.py`, PEP 508 Linux-only `SecretStorage`, `setup.sh` `dpkg`/`sudo -n` guards, cross-platform `aim-skill-library/scripts/install.py` (`WinError 1314` copy fallback), Tier 1 vs. Tier 2 Capability Matrix in `README.md` (`46/46` pytest w/ `0` warnings), and deprecated/archived `BrianV1981/agy-joshua` | ✅ SHIPPED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -71,7 +72,7 @@ The backlog is currently clear. You are awaiting explicit operator directives.
 
 ## 3. DETAILED ANALYSIS / BREAKDOWN
 - **Two-Tier Retrieval Protocol:** The retrieval architecture has fundamentally shifted. If you are operating in a modern CLI/IDE harness (like AGY), you will natively possess the `search_lancedb` internal tool. This MCP server dynamically locates the vector database using Local-First or Umbrella Subfolder Fallback, and `retriever.py` (`get_active_aim_root()`) dynamically tracks `lance_backend.LANCE_DB_PATH` so supplemental `archive/cartridges` and `archive/flashrank_cache` resolve inside the target project. If you are operating in a legacy CLI that lacks MCP, you must gracefully degrade to `python3 joshua_os/.aim_core/aim_cli.py search`. Do not assume tools exist if they are not in your prompt.
-- **Cross-Platform Launchers (Linux/macOS & Windows 10/11):** Root entrypoints `./aim` (Bash), `aim.ps1` (PowerShell), and `aim.cmd` (CMD) alongside `resolve_venv_python()` (`Scripts/python.exe` and `bin/python3`) and `git_push_changes()` (pure-Python `cmd_push`) allow J.O.S.H.U.A. to run natively on Linux, macOS, and Windows 10/11 IDEs without requiring a Bash subshell.
+- **Cross-Platform Installers, Launchers & Multi-Harness MCP (Linux/macOS/WSL & Windows 10/11):** Onboarding scripts (`install*.sh` and `install*.ps1` delegating to `bootstrap_install.py`), root entrypoints `./aim` (Bash), `aim.ps1` (PowerShell), and `aim.cmd` (CMD), `resolve_venv_python()`, `git_push_changes()`, and `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) allow Tier 1 J.O.S.H.U.A. features to run natively across Linux, macOS, WSL, and Windows 10/11 without requiring Bash, while keeping Tier 2 (`tmux` and `bwrap`) cleanly POSIX-scoped.
 - **GitOps Enforcement:** Never code on `main`. Always `aim fix <id>` to branch into a worktree sandbox.
 - **Vector Ingestion (Index):** Ingestion is fully parameterized. Custom directories can be ingested into the LanceDB RAM pool by executing `aim index --dir <path>`. This command also handles recursive directory crawling seamlessly.
 - **Testing Framework:** The core Python modules (`mcp_lancedb.py`, `bootstrap_brain.py`) now enforce Pytest unit testing using `unittest.mock`.
@@ -107,12 +108,13 @@ Follow strict GitOps workflow for any future tasks:
 ---
 
 ## 6. KEY PATHS
-- `~/aim-joshua/joshua_os/`
+- `~/aim-joshua/joshua_os/` (`install*.sh`, `install*.ps1`)
 - `~/aim-joshua/aim`, `~/aim-joshua/aim.ps1`, `~/aim-joshua/aim.cmd` (Cross-Platform Launchers)
 - `~/aim-joshua/memory-wiki/`
+- `~/aim-joshua/joshua_os/.aim_core/bootstrap_install.py` & `register_mcp.py`
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `~/aim-joshua/tests/` (`41/41` Pytest Coverage, `0` Warnings)
+- `~/aim-joshua/tests/` (`46/46` Pytest Coverage, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---
