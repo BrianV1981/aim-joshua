@@ -737,7 +737,19 @@ def cmd_update(args):
         with open(config_path, "wb") as cf:
             cf.write(preserved_config)
 
-    for fname in ("setup.sh", "requirements.txt", "link_cli_alias.sh", "VERSION"):
+    for fname in (
+        "setup.sh",
+        "requirements.txt",
+        "link_cli_alias.sh",
+        "VERSION",
+        "install.sh",
+        "install-clean.sh",
+        "install-agent.sh",
+        "install-core.sh",
+        "install.ps1",
+        "install-agent.ps1",
+        "install-core.ps1",
+    ):
         src_file = os.path.join(source_os_dir, fname)
         if os.path.isfile(src_file):
             shutil.copy2(src_file, os.path.join(OS_DIR, fname))
@@ -763,9 +775,11 @@ def cmd_update(args):
     if os.path.exists(deprecated_ingest):
         shutil.rmtree(deprecated_ingest)
 
-    if not skip_deps and os.path.isfile(os.path.join(OS_DIR, "setup.sh")):
+    if not skip_deps:
         print("[*] Rebuilding dependencies...")
-        subprocess.run(["bash", os.path.join(OS_DIR, "setup.sh")], check=True, cwd=BASE_DIR, stdout=subprocess.DEVNULL)
+        from bootstrap_install import build_engine_venv
+
+        build_engine_venv(OS_DIR)
 
     if temp_dir and os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)

@@ -5,19 +5,20 @@ J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve 
 
 ## 🚀 Quickstart & Installation
 
-J.O.S.H.U.A. requires **Linux** or **WSL (Ubuntu)**, Python 3.10+, Node.js v20+, and your preferred underlying LLM CLI (Antigravity, Grok, OpenCode, Codex, etc.).
+J.O.S.H.U.A. runs natively on **Linux**, **WSL (Ubuntu)**, **macOS**, and **Windows 10/11**, requiring Python 3.10+, Git, and your preferred underlying LLM harness (Antigravity IDE/CLI, Grok CLI, OpenCode, Codex, Claude Code, Cursor, etc.).
 
-> **⚠️ IMPORTANT (Target Directory Rule):** All installers scaffold J.O.S.H.U.A. **directly into your current working directory (`pwd`)** and register a bash CLI alias matching the folder name (`basename $(pwd)`). Always create and `cd` into your target project directory **before** running the installer.
+> **⚠️ IMPORTANT (Target Directory Rule):** All installers scaffold J.O.S.H.U.A. **directly into your current working directory (`pwd`)** and register a CLI alias matching the folder name. Always create and `cd` into your target project directory **before** running the installer.
 
-| Option | Installer Script | Best For | `AGENTS.md` Installed | Upstream `.git` / `tests/` |
-|--------|------------------|----------|-----------------------|----------------------------|
-| **Option A (Default)** | `joshua_os/install.sh` | New or existing software projects | Full 10-section J.O.S.H.U.A. `AGENTS.md` (`cp -n`, never overwrites existing) | Stripped (clean project root) |
-| **Option B (Co-Agent)** | `joshua_os/install-agent.sh [persona]` | Specialist peer nodes under `~/aim-agents/<name>` | Specialist blueprint from `aim-coagents` if `[persona]` is passed; otherwise full 10-section `AGENTS.md` | Stripped (isolated node) |
-| **Option C (Contributor)** | `joshua_os/install-core.sh` | Developing the J.O.S.H.U.A. OS engine itself | Upstream `aim-joshua/AGENTS.md` | Preserved (`tests/`, `memory-wiki/`, `.git`) |
+| Option | Installer Script | Windows PowerShell | Best For | `AGENTS.md` Installed | Upstream `.git` / `tests/` |
+|--------|------------------|--------------------|----------|-----------------------|----------------------------|
+| **Option A (Default)** | `joshua_os/install.sh` | `joshua_os/install.ps1` | New or existing software projects | Full 10-section J.O.S.H.U.A. `AGENTS.md` (`cp -n`, never overwrites existing) | Stripped (clean project root) |
+| **Option B (Co-Agent)** | `joshua_os/install-agent.sh [persona]` | `joshua_os/install-agent.ps1 [persona]` | Specialist peer nodes under `~/aim-agents/<name>` | Specialist blueprint from `aim-coagents` if `[persona]` is passed; otherwise full 10-section `AGENTS.md` | Stripped (isolated node) |
+| **Option C (Contributor)** | `joshua_os/install-core.sh` | `joshua_os/install-core.ps1` | Developing the J.O.S.H.U.A. OS engine itself | Upstream `aim-joshua/AGENTS.md` | Preserved (`tests/`, `memory-wiki/`, `.git`) |
 
 ### Option A: Clean Project Installation (Default — New or Existing Projects)
-Installs the `joshua_os/` engine, local `./aim` wrapper, project-specific `memory_lance/` database, `search_lancedb` MCP server, and default `AGENTS.md` / `TOOLS.md` blueprints into your project directory without `aim-joshua` contributor history.
+Installs the `joshua_os/` engine, local `./aim` / `aim.ps1` / `aim.cmd` launchers, project-specific `memory_lance/` database, multi-harness `search_lancedb` MCP server (auto-registered for Antigravity, Grok, Codex, OpenCode, and existing Cursor/Claude configs), and default `AGENTS.md` / `TOOLS.md` blueprints into your project directory without `aim-joshua` contributor history.
 
+**Linux / macOS / WSL (Bash):**
 ```bash
 # 1. Create and enter your project directory (the folder name becomes your CLI alias)
 mkdir -p ~/my-project && cd ~/my-project
@@ -30,50 +31,94 @@ source ~/.bashrc
 my-project doctor
 ```
 
+**Windows 10/11 (PowerShell):**
+```powershell
+# 1. Create and enter your project directory
+mkdir my-project; cd my-project
+
+# 2. Run the native PowerShell installer
+irm https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install.ps1 | iex
+
+# 3. Verify installation
+.\aim.ps1 doctor
+```
+
 ### Option B: Headless Co-Agent (Sovereign Node)
 Deploys a stripped-down, headless Sovereign Co-Agent node (ideal for specialist peers under `~/aim-agents/<node-name>` paired with a blueprint from `aim-coagents`). Pass an optional persona name (`python-developer`, `aim-auditor`, `lead-analyst`, etc.) to pull that specialist `AGENTS.md` blueprint automatically, or omit it to use the default 10-section J.O.S.H.U.A. `AGENTS.md`.
 
 ```bash
+# Linux / macOS / WSL
 mkdir -p ~/aim-agents/my-agent && cd ~/aim-agents/my-agent
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.sh | bash -s python-developer
 source ~/.bashrc
 my-agent doctor
 ```
 
+```powershell
+# Windows 10/11 (PowerShell)
+mkdir C:\aim-agents\my-agent; cd C:\aim-agents\my-agent
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-agent.ps1))) python-developer
+.\aim.ps1 doctor
+```
+
 ### Option C: Core Contributor Installation
 Installs the universal engine while preserving the `aim-joshua` `.git` history, test suites (`tests/`), and `memory-wiki/` for developing J.O.S.H.U.A. itself.
 
 ```bash
+# Linux / macOS / WSL
 mkdir -p ~/aim-joshua-dev && cd ~/aim-joshua-dev
 curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.sh | bash
+```
+
+```powershell
+# Windows 10/11 (PowerShell)
+mkdir aim-joshua-dev; cd aim-joshua-dev
+irm https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.ps1 | iex
 ```
 
 ### Customizing J.O.S.H.U.A. for Your New Project
 Once installed in your project directory:
 1. **Personalize Identity & Rules (`AGENTS.md`):**
    - **Automatic Turn-1 Prompt or Direct Edit:** The default `AGENTS.md` includes `- **Operator Name:** [ASK OPERATOR FOR THEIR NAME AND FILL IT IN HERE USING FILE EDIT TOOLS]`, instructing your agent on Turn 1 to ask your name and update `AGENTS.md` in place. You can also edit `AGENTS.md` (and `TOOLS.md`) directly to define your project's domain architecture, tech stack, and specific rules, or copy a specialist blueprint from [`aim-coagents`](https://github.com/BrianV1981/aim-coagents).
-   - **Interactive Onboarding Interview (`./aim init`):** Alternatively, run `./aim init` to launch the interactive Onboarding Architect (`joshua_os/BOOTSTRAP.md`) in a `tmux` session, which interviews you for your Operator Name, tech stack, and mission and updates `AGENTS.md` (`## 1` and `## 11`) while preserving all 10 core OS sections.
+   - **Interactive Onboarding Interview (`./aim init`):** Alternatively, run `./aim init` (on POSIX systems with `tmux`) to launch the interactive Onboarding Architect (`joshua_os/BOOTSTRAP.md`) in a `tmux` session, or run `.\aim.ps1 init --headless` on Windows and paste `joshua_os/BOOTSTRAP.md` into your IDE/CLI chat to customize `AGENTS.md` (`## 1` and `## 11`) while preserving all 10 core OS sections.
 2. **Initialize Project Knowledge (`memory-wiki/` & LanceDB):** Add project documentation in `memory-wiki/` (or any docs folder) and vectorize it into your project's isolated LanceDB database:
    ```bash
-   ./aim index
+   ./aim index          # Windows PowerShell: .\aim.ps1 index
    # Or ingest a custom documentation directory:
    ./aim index --dir ./docs
    ```
 3. **Keep the Engine Updated:** At any time, pull the latest J.O.S.H.U.A. engine into your project without overwriting your custom `AGENTS.md`, `TOOLS.md`, `memory-wiki/`, or `CONFIG.json`:
    ```bash
-   ./aim update
+   ./aim update         # Windows PowerShell: .\aim.ps1 update
    ```
 
 ### Universal Skill Injection (Required Once Per Host CLI)
-Because J.O.S.H.U.A. is CLI-agnostic, skills are not hardcoded into the OS. Clone the central skill library once and link the skills into your preferred CLI vessel:
+Because J.O.S.H.U.A. is CLI-agnostic, skills are not hardcoded into the OS. Clone the central skill library once and install the pack for your preferred harness (`agy`, `grok`, `opencode`, or `codex`):
 
 ```bash
+# Linux / macOS / WSL
 git clone https://github.com/BrianV1981/aim-skill-library.git ~/aim-skill-library
 cd ~/aim-skill-library
-
-# Example: Install globally for the 'agy' vessel
-./scripts/install.sh --vessel agy --dest ~/.gemini/antigravity-cli/builtin/skills --mode symlink
+./scripts/install.sh --vessel agy --dest ~/.gemini/antigravity-cli/skills --mode symlink
 ```
+
+```powershell
+# Windows 10/11 (PowerShell — defaults to copy mode without requiring Developer Mode symlinks)
+git clone https://github.com/BrianV1981/aim-skill-library.git "$HOME\aim-skill-library"
+cd "$HOME\aim-skill-library"
+.\scripts\install.ps1 -Vessel agy -Dest "$HOME\.gemini\skills"
+```
+
+---
+
+## 🧭 Platform & Harness Capability Matrix
+
+J.O.S.H.U.A. separates its cross-platform **Universal Core** from optional **POSIX Swarm** add-ons so every project gets full memory and GitOps without platform bloat:
+
+| Tier | Platforms & Harnesses | Included Capabilities |
+|------|-----------------------|-----------------------|
+| **Tier 1: Universal Core** | **Windows 10/11, macOS, Linux, WSL** · Antigravity IDE/CLI, Grok CLI, OpenCode, Codex, Claude Code, Cursor, or any CLI | `AGENTS.md` constitution, `memory-wiki/` (`/aim-memory-wiki` & `/aim-handoff`), Two-Tier LanceDB RAG (`search_lancedb` MCP + `./aim search` / `.\aim.ps1 search` fallback), pure-Python GitOps worktrees (`fix`, `push`, `promote`, `projects`), encrypted Blackbox Vault & FTS5 session notebook (`sessions`), and `aim-skill-library` packs. |
+| **Tier 2: POSIX Swarm** | **Linux, WSL, macOS** (`tmux`; `bwrap` on Linux) | Detached `tmux` execution, `aim-communicate` live multi-agent pane messaging, `/aim-handoff` automated `tmux` baton pass, and Linux `bwrap` sandbox isolation (`aim-bwrap-forge`). |
 
 ---
 

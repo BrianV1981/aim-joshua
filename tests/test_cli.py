@@ -545,3 +545,100 @@ def test_semver_ga_posture():
     assert "## [v1.0.0]" in changelog
 
 
+def test_requirements_linux_marker_and_powershell_shims():
+    with open("joshua_os/requirements.txt", "r", encoding="utf-8") as f:
+        reqs = f.read()
+    assert "SecretStorage>=3.5.0; sys_platform == 'linux'" in reqs or 'SecretStorage>=3.5.0; sys_platform == "linux"' in reqs
+
+    for ps1 in ("joshua_os/install.ps1", "joshua_os/install-agent.ps1", "joshua_os/install-core.ps1"):
+        assert os.path.isfile(ps1), f"Missing PowerShell installer shim: {ps1}"
+        with open(ps1, "r", encoding="utf-8") as f:
+            body = f.read()
+        assert "bootstrap_install.py" in body
+
+    with open("README.md", "r", encoding="utf-8") as f:
+        readme = f.read()
+    assert "Windows 10/11" in readme
+    assert "macOS" in readme
+    assert "install.ps1" in readme
+    assert "Universal Core" in readme
+    assert "POSIX Swarm" in readme
+
+
+def test_bootstrap_install_clean_and_agent_modes_and_root_guards(tmp_path):
+    import json
+    import sys
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import bootstrap_install
+
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    assert bootstrap_install.is_unsafe_target_dir(str(fake_home), home_dir=str(fake_home)) is True
+    assert bootstrap_install.is_unsafe_target_dir("/", home_dir=str(fake_home)) is True
+    assert bootstrap_install.is_unsafe_target_dir("C:\\", home_dir=str(fake_home)) is True
+    assert bootstrap_install.is_unsafe_target_dir("D:/", home_dir=str(fake_home)) is True
+
+    clean_target = tmp_path / "my-win-app"
+    clean_target.mkdir()
+    bootstrap_install.install_project(
+        target_dir=str(clean_target),
+        mode="clean",
+        source_dir=os.getcwd(),
+        skip_deps=True,
+        home_dir=str(fake_home),
+        skip_shell_rc=True,
+    )
+    assert (clean_target / "joshua_os" / ".aim_core" / "aim_cli.py").is_file()
+    assert not (clean_target / "joshua_os" / "tests").exists()
+    assert (clean_target / "AGENTS.md").is_file()
+    assert (clean_target / "TOOLS.md").is_file()
+    assert (clean_target / "aim").is_file()
+    assert (clean_target / "aim.ps1").is_file()
+    assert (clean_target / "aim.cmd").is_file()
+    assert (clean_target / "memory-wiki" / "index.md").is_file()
+    assert (clean_target / "memory-wiki" / "log.md").is_file()
+    assert (clean_target / "joshua_os" / "memory_lance").is_dir()
+    gi = (clean_target / ".gitignore").read_text(encoding="utf-8")
+    for item in ("joshua_os/", "aim", "aim.ps1", "aim.cmd", "workspace/", "archive/"):
+        assert item in gi
+    mcp_cfg = json.loads((fake_home / ".gemini" / "config" / "mcp_config.json").read_text(encoding="utf-8"))
+    assert "search_lancedb" in mcp_cfg["mcpServers"]
+
+    agent_target = tmp_path / "coagent-node"
+    agent_target.mkdir()
+    bootstrap_install.install_project(
+        target_dir=str(agent_target),
+        mode="agent",
+        source_dir=os.getcwd(),
+        persona_name="offline-nonexistent-persona",
+        skip_deps=True,
+        home_dir=str(fake_home),
+        skip_shell_rc=True,
+    )
+    assert (agent_target / ".git").is_dir()
+    assert not (agent_target / ".github").exists()
+    assert len((agent_target / "AGENTS.md").read_text(encoding="utf-8").splitlines()) >= 80
+
+
+def test_aim_init_find_project_root_terminates_on_windows_drive_root():
+    import ntpath
+    import sys
+    from unittest.mock import patch
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import aim_init
+
+    orig_dirname = os.path.dirname
+    with patch("aim_init.os.path.abspath", side_effect=lambda p: p), \
+         patch("aim_init.os.path.exists", return_value=False), \
+         patch("aim_init.os.path.dirname", side_effect=lambda p: ntpath.dirname(p) if "\\" in p else orig_dirname(p)):
+        res = aim_init.find_project_root("C:\\Users\\Dev\\proj")
+        assert isinstance(res, str)
+
+
+

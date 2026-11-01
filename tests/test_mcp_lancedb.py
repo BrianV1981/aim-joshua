@@ -133,5 +133,87 @@ def test_list_lance_tables_zero_deprecation_warnings(tmp_path):
     assert lance_backend.list_lance_tables(LegacyConn()) == ["legacy_tbl"]
 
 
+def test_uri_to_local_path_windows_and_posix_spaces():
+    from mcp_lancedb import _uri_to_local_path
+
+    assert _uri_to_local_path("file:///home/dev/My%20Project") == "/home/dev/My Project"
+    assert _uri_to_local_path("file:///C:/Users/Dev%20User/my-app") == "C:/Users/Dev User/my-app"
+    assert _uri_to_local_path("file:///c%3A/Users/Brian/aim-project") == "c:/Users/Brian/aim-project"
+    assert _uri_to_local_path("/plain/local/path") == "/plain/local/path"
+
+
+def test_register_mcp_multi_harness_detection_and_self_healing(tmp_path):
+    import json
+    import register_mcp
+
+    fake_home = tmp_path / "home"
+    (fake_home / ".gemini").mkdir(parents=True)
+    (fake_home / ".grok").mkdir(parents=True)
+    (fake_home / ".codex").mkdir(parents=True)
+    (fake_home / ".codex" / "config.toml").write_text('[projects."/demo"]\ntrust_level = "trusted"\n', encoding="utf-8")
+    (fake_home / ".config" / "opencode").mkdir(parents=True)
+    (fake_home / ".config" / "opencode" / "opencode.json").write_text(
+        json.dumps({"$schema": "https://opencode.ai/config.json", "snapshot": False}),
+        encoding="utf-8",
+    )
+    (fake_home / ".cursor").mkdir(parents=True)
+
+    proj_a = tmp_path / "proj-a"
+    py_a = proj_a / "joshua_os" / "venv" / "bin" / "python3"
+    mcp_a = proj_a / "joshua_os" / ".aim_core" / "mcp_lancedb.py"
+    py_a.parent.mkdir(parents=True)
+    mcp_a.parent.mkdir(parents=True)
+    py_a.write_text("#!/bin/sh\n", encoding="utf-8")
+    mcp_a.write_text("# mcp\n", encoding="utf-8")
+
+    updated = register_mcp.register_all_harnesses(
+        project_root=str(proj_a),
+        home_dir=str(fake_home),
+        detect_path_binaries=False,
+    )
+    assert set(updated) == {"agy", "grok", "codex", "opencode", "cursor"}
+    assert not (fake_home / ".claude.json").exists()
+
+    agy_cfg = json.loads((fake_home / ".gemini" / "config" / "mcp_config.json").read_text(encoding="utf-8"))
+    assert agy_cfg["mcpServers"]["search_lancedb"] == {"command": str(py_a), "args": [str(mcp_a)]}
+
+    opencode_cfg = json.loads((fake_home / ".config" / "opencode" / "opencode.json").read_text(encoding="utf-8"))
+    assert opencode_cfg["snapshot"] is False
+    assert opencode_cfg["mcp"]["search_lancedb"] == {
+        "type": "local",
+        "command": [str(py_a), str(mcp_a)],
+        "enabled": True,
+    }
+
+    codex_toml = (fake_home / ".codex" / "config.toml").read_text(encoding="utf-8")
+    assert '[projects."/demo"]' in codex_toml
+    assert "[mcp_servers.search_lancedb]" in codex_toml
+    assert str(py_a) in codex_toml
+
+    grok_toml = (fake_home / ".grok" / "config.toml").read_text(encoding="utf-8")
+    assert "[mcp_servers.search_lancedb]" in grok_toml
+    assert "enabled = true" in grok_toml
+
+    # Second project preserves healthy proj_a entry unless proj_a is removed or force=True
+    proj_b = tmp_path / "proj-b"
+    py_b = proj_b / "joshua_os" / "venv" / "bin" / "python3"
+    mcp_b = proj_b / "joshua_os" / ".aim_core" / "mcp_lancedb.py"
+    py_b.parent.mkdir(parents=True)
+    mcp_b.parent.mkdir(parents=True)
+    py_b.write_text("#!/bin/sh\n", encoding="utf-8")
+    mcp_b.write_text("# mcp\n", encoding="utf-8")
+
+    register_mcp.register_all_harnesses(project_root=str(proj_b), home_dir=str(fake_home), detect_path_binaries=False)
+    agy_cfg_keep = json.loads((fake_home / ".gemini" / "config" / "mcp_config.json").read_text(encoding="utf-8"))
+    assert agy_cfg_keep["mcpServers"]["search_lancedb"]["command"] == str(py_a)
+
+    # Simulate deleting proj_a -> self-heals to proj_b automatically
+    py_a.unlink()
+    register_mcp.register_all_harnesses(project_root=str(proj_b), home_dir=str(fake_home), detect_path_binaries=False)
+    agy_cfg_healed = json.loads((fake_home / ".gemini" / "config" / "mcp_config.json").read_text(encoding="utf-8"))
+    assert agy_cfg_healed["mcpServers"]["search_lancedb"]["command"] == str(py_b)
+
+
+
 
 

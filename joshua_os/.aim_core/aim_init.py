@@ -10,9 +10,13 @@ from datetime import datetime
 # --- CONFIG BOOTSTRAP ---
 def find_project_root(start_dir):
     current = os.path.abspath(start_dir)
-    while current != '/':
-        if os.path.exists(os.path.join(current, "joshua_os", ".aim_core")) or os.path.exists(os.path.join(current, "setup.sh")): return current
-        current = os.path.dirname(current)
+    while True:
+        if os.path.exists(os.path.join(current, "joshua_os", ".aim_core")) or os.path.exists(os.path.join(current, "setup.sh")):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 BASE_DIR = find_project_root(os.getcwd())
@@ -22,7 +26,15 @@ DOCS_DIR = os.path.join(OS_DIR, "docs")
 ARCHIVE_DIR = os.path.join(OS_DIR, "archive")
 HOOKS_DIR = os.path.join(OS_DIR, "hooks")
 AIM_CORE_DIR = os.path.join(OS_DIR, ".aim_core")
-VENV_PYTHON = os.path.join(OS_DIR, "venv/bin/python3")
+VENV_PYTHON = (
+    os.path.join(OS_DIR, "venv", "Scripts", "python.exe")
+    if os.name == "nt" and os.path.isfile(os.path.join(OS_DIR, "venv", "Scripts", "python.exe"))
+    else (
+        os.path.join(OS_DIR, "venv", "bin", "python3")
+        if os.path.isfile(os.path.join(OS_DIR, "venv", "bin", "python3"))
+        else sys.executable
+    )
+)
 
 # --- INTERNAL TEMPLATES ---
 
@@ -240,10 +252,12 @@ def register_hooks(is_light_mode=False):
         settings["hooks"] = {}
 
         # Actually write the hooks to the settings dictionary
+        py_cmd = f'"{VENV_PYTHON}"' if " " in VENV_PYTHON else VENV_PYTHON
+        router_cmd = f'"{router_dest}"' if " " in router_dest else router_dest
         for event, hooks in aim_hooks.items():
             settings["hooks"][event] = []
             for h in hooks:
-                entry = { "name": h[0], "type": "command", "command": f"python3 {router_dest} {h[1]}" }
+                entry = { "name": h[0], "type": "command", "command": f"{py_cmd} {router_cmd} {h[1]}" }
                 if len(h) > 2: entry["matcher"] = h[2]
                 settings["hooks"][event].append({"hooks": [entry]})
                 
@@ -358,8 +372,16 @@ engrams/
 
     bootstrap_file = os.path.join(OS_DIR, "BOOTSTRAP.md")
     if not os.path.exists(bootstrap_file):
-        print(f"[ERROR] {bootstrap_file} not found. Please run the curl installer.")
+        print(f"[ERROR] {bootstrap_file} not found. Please run the installer.")
         sys.exit(1)
+
+    if shutil.which("tmux") is None:
+        print(f"[SUCCESS] J.O.S.H.U.A. OS Scaffolding Complete ({provision_status}).")
+        print("[INFO] 'tmux' is not installed on this platform (POSIX Swarm add-on).")
+        print("       Open this folder in your preferred IDE/CLI (Antigravity, Grok, OpenCode, Codex) —")
+        print("       AGENTS.md will automatically prompt for your Operator Name on Turn 1,")
+        print(f"       or paste {bootstrap_file} into your agent chat to run the full interview.")
+        return
         
     import time
     from session_naming import build_agent_session_name

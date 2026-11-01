@@ -1,12 +1,50 @@
 #!/usr/bin/env python3
 import traceback
+import subprocess
 import sys
 import os
 import json
+import re
+import urllib.parse
+
+# --- VENV SELF-BOOTSTRAP ---
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_os_root = os.path.dirname(_current_dir)
+_venv_py = (
+    os.path.join(_os_root, "venv", "Scripts", "python.exe")
+    if os.name == "nt"
+    else os.path.join(_os_root, "venv", "bin", "python3")
+)
+if (
+    __name__ == "__main__"
+    and os.path.isfile(_venv_py)
+    and os.path.abspath(sys.executable) != os.path.abspath(_venv_py)
+):
+    if os.name == "nt":
+        sys.exit(subprocess.call([_venv_py] + sys.argv))
+    else:
+        os.execv(_venv_py, [_venv_py] + sys.argv)
+
 from fastmcp import FastMCP, Context
 
 # Create the MCP server
 mcp = FastMCP("LanceDB Search Server")
+
+
+def _uri_to_local_path(uri: str) -> str:
+    """Convert a file:// URI (including Windows drive letters and %20 escapes) into a local filesystem path."""
+    if not uri:
+        return ""
+    if not uri.startswith("file://"):
+        return uri
+    parsed = urllib.parse.urlparse(uri)
+    path = urllib.parse.unquote(parsed.path or "")
+    if parsed.netloc and parsed.netloc.lower() != "localhost":
+        path = f"//{parsed.netloc}{path}"
+    if re.match(r"^/[A-Za-z]:(/|$)", path):
+        path = path[1:]
+    return path
+
 
 @mcp.tool()
 def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
@@ -22,10 +60,8 @@ def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
                 folders = extra.get("workspaceFolders", [])
                 if folders and len(folders) > 0:
                     uri = folders[0].get("uri", "")
-                    if uri.startswith("file://"):
-                        workspace_path = uri[7:]
-                    else:
-                        workspace_path = uri
+                    if uri:
+                        workspace_path = _uri_to_local_path(uri)
                         
     if not workspace_path:
         workspace_path = os.getcwd()

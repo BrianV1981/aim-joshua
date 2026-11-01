@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.1.0] - 2026-11-01
+- Feature: Add universal cross-platform installer and multi-harness MCP registration (Closes #116)
+
+
 ## [v1.0.0] - 2026-10-30
 - Release: J.O.S.H.U.A. v1.0.0 General Availability — Two-Tier LanceDB MCP + CLI Hybrid Memory, GitOps Worktrees with Direct-to-main Memory Wiki & Handoffs, Multi-Key AES-GCM Blackbox Vault & `/aim-sessions` FTS5 Notebook, Cross-Platform Linux/WSL/Windows Launchers, Sovereign Co-Agent Onboarding, Neural TTS Spoken Summary (`🔊`) Mandate, and Pytest A+ Gate (Closes #115)
 
