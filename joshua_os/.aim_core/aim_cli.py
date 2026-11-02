@@ -445,6 +445,13 @@ def git_push_changes(msg, cwd=None, include_untracked=False):
     for rel_file in ("VERSION", "CHANGELOG.md"):
         if os.path.isfile(os.path.join(work_dir, rel_file)):
             subprocess.run(["git", "add", rel_file], cwd=work_dir, check=False, capture_output=True)
+    if is_upstream_engine_repo(work_dir) and os.path.isfile(os.path.join(work_dir, "joshua_os", "VERSION")):
+        subprocess.run(
+            ["git", "add", os.path.join("joshua_os", "VERSION")],
+            cwd=work_dir,
+            check=False,
+            capture_output=True,
+        )
 
     if include_untracked:
         subprocess.run(["git", "add", "-A"], cwd=work_dir, check=True)
@@ -515,7 +522,12 @@ def cmd_push(args):
         
         if bump_type != "none":
             print(f"[1/3] Bumping version: {current_version} -> {new_version}")
-            with open(version_file, 'w') as f: f.write(new_version)
+            with open(version_file, "w", encoding="utf-8") as f:
+                f.write(f"{new_version}\n")
+            os_version_file = os.path.join(OS_DIR, "VERSION")
+            if os.path.isdir(OS_DIR):
+                with open(os_version_file, "w", encoding="utf-8") as of:
+                    of.write(f"{new_version}\n")
             
             date_str = datetime.now().strftime("%Y-%m-%d")
             log_entry = f"## [{new_version}] - {date_str}\n- {msg}\n\n"
@@ -741,6 +753,7 @@ def cmd_update(args):
         "setup.sh",
         "requirements.txt",
         "link_cli_alias.sh",
+        "BOOTSTRAP.md",
         "VERSION",
         "install.sh",
         "install-clean.sh",
@@ -755,6 +768,9 @@ def cmd_update(args):
             shutil.copy2(src_file, os.path.join(OS_DIR, fname))
 
     source_parent = os.path.dirname(source_os_dir)
+    root_version_src = os.path.join(source_parent, "VERSION")
+    if os.path.isfile(root_version_src):
+        shutil.copy2(root_version_src, os.path.join(OS_DIR, "VERSION"))
     for wrapper_name in ("aim", "aim.ps1", "aim.cmd"):
         src_wrapper = os.path.join(source_parent, wrapper_name)
         dst_wrapper = os.path.join(BASE_DIR, wrapper_name)

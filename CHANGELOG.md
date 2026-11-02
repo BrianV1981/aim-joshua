@@ -1,5 +1,15 @@
 # Changelog
 
+## [v1.1.1] - 2026-11-02
+- Fix: Deduplicate `./aim index` via single-batch `upsert_fragments`, repo-relative `session_id` keys, single-pass LanceDB FTS rebuild, and `table.optimize` compaction (#122)
+- Fix: Prevent Windows PowerShell 5.1 `py.exe -3` array-splat hang in `joshua_os/install*.ps1` (#117)
+- Fix: Fall back to registered `_os_root/memory_lance` in `mcp_lancedb.py` for Antigravity 2.0 Desktop when `workspaceFolders` is omitted (#118)
+- Fix: Support Antigravity 2.0 (`~/.gemini/antigravity`) + legacy CLI (`~/.gemini/antigravity-cli`) roots across vault, handoff, sessions, hooks, and workspace trust, and exit `1` on blackbox failure (#119)
+- Fix: Sanitize FTS5 queries in `./aim search-sessions` for hyphenated/dotted/`#` tokens and exit `1` on DB error (#124)
+- Fix: Unify root `VERSION` and `joshua_os/VERSION`, sync `BOOTSTRAP.md` during `./aim update`, and enforce `git init -b main` + `bootstrap_install.py` delegation across POSIX `install*.sh` shims (#121, #125, #126)
+- Fix: Update `README.md` Antigravity 2.0 global skill path (`~/.gemini/config/skills`), replace bare `python3` fallback and scope `tmux` to POSIX in `AGENTS.md` / `default_AGENTS.md`, and handle OneDrive `Documents` + ASCII comments in Windows `$PROFILE` (#120, #123)
+
+
 ## [v1.1.0] - 2026-11-01
 - Feature: Add universal cross-platform installer and multi-harness MCP registration (Closes #116)
 

@@ -303,6 +303,8 @@ def install_project(
                 dst_os,
                 ignore=shutil.ignore_patterns(*excluded),
             )
+            if (src_root / "VERSION").is_file():
+                shutil.copy2(src_root / "VERSION", dst_os / "VERSION")
 
             for wrapper_name in ("aim", "aim.ps1", "aim.cmd"):
                 _copy_if_missing(

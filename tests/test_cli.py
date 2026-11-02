@@ -70,6 +70,8 @@ def test_cmd_update_preserves_coagent_blueprint_and_config(tmp_path):
     assert json.loads((node_core / "CONFIG.json").read_text(encoding="utf-8")) == custom_cfg
     assert (node_os / "handoff").is_dir()
     assert (node_os / "hooks").is_dir()
+    assert (node_os / "BOOTSTRAP.md").is_file()
+    assert (node_os / "VERSION").read_text(encoding="utf-8").strip() == open("VERSION", encoding="utf-8").read().strip()
 
 
 def test_legacy_modules_import_without_relative_import_error():
@@ -582,6 +584,11 @@ def test_semver_ga_posture():
     major, minor, patch = map(int, version_str[1:].split("."))
     assert major >= 1
 
+    # Issue #125 (JOSH-030): Root VERSION and joshua_os/VERSION must never drift
+    with open("joshua_os/VERSION", "r", encoding="utf-8") as f:
+        os_version_str = f.read().strip()
+    assert os_version_str == version_str
+
     with open("README.md", "r", encoding="utf-8") as f:
         readme = f.read()
     assert "Alpha, trenches-first." not in readme
@@ -590,6 +597,7 @@ def test_semver_ga_posture():
     with open("CHANGELOG.md", "r", encoding="utf-8") as f:
         changelog = f.read()
     assert "## [v1.0.0]" in changelog
+    assert f"## [{version_str}]" in changelog
 
 
 def test_requirements_linux_marker_and_powershell_shims():
