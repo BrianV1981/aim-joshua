@@ -301,11 +301,23 @@ def _remove_file_if_owned(path: str) -> None:
         os.unlink(path)
 
 
+def _handle_rmtree_error(func, path, _exc):
+    try:
+        os.chmod(path, 0o700)
+        func(path)
+    except OSError:
+        if os.name != "nt":
+            raise
+
+
 def _remove_dir_if_owned(path: str) -> None:
     if os.path.islink(path):
         os.unlink(path)
     elif os.path.isdir(path):
-        shutil.rmtree(path)
+        if sys.version_info >= (3, 12):
+            shutil.rmtree(path, onexc=_handle_rmtree_error)
+        else:
+            shutil.rmtree(path, onerror=_handle_rmtree_error)
 
 
 def cmd_uninstall(args):
