@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-02T16:45:00-05:00
+> **Updated:** 2026-11-02T18:45:00-05:00
 > **Updated by:** Antigravity (Session ID: c0ebd30d-0e8b-4526-a2bd-d9fe8b4cc48e)
-> **Priority Mission:** STANDBY — `v1.1.2` SHIPPED (Pass 12 EGM Remediation `#127`–`#135` Closed on Green Linux + Windows CI, Official `v1.1.2` GitHub Release Live, `0` Open Issues, `62/62` Pytest w/ `0` Warnings)
+> **Priority Mission:** STANDBY — `v1.1.3` SHIPPED (Pass 13 Audit Delta `#132`, `#134`, `#135` Closed on Green Linux + Windows CI, Official `v1.1.3` GitHub Release Live, `0` Open Issues, `66/66` Pytest w/ `0` Warnings)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -43,6 +43,7 @@
 | b1b9864e | #116 (`v1.1.0`, `2207caf4`) + `aim-skill-library#21` (`c018f85`): Shipped pure-Python `bootstrap_install.py` + thin Windows 10/11 PowerShell shims (`install.ps1`, `install-agent.ps1`, `install-core.ps1`), multi-harness `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) with stale-binary self-healing, `_uri_to_local_path()` Windows `file:///C:/...` decoding in `mcp_lancedb.py`, PEP 508 Linux-only `SecretStorage`, `setup.sh` `dpkg`/`sudo -n` guards, cross-platform `aim-skill-library/scripts/install.py` (`WinError 1314` copy fallback), Tier 1 vs. Tier 2 Capability Matrix in `README.md` (`46/46` pytest w/ `0` warnings), and deprecated/archived `BrianV1981/agy-joshua` | ✅ SHIPPED |
 | c0ebd30d | #117–#126 (`v1.1.1`, `84949726`): Remediated all 10 Pass 10 audit tickets — deduplicated `./aim index` via single-batch `upsert_fragments`, repo-relative `session_id`s, `FTS(with_position=True)` & `table.optimize` (`default_lance` `10` files/`60` rows, `memory_lance` `138` rows, `#122`), fixed PS 5.1 `py -3` array-splat hang in `install*.ps1` (`#117`), added Desktop `_os_root` MCP fallback (`#118`), added dual AGY 2.0 (`~/.gemini/antigravity`) + CLI resolvers & `rc=1` blackbox failure exits (`#119`), sanitized FTS5 `./aim search-sessions` (`#124`), unified `VERSION` + `joshua_os/VERSION` + `BOOTSTRAP.md` sync (`#125`), delegated POSIX `install*.sh` shims to `bootstrap_install.py` with `git init -b main` (`#121`, `#126`), updated `README.md` AGY 2.0 skills path (`#120`) and `AGENTS.md` / `default_AGENTS.md` Windows `python3` + POSIX `tmux` rules (`#123`), and published GitHub Release `v1.1.1` (`51/51` pytest w/ `0` warnings) | ✅ SHIPPED |
 | c0ebd30d | #127–#135 (`v1.1.2`, `f26e4e3c`): Remediated all 9 Pass 12 Google EGM Cold-Reader audit tickets — host-safe `cmd_uninstall`/`cmd_purge` + zero caller-`$PWD` git commits (`#127`), `Path.parents` Windows root termination + `cryptography` in `requirements.txt` + AGY 2.0 `Enter`-only tmux paste + non-destructive hooks/JSONC + `windows-latest` CI matrix leg (`#128`), unified `AIM_ROOT = OS_ROOT` + zero `[PORTABILITY]` spam + auto-detected `github_projects.owner` (`#129`), re-entrant `.lance.lock` + `sql_quote()` + explicit `db_path` isolation + cached offline 768-dim vectors (`#130`), session-scoped `opencode-blackbox` + WAL `history.db` + shrink-overwrite guard (`#132`), 28-file zombie purge + `handoff-vnext e2e-staged` + DataJack `aim_exchange.py` + `build_parser() == COMMAND_HANDLERS` parity (`#133`, `#134`), clean-worktree/local-only `promote` + release-pinned `safe_extract_zip()` `update` (`#135`), reconciled docs + `56`-fragment `default_lance` (`#131`), and published GitHub Release `v1.1.2` (`62/62` pytest w/ `0` warnings on Linux + Windows) | ✅ SHIPPED |
+| c0ebd30d | #132, #134, #135 (`v1.1.3`, `55982475`): Remediated all 3 reopened Pass 13 audit delta tickets — fixed `VectorBackend(path=lance_dir)` in `heartbeat.py` (`./aim health` `rc=0`), `return True` in `VectorBackend.compact()` + `--immediate`/`[days]` forwarding (`./aim clean` `rc=0`), `rc=1` propagation in `./aim audit` & `./aim recall` on missing/corrupt `history.db`, and `_clear_screen()` in `aim_config.py` (`#134`); added initial baseline scaffold commit on newborn `main` in `bootstrap_install.py`, unborn-`HEAD` guard in `cmd_fix`, `-uno` root-dirty gate + Windows shell-lock cleanup in `cmd_promote`, `(goto) 2>nul` batch unwinding in `aim.cmd`, empty `workspace/` pruning in `cmd_uninstall`, and 0-byte stub removal in `aim_init.py` (`#135`); wired `--vessel-root` across `agy-blackbox`, `grok-blackbox`, `codex-blackbox`, and `opencode-blackbox` (`#132`); added real unmocked subprocess CLI E2E suite (`tests/test_v1_1_3_remediation.py`) + CI `health`/`clean` gates (`66/66` pytest w/ `0` warnings on Linux + Windows), and published GitHub Release `v1.1.3` | ✅ SHIPPED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -116,7 +117,7 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/joshua_os/.aim_core/bootstrap_install.py` & `register_mcp.py`
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `~/aim-joshua/tests/` (`62/62` Pytest Coverage on Linux + Windows, `0` Warnings)
+- `~/aim-joshua/tests/` (`66/66` Pytest Coverage on Linux + Windows, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---
