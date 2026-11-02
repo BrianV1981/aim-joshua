@@ -119,62 +119,124 @@ def list_lance_tables(db):
     return list(db.table_names())
 
 
+def rebuild_fts_index(table, column="content"):
+    """Forward/backward-compatible LanceDB FTS index builder (avoids create_fts_index DeprecationWarning on LanceDB 0.25+)."""
+    try:
+        from lancedb.index import FTS
+
+        table.create_index(column, config=FTS(with_position=True), replace=True)
+        return
+    except (ImportError, TypeError, AttributeError):
+        pass
+    table.create_fts_index(column, replace=True)
+
+
+FRAGMENT_SCHEMA = pa.schema([
+    pa.field("fragment_id", pa.int64()),
+    pa.field("session_id", pa.string()),
+    pa.field("type", pa.string()),
+    pa.field("content", pa.string()),
+    pa.field("timestamp", pa.string()),
+    pa.field("metadata", pa.string()),
+    pa.field("parent_id", pa.int64()),
+    pa.field("source_db", pa.string()),
+    pa.field("vector", pa.list_(pa.float32(), 768)),
+])
+
+
 class VectorBackend:
     def __init__(self, path=None):
         self.path = path or LANCE_DB_PATH
         self.db = lancedb.connect(self.path)
         self.table_name = "fragments"
-        
+
     def ensure_table(self):
         if self.table_name not in list_lance_tables(self.db):
-            schema = pa.schema([
-                pa.field("fragment_id", pa.int64()),
-                pa.field("session_id", pa.string()),
-                pa.field("type", pa.string()),
-                pa.field("content", pa.string()),
-                pa.field("timestamp", pa.string()),
-                pa.field("metadata", pa.string()),
-                pa.field("parent_id", pa.int64()),
-                pa.field("source_db", pa.string()),
-                pa.field("vector", pa.list_(pa.float32(), 768))
-            ])
-            self.db.create_table(self.table_name, schema=schema)
+            self.db.create_table(self.table_name, schema=FRAGMENT_SCHEMA)
             try:
                 t = self.db.open_table(self.table_name)
-                t.create_fts_index("content", replace=True)
+                rebuild_fts_index(t, "content")
             except Exception:
                 pass
+
     def get_table(self):
         self.ensure_table()
         return self.db.open_table(self.table_name)
-        
-    def add_fragments(self, fragments):
-        table = self.get_table()
-        current_id = table.count_rows() + 1
-        
-        from datetime import datetime
+
+    def _normalize_fragments(self, fragments, start_id=1):
+        from datetime import datetime, timezone
+
+        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        current_id = start_id
         records = []
         for frag in fragments:
-            if 'vector' not in frag or not frag['vector'] or len(frag['vector']) != 768:
+            if "vector" not in frag or not frag["vector"] or len(frag["vector"]) != 768:
                 continue
-                
             records.append({
-                "fragment_id": frag.get("fragment_id", current_id),
-                "session_id": frag.get("session_id", ""),
-                "type": frag.get("type", "session_history"),
-                "content": frag.get("content", ""),
-                "timestamp": frag.get("timestamp", datetime.utcnow().isoformat() + "Z"),
-                "metadata": frag.get("metadata", "{}"),
+                "fragment_id": int(frag.get("fragment_id", current_id)),
+                "session_id": str(frag.get("session_id", "")),
+                "type": str(frag.get("type", "session_history")),
+                "content": str(frag.get("content", "")),
+                "timestamp": str(frag.get("timestamp") or now_iso),
+                "metadata": str(frag.get("metadata", "{}")),
                 "parent_id": frag.get("parent_id", None),
-                "source_db": frag.get("source_db", "live_session"),
-                "vector": frag['vector']
+                "source_db": str(frag.get("source_db", "live_session")),
+                "vector": [float(x) for x in frag["vector"]],
             })
             current_id += 1
-            
+        return records
+
+    def add_fragments(self, fragments, rebuild_fts=True):
+        table = self.get_table()
+        current_id = table.count_rows() + 1
+        records = self._normalize_fragments(fragments, start_id=current_id)
+
         if records:
             table.add(records)
-            table.create_fts_index("content", replace=True)
-            print(f"[SUCCESS] Added {len(records)} fragments to LanceDB RAM and rebuilt FTS index.")
+            if rebuild_fts:
+                rebuild_fts_index(table, "content")
+            print(f"[SUCCESS] Added {len(records)} fragments to LanceDB RAM" + (" and rebuilt FTS index." if rebuild_fts else "."))
+
+    def upsert_fragments(self, fragments, *, purge_predicate=None):
+        """
+        Atomically replace matching fragments in a single batch write, compact LanceDB
+        manifest history, and rebuild the Tantivy FTS index once (Issue #122 / JOSH-W06 / JOSH-028).
+        """
+        from datetime import timedelta
+
+        existing_rows = []
+        if self.table_name in list_lance_tables(self.db):
+            try:
+                existing_rows = self.db.open_table(self.table_name).to_arrow().to_pylist()
+            except Exception:
+                existing_rows = []
+
+        incoming_sids = {str(f.get("session_id", "")) for f in fragments if f.get("session_id")}
+        if purge_predicate is not None:
+            surviving = [r for r in existing_rows if not purge_predicate(r, incoming_sids)]
+        else:
+            surviving = [r for r in existing_rows if r.get("session_id") not in incoming_sids]
+
+        max_existing_id = max((int(r["fragment_id"]) for r in surviving if r.get("fragment_id") is not None), default=0)
+        new_records = self._normalize_fragments(fragments, start_id=max_existing_id + 1)
+        combined = surviving + new_records
+
+        if combined:
+            self.db.create_table(self.table_name, data=combined, schema=FRAGMENT_SCHEMA, mode="overwrite")
+        else:
+            self.db.create_table(self.table_name, schema=FRAGMENT_SCHEMA, mode="overwrite")
+
+        tbl = self.db.open_table(self.table_name)
+        try:
+            tbl.optimize(cleanup_older_than=timedelta(seconds=0))
+        except Exception:
+            pass
+        try:
+            rebuild_fts_index(tbl, "content")
+        except Exception:
+            pass
+        print(f"[SUCCESS] Upserted {len(new_records)} fragments ({len(combined)} total) and rebuilt FTS index once.")
+        return len(new_records)
 
     def search(self, query_vec, original_query, top_k=10, session_filter=None):
         table = self.get_table()
@@ -212,8 +274,8 @@ class VectorBackend:
                         dataset = ds.dataset(parquet_file)
                         t = mem_db.create_table(table_name, data=dataset)
                         try:
-                            t.create_fts_index("content", replace=True)
-                        except:
+                            rebuild_fts_index(t, "content")
+                        except Exception:
                             pass # If FTS index creation fails on dataset, skip
                     else:
                         t = mem_db.open_table(table_name)

@@ -77,3 +77,80 @@ def test_bootstrap_foundation_with_custom_dir(mock_backend, mock_glob, mock_veri
     mock_index_file.assert_called_once()
     assert mock_index_file.call_args[0][1] == "/custom/docs/file.md"
 
+
+def test_bootstrap_foundation_idempotent_two_runs_and_no_basename_collision(tmp_path, monkeypatch):
+    """Issue #122 (JOSH-W06 + JOSH-028): Two consecutive runs must keep count_rows() identical, avoid index.md collisions, and preserve session_history."""
+    import bootstrap_brain
+    from lance_backend import VectorBackend
+
+    proj_root = tmp_path / "proj"
+    os_root = proj_root / "joshua_os"
+    (proj_root / "memory-wiki").mkdir(parents=True)
+    (os_root / "memory-wiki").mkdir(parents=True)
+    (os_root / "joshua_os_docs").mkdir(parents=True)
+    (os_root / "foundry").mkdir(parents=True)
+
+    (proj_root / "AGENTS.md").write_text("# Root Constitution Mandate\nAlways test empirically.\n", encoding="utf-8")
+    (proj_root / "memory-wiki" / "index.md").write_text("# Root Wiki Index\nUniqueTokenRootWikiAlpha\n", encoding="utf-8")
+    (os_root / "memory-wiki" / "index.md").write_text("# Engine Wiki Index\nUniqueTokenEngineWikiBeta\n", encoding="utf-8")
+    (os_root / "joshua_os_docs" / "README.md").write_text("# OS Docs Readme\nUniqueTokenOsDocsGamma\n", encoding="utf-8")
+    (os_root / "foundry" / "README.md").write_text("# Foundry Readme\nUniqueTokenFoundryDelta\n", encoding="utf-8")
+
+    db_dir = os_root / "memory_lance"
+    vb = VectorBackend(path=str(db_dir))
+    # Seed a historical session fragment that MUST survive full foundation re-indexing
+    vb.add_fragments([
+        {
+            "session_id": "hist-session-001",
+            "type": "session_history",
+            "content": "Preserved historical session turn UniqueTokenHistoryOmega",
+            "source_db": "live_session",
+            "vector": [0.0] * 768,
+        }
+    ])
+    assert vb.get_table().count_rows() == 1
+
+    monkeypatch.setattr(bootstrap_brain, "PROJECT_ROOT", str(proj_root))
+    monkeypatch.setattr(bootstrap_brain, "AIM_ROOT", str(os_root))
+    monkeypatch.setattr(bootstrap_brain, "verify_embedding_engine", lambda: False)
+
+    bootstrap_brain.bootstrap_foundation(db_path=str(db_dir))
+    rows_after_run1 = vb.get_table().count_rows()
+    assert rows_after_run1 == 6  # 1 session_history + 5 distinct markdown files
+
+    # Second run must NOT append duplicate rows
+    bootstrap_brain.bootstrap_foundation(db_path=str(db_dir))
+    rows_after_run2 = vb.get_table().count_rows()
+    assert rows_after_run2 == rows_after_run1
+
+    all_rows = vb.get_table().to_arrow().to_pylist()
+    sids = {r["session_id"] for r in all_rows}
+    assert sids == {
+        "hist-session-001",
+        "foundation-AGENTS.md",
+        "foundation-memory-wiki/index.md",
+        "foundation-joshua_os/memory-wiki/index.md",
+        "foundation-joshua_os/joshua_os_docs/README.md",
+        "expert-joshua_os/foundry/README.md",
+    }
+
+    # Both colliding basenames (index.md and README.md) are searchable via Tantivy FTS
+    assert len(vb.search(None, "UniqueTokenRootWikiAlpha", top_k=5)) == 1
+    assert len(vb.search(None, "UniqueTokenEngineWikiBeta", top_k=5)) == 1
+    assert len(vb.search(None, "UniqueTokenHistoryOmega", top_k=5)) == 1
+
+    # Custom --dir ingestion also upserts idempotently without basename collisions
+    custom_docs = proj_root / "docs"
+    (custom_docs / "nested").mkdir(parents=True)
+    (custom_docs / "index.md").write_text("# Custom Docs Root\nCustomDocsRootToken\n", encoding="utf-8")
+    (custom_docs / "nested" / "index.md").write_text("# Custom Docs Nested\nCustomDocsNestedToken\n", encoding="utf-8")
+
+    bootstrap_brain.bootstrap_foundation(target_dir=str(custom_docs), db_path=str(db_dir))
+    rows_custom_1 = vb.get_table().count_rows()
+    assert rows_custom_1 == rows_after_run2 + 2
+
+    bootstrap_brain.bootstrap_foundation(target_dir=str(custom_docs), db_path=str(db_dir))
+    rows_custom_2 = vb.get_table().count_rows()
+    assert rows_custom_2 == rows_custom_1
+
+
