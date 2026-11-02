@@ -214,6 +214,47 @@ def test_register_mcp_multi_harness_detection_and_self_healing(tmp_path):
     assert agy_cfg_healed["mcpServers"]["search_lancedb"]["command"] == str(py_b)
 
 
+@patch("retriever.perform_search")
+def test_search_lancedb_desktop_fallback_to_os_root_when_no_workspace_folders(mock_perform_search, tmp_path):
+    """Issue #118 (JOSH-W02): Antigravity 2.0 Desktop omits workspaceFolders and sets cwd to app binary dir or $HOME."""
+    import mcp_lancedb
+    import lance_backend
+
+    app_bin_dir = tmp_path / "AppData" / "Local" / "Programs" / "Antigravity"
+    app_bin_dir.mkdir(parents=True)
+
+    fake_os_root = tmp_path / "registered-project" / "joshua_os"
+    installed_db = fake_os_root / "memory_lance"
+    installed_db.mkdir(parents=True)
+
+    ctx = MagicMock()
+    ctx.request_context.session.client_params.model_extra = {}
+    mock_perform_search.return_value = [{"filename": "AGENTS.md", "content": "Desktop fallback hit", "score": 0.97}]
+
+    orig_lance_path = lance_backend.LANCE_DB_PATH
+    try:
+        with patch.object(mcp_lancedb, "_os_root", str(fake_os_root)), \
+             patch("mcp_lancedb.os.getcwd", return_value=str(app_bin_dir)), \
+             patch.dict(os.environ, {"AIM_WORKSPACE_ROOT": ""}, clear=False):
+            out = search_lancedb("desktop query", top_k=3, ctx=ctx)
+            assert lance_backend.LANCE_DB_PATH == str(installed_db)
+            assert "Desktop fallback hit" in out
+
+        # Also verify $HOME cwd without workspaceFolders does NOT umbrella-scan unrelated $HOME/* projects
+        fake_home = tmp_path / "fake_home"
+        (fake_home / "unrelated-proj" / "joshua_os" / "memory_lance").mkdir(parents=True)
+        with patch.object(mcp_lancedb, "_os_root", str(fake_os_root)), \
+             patch("mcp_lancedb.os.getcwd", return_value=str(fake_home)), \
+             patch("mcp_lancedb.os.path.expanduser", side_effect=lambda p: str(fake_home) if p == "~" else p), \
+             patch.dict(os.environ, {"AIM_WORKSPACE_ROOT": ""}, clear=False):
+            out_home = search_lancedb("desktop home query", top_k=3, ctx=ctx)
+            assert lance_backend.LANCE_DB_PATH == str(installed_db)
+            assert "[unrelated-proj]" not in out_home
+    finally:
+        lance_backend.LANCE_DB_PATH = orig_lance_path
+
+
+
 
 
 

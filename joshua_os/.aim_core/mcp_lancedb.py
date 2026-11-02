@@ -46,47 +46,86 @@ def _uri_to_local_path(uri: str) -> str:
     return path
 
 
+def _is_home_or_fs_root(path_str: str) -> bool:
+    """Return True if path_str resolves to the user's HOME directory or a filesystem/drive root."""
+    if not path_str:
+        return True
+    norm = os.path.abspath(os.path.expanduser(path_str)).rstrip("/\\")
+    if not norm or re.match(r"^[A-Za-z]:$", norm):
+        return True
+    home_norm = os.path.abspath(os.path.expanduser("~")).rstrip("/\\")
+    if (norm.lower() == home_norm.lower()) if os.name == "nt" else (norm == home_norm):
+        return True
+    abs_raw = os.path.abspath(path_str)
+    return os.path.dirname(abs_raw) == abs_raw
+
+
 @mcp.tool()
 def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
     """Search the LanceDB vector database for architectural context, code snippets, and mandates."""
     workspace_path = None
-    
+    from_ctx = False
+
     # Extract workspace URI dynamically from the initialize payload as per mandate
     if ctx and hasattr(ctx, "request_context"):
-        client_params = getattr(ctx.request_context.session, "client_params", None)
+        session = getattr(ctx.request_context, "session", None)
+        client_params = getattr(session, "client_params", None) if session else None
         if client_params:
-            extra = getattr(client_params, "model_extra", {})
-            if extra:
-                folders = extra.get("workspaceFolders", [])
+            extra = getattr(client_params, "model_extra", None) or {}
+            if isinstance(extra, dict):
+                folders = extra.get("workspaceFolders") or []
                 if folders and len(folders) > 0:
-                    uri = folders[0].get("uri", "")
+                    first = folders[0]
+                    uri = first.get("uri", "") if isinstance(first, dict) else getattr(first, "uri", "")
                     if uri:
                         workspace_path = _uri_to_local_path(uri)
-                        
+                        from_ctx = True
+                if not workspace_path and extra.get("rootUri"):
+                    workspace_path = _uri_to_local_path(str(extra["rootUri"]))
+                    from_ctx = True
+
     if not workspace_path:
-        workspace_path = os.getcwd()
+        env_ws = os.environ.get("AIM_WORKSPACE_ROOT", "").strip()
+        if env_ws:
+            workspace_path = _uri_to_local_path(env_ws)
+            from_ctx = True
+        else:
+            workspace_path = os.getcwd()
 
     db_path = os.path.join(workspace_path, "joshua_os", "memory_lance")
-    
-    # Dynamically locate .aim_core (prefer workspace, fall back to script directory for umbrella folders)
+
+    # Dynamically locate .aim_core (prefer workspace, fall back to script directory for umbrella/Desktop launches)
     core_path = os.path.join(workspace_path, "joshua_os", ".aim_core")
     if not os.path.isdir(core_path):
-        core_path = os.path.dirname(os.path.abspath(__file__))
+        core_path = _current_dir
     if core_path not in sys.path:
         sys.path.insert(0, core_path)
-        
+
     try:
         import lance_backend
         from retriever import perform_search
 
         # Rule 1 (Strict Project Isolation): If local DB exists, never scan subfolders.
-        # Rule 2 (Umbrella Fallback): If no local DB exists in an existing parent directory, scan immediate */joshua_os/memory_lance subfolders.
+        # Rule 2 (Umbrella Fallback): Scan immediate */joshua_os/memory_lance subfolders when workspace_path
+        # came from an explicit workspace context (or a non-HOME/non-root cwd).
         subfolder_dbs = []
-        if not os.path.isdir(db_path) and os.path.isdir(workspace_path):
+        allow_umbrella_scan = from_ctx or not _is_home_or_fs_root(workspace_path)
+        if not os.path.isdir(db_path) and allow_umbrella_scan and os.path.isdir(workspace_path):
             for entry in sorted(os.listdir(workspace_path)):
                 sub_db = os.path.join(workspace_path, entry, "joshua_os", "memory_lance")
                 if os.path.isdir(sub_db):
                     subfolder_dbs.append((entry, sub_db))
+
+        # Rule 3 (Desktop / Non-IDE Fallback, Issue #118): When the MCP host omits workspaceFolders
+        # (e.g. Antigravity 2.0 Desktop) and cwd is an app binary dir or $HOME, fall back to the
+        # registered installation's own _os_root/memory_lance (or default_lance seed).
+        if not from_ctx and not os.path.isdir(db_path) and not subfolder_dbs:
+            installed_db = os.path.join(_os_root, "memory_lance")
+            seed_db = os.path.join(_os_root, "assets", "default_lance")
+            if os.path.isdir(installed_db):
+                db_path = installed_db
+            elif os.path.isdir(seed_db):
+                db_path = seed_db
 
         if subfolder_dbs:
             results = []
