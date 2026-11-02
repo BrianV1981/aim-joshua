@@ -96,17 +96,17 @@ Once installed in your project directory:
 Because J.O.S.H.U.A. is CLI-agnostic, skills are not hardcoded into the OS. Clone the central skill library once and install the pack for your preferred harness (`agy`, `grok`, `opencode`, or `codex`):
 
 ```bash
-# Linux / macOS / WSL
+# Linux / macOS / WSL (Antigravity 2.0 global skills; legacy standalone agy 1.x CLI uses ~/.gemini/antigravity-cli/skills)
 git clone https://github.com/BrianV1981/aim-skill-library.git ~/aim-skill-library
 cd ~/aim-skill-library
-./scripts/install.sh --vessel agy --dest ~/.gemini/antigravity-cli/skills --mode symlink
+./scripts/install.sh --vessel agy --dest ~/.gemini/config/skills --mode symlink
 ```
 
 ```powershell
-# Windows 10/11 (PowerShell — defaults to copy mode without requiring Developer Mode symlinks)
+# Windows 10/11 (PowerShell — Antigravity 2.0 global skills; defaults to copy mode without requiring Developer Mode symlinks)
 git clone https://github.com/BrianV1981/aim-skill-library.git "$HOME\aim-skill-library"
 cd "$HOME\aim-skill-library"
-.\scripts\install.ps1 -Vessel agy -Dest "$HOME\.gemini\skills"
+.\scripts\install.ps1 -Vessel agy -Dest "$HOME\.gemini\config\skills"
 ```
 
 ---

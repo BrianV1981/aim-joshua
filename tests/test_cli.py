@@ -568,6 +568,10 @@ def test_requirements_linux_marker_and_powershell_shims():
     assert "install.ps1" in readme
     assert "Universal Core" in readme
     assert "POSIX Swarm" in readme
+    # Issue #120 (JOSH-W04): Antigravity 2.0 global skills path
+    assert "--dest ~/.gemini/config/skills" in readme
+    assert r'-Dest "$HOME\.gemini\config\skills"' in readme
+    assert r'-Dest "$HOME\.gemini\skills"' not in readme
 
 
 def test_bootstrap_install_clean_and_agent_modes_and_root_guards(tmp_path):
