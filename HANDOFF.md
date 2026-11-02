@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-02T13:25:00-05:00
+> **Updated:** 2026-11-02T16:45:00-05:00
 > **Updated by:** Antigravity (Session ID: c0ebd30d-0e8b-4526-a2bd-d9fe8b4cc48e)
-> **Priority Mission:** STANDBY — `v1.1.1` SHIPPED (Pass 10 Remediation `#117`–`#126` Closed on Green CI, Official `v1.1.1` GitHub Release Live, `0` Open Issues, `51/51` Pytest w/ `0` Warnings, Deduplicated `memory_lance` `138` Rows)
+> **Priority Mission:** STANDBY — `v1.1.2` SHIPPED (Pass 12 EGM Remediation `#127`–`#135` Closed on Green Linux + Windows CI, Official `v1.1.2` GitHub Release Live, `0` Open Issues, `62/62` Pytest w/ `0` Warnings)
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -42,6 +42,7 @@
 | 2e735b20 | #115: Graduated `README.md` to `v1.0 — Production-tested, trenches-first.`, bumped `VERSION` to `v1.0.0`, updated `CHANGELOG.md`, added `test_semver_ga_posture()` (`480511b0`, `41/41` pytest w/ `0` warnings), published the inaugural official `v1.0.0` GitHub Release on `BrianV1981/aim-joshua` (standardized to single `aim-ecosystem` link), scoped `memory-wiki/` strictly to the J.O.S.H.U.A. OS kernel (`9ecaf496`), and documented local `install-agent.sh <blueprint>` Co-Agent provisioning mechanics in `operations.md` | ✅ SHIPPED |
 | b1b9864e | #116 (`v1.1.0`, `2207caf4`) + `aim-skill-library#21` (`c018f85`): Shipped pure-Python `bootstrap_install.py` + thin Windows 10/11 PowerShell shims (`install.ps1`, `install-agent.ps1`, `install-core.ps1`), multi-harness `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) with stale-binary self-healing, `_uri_to_local_path()` Windows `file:///C:/...` decoding in `mcp_lancedb.py`, PEP 508 Linux-only `SecretStorage`, `setup.sh` `dpkg`/`sudo -n` guards, cross-platform `aim-skill-library/scripts/install.py` (`WinError 1314` copy fallback), Tier 1 vs. Tier 2 Capability Matrix in `README.md` (`46/46` pytest w/ `0` warnings), and deprecated/archived `BrianV1981/agy-joshua` | ✅ SHIPPED |
 | c0ebd30d | #117–#126 (`v1.1.1`, `84949726`): Remediated all 10 Pass 10 audit tickets — deduplicated `./aim index` via single-batch `upsert_fragments`, repo-relative `session_id`s, `FTS(with_position=True)` & `table.optimize` (`default_lance` `10` files/`60` rows, `memory_lance` `138` rows, `#122`), fixed PS 5.1 `py -3` array-splat hang in `install*.ps1` (`#117`), added Desktop `_os_root` MCP fallback (`#118`), added dual AGY 2.0 (`~/.gemini/antigravity`) + CLI resolvers & `rc=1` blackbox failure exits (`#119`), sanitized FTS5 `./aim search-sessions` (`#124`), unified `VERSION` + `joshua_os/VERSION` + `BOOTSTRAP.md` sync (`#125`), delegated POSIX `install*.sh` shims to `bootstrap_install.py` with `git init -b main` (`#121`, `#126`), updated `README.md` AGY 2.0 skills path (`#120`) and `AGENTS.md` / `default_AGENTS.md` Windows `python3` + POSIX `tmux` rules (`#123`), and published GitHub Release `v1.1.1` (`51/51` pytest w/ `0` warnings) | ✅ SHIPPED |
+| c0ebd30d | #127–#135 (`v1.1.2`, `f26e4e3c`): Remediated all 9 Pass 12 Google EGM Cold-Reader audit tickets — host-safe `cmd_uninstall`/`cmd_purge` + zero caller-`$PWD` git commits (`#127`), `Path.parents` Windows root termination + `cryptography` in `requirements.txt` + AGY 2.0 `Enter`-only tmux paste + non-destructive hooks/JSONC + `windows-latest` CI matrix leg (`#128`), unified `AIM_ROOT = OS_ROOT` + zero `[PORTABILITY]` spam + auto-detected `github_projects.owner` (`#129`), re-entrant `.lance.lock` + `sql_quote()` + explicit `db_path` isolation + cached offline 768-dim vectors (`#130`), session-scoped `opencode-blackbox` + WAL `history.db` + shrink-overwrite guard (`#132`), 28-file zombie purge + `handoff-vnext e2e-staged` + DataJack `aim_exchange.py` + `build_parser() == COMMAND_HANDLERS` parity (`#133`, `#134`), clean-worktree/local-only `promote` + release-pinned `safe_extract_zip()` `update` (`#135`), reconciled docs + `56`-fragment `default_lance` (`#131`), and published GitHub Release `v1.1.2` (`62/62` pytest w/ `0` warnings on Linux + Windows) | ✅ SHIPPED |
 
 *(Keep clean and consolidated. Point to wiki/issues for deep history — do not re-audit.)*
 
@@ -72,7 +73,7 @@ The backlog is currently clear. You are awaiting explicit operator directives.
 ---
 
 ## 3. DETAILED ANALYSIS / BREAKDOWN
-- **Two-Tier Retrieval Protocol:** The retrieval architecture has fundamentally shifted. If you are operating in a modern CLI/IDE harness (like AGY), you will natively possess the `search_lancedb` internal tool. This MCP server dynamically locates the vector database using Local-First, Umbrella Subfolder Fallback, or Desktop `_os_root` Fallback (`#118`), and `retriever.py` (`get_active_aim_root()`) dynamically tracks `lance_backend.LANCE_DB_PATH` so supplemental `archive/cartridges` and `archive/flashrank_cache` resolve inside the target project. If you are operating in a CLI that lacks MCP, gracefully degrade to `./aim search` (POSIX) or `.\aim.ps1 search` / `.\aim.cmd search` (Windows) — never bare `python3` on Windows (`rc=9009` Microsoft Store stub). Do not assume tools exist if they are not in your prompt.
+- **Two-Tier Retrieval Protocol:** The retrieval architecture has fundamentally shifted. If you are operating in a modern CLI/IDE harness (like AGY), you will natively possess the `search_lancedb` internal tool. This MCP server dynamically locates the vector database using Local-First, Umbrella Subfolder Fallback, or Desktop `_os_root` Fallback (`#118`), passing explicit `db_path=` into `retriever.py` (`get_active_aim_root(db_path=...)`) without mutating global module state (`#130`) so supplemental `archive/cartridges` resolve inside the target project. If you are operating in a CLI that lacks MCP, gracefully degrade to `./aim search` (POSIX) or `.\aim.ps1 search` / `.\aim.cmd search` (Windows) — never bare `python3` on Windows (`rc=9009` Microsoft Store stub). Do not assume tools exist if they are not in your prompt.
 - **Cross-Platform Installers, Launchers & Multi-Harness MCP (Linux/macOS/WSL & Windows 10/11):** Onboarding scripts (`install*.sh` and `install*.ps1` delegating to `bootstrap_install.py`), root entrypoints `./aim` (Bash), `aim.ps1` (PowerShell), and `aim.cmd` (CMD), `resolve_venv_python()`, `git_push_changes()`, and `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) allow Tier 1 J.O.S.H.U.A. features to run natively across Linux, macOS, WSL, and Windows 10/11 without requiring Bash, while keeping Tier 2 (`tmux` and `bwrap`) cleanly POSIX-scoped.
 - **GitOps Enforcement:** Never code on `main`. Always `aim fix <id>` to branch into a worktree sandbox.
 - **Vector Ingestion (Index):** Ingestion (`bootstrap_brain.py` + `VectorBackend.upsert_fragments()`) is idempotent across re-runs using collision-free repo-relative `session_id` keys, single-pass `FTS(with_position=True)` rebuilds, and `table.optimize` compaction. Custom directories can be ingested via `aim index --dir <path>`.
@@ -84,13 +85,13 @@ The backlog is currently clear. You are awaiting explicit operator directives.
 
 ## 4. IMPLEMENTATION STRATEGY
 Follow strict GitOps workflow for any future tasks:
-1. `aim bug "Title"` to create a structured issue.
-2. `aim projects in-progress <id>` (Board is `#7`)
-3. `aim fix <id>`
+1. `./aim bug "Title" --context "..." --failure "..." --intent "..."` to create a structured issue.
+2. `./aim projects in-progress <id>` (Board is `#7` via local `CONFIG.json`)
+3. `./aim fix <id>`
 4. Work in the `workspace/issue-<id>` worktree.
-5. `aim push` (Ensure `git add` is used for untracked files).
-6. `aim promote`
-7. `aim projects done <id>`
+5. `./aim push "Fix: ..."` (Ensure `git add` is used for untracked files).
+6. `../../aim promote` (from inside clean `workspace/issue-<id>`)
+7. `./aim projects done <id>`
 
 ---
 
@@ -115,7 +116,7 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/joshua_os/.aim_core/bootstrap_install.py` & `register_mcp.py`
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `~/aim-joshua/tests/` (`51/51` Pytest Coverage, `0` Warnings)
+- `~/aim-joshua/tests/` (`62/62` Pytest Coverage on Linux + Windows, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---
