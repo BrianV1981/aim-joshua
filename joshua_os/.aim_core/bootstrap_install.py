@@ -187,20 +187,51 @@ def _seed_memory_wiki_and_lance(target: Path, cli_name: str) -> None:
                 shutil.copy2(item, dest_item)
 
 
+def _resolve_windows_documents_dir(home: Path) -> Path:
+    """Resolve the user's Documents folder on Windows, accounting for OneDrive Known Folder Redirection."""
+    if os.name == "nt":
+        try:
+            default_home = Path.home().resolve()
+            if home.resolve() == default_home:
+                import ctypes
+
+                buf = ctypes.create_unicode_buffer(260)
+                # CSIDL_PERSONAL = 5 (Documents)
+                if ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf) == 0 and buf.value:
+                    return Path(buf.value)
+        except Exception:
+            pass
+
+    onedrive_docs = home / "OneDrive" / "Documents"
+    if onedrive_docs.is_dir():
+        return onedrive_docs
+    env_onedrive = os.environ.get("OneDrive") or os.environ.get("OneDriveConsumer")
+    if env_onedrive and os.name == "nt":
+        cand = Path(env_onedrive) / "Documents"
+        if cand.is_dir():
+            return cand
+    return home / "Documents"
+
+
 def _register_windows_powershell_alias(target: Path, cli_name: str, home: Path) -> None:
-    """Register a convenience PowerShell function in $PROFILE when present on Windows."""
-    ps_Launcher = target / "aim.ps1"
-    for ps_dir_name in ("PowerShell", "WindowsPowerShell"):
-        docs_dir = home / "Documents" / ps_dir_name
-        if not docs_dir.is_dir():
-            continue
-        profile_file = docs_dir / "Microsoft.PowerShell_profile.ps1"
+    """Register an ASCII-clean PowerShell function in $PROFILE (handles OneDrive Documents & clean installs)."""
+    ps_launcher = target / "aim.ps1"
+    docs_root = _resolve_windows_documents_dir(home)
+
+    target_dirs = [docs_root / "WindowsPowerShell"]
+    ps7_dir = docs_root / "PowerShell"
+    if ps7_dir.is_dir() or shutil.which("pwsh"):
+        target_dirs.append(ps7_dir)
+
+    fn_line = f'function {cli_name} {{ & "{ps_launcher}" @args }}'
+    marker = f"function {cli_name} "
+    for ps_dir in target_dirs:
+        ps_dir.mkdir(parents=True, exist_ok=True)
+        profile_file = ps_dir / "Microsoft.PowerShell_profile.ps1"
         existing = profile_file.read_text(encoding="utf-8", errors="ignore") if profile_file.is_file() else ""
-        fn_line = f'function {cli_name} {{ & "{ps_Launcher}" @args }}'
-        marker = f"function {cli_name} "
         if marker not in existing:
             sep = "" if (not existing or existing.endswith("\n")) else "\n"
-            profile_file.write_text(f"{existing}{sep}# A.I.M. CLI — {cli_name}\n{fn_line}\n", encoding="utf-8")
+            profile_file.write_text(f"{existing}{sep}# A.I.M. CLI - {cli_name}\n{fn_line}\n", encoding="utf-8")
 
 
 def install_project(

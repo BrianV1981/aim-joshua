@@ -32,9 +32,8 @@ When writing code, you must write tests before or alongside your implementation.
 You do not hallucinate knowledge. You retrieve it. 
 Whenever the Operator asks you a factual question about a repository or framework, your very first instinct MUST be to natively act as a retrieval agent. 
 - **Primary (Native MCP):** Use the `search_lancedb` internal tool if it is injected into your toolset.
-- **Fallback (CLI-Agnostic):** If you are operating in a vessel that does not support MCP (you don't see the tool), you must gracefully degrade and query the LanceDB hybrid memory pool explicitly by running the raw Python CLI script:
-  `python3 joshua_os/.aim_core/aim_cli.py search "<your query here>"`
-  *(Do not guess or assume global bash aliases like `aim search` exist if they are not in your path. Execute the script directly).*
+- **Fallback (CLI-Agnostic):** If you are operating in a vessel that does not support MCP (you don't see the tool), you must gracefully degrade and query the LanceDB hybrid memory pool explicitly via the local project launcher (`./aim search "<your query here>"` on Linux/WSL/macOS; `.\aim.ps1 search "<your query here>"` or `.\aim.cmd search "<your query here>"` on Windows 10/11) or the project venv Python (`./joshua_os/venv/bin/python3 joshua_os/.aim_core/aim_cli.py search "<your query here>"` on POSIX; `.\joshua_os\venv\Scripts\python.exe joshua_os\.aim_core\aim_cli.py search "<your query here>"` on Windows).
+  *(Never invoke bare `python3` on Windows, which hits the Microsoft Store stub `rc=9009`, and never assume unverified global shell aliases exist).*
 - **Sovereign Answer Protocol:** If the answer is NOT in the database, DO NOT guess or hallucinate. State what you know and ask if you should search the web.
 
 ## 5. THE REFLEX (ERROR RECOVERY & FACT VERIFICATION)
@@ -46,11 +45,11 @@ You are part of a continuous, multi-agent relay race. When your context window f
 - **Idempotent Auto-Wiki Delta Check:** `aim-handoff` automatically inspects `memory-wiki/log.md` first; if session work or architectural decisions occurred since the last `/aim-memory-wiki` checkpoint, it updates `memory-wiki/` automatically before updating `HANDOFF.md`.
 - Surgically update `HANDOFF.md` detailing the tactical state, execution queue, and next steps (`0–9` template), then stage and push both `memory-wiki/` and `HANDOFF.md` directly to `origin/main` (`git add memory-wiki/ HANDOFF.md`, commit, `git pull --rebase --autostash origin main`, `git push origin main`) with zero confirmation prompts.
 - Before exiting, you MUST seal your session into the immutable vault using your vessel-specific blackbox command (e.g. `aim agy-blackbox --session-id <uuid>`).
-- If requested, use Tmux to spawn the next agent vessel and inject the handoff document directly into its prompt.
+- On POSIX hosts with `tmux` (Linux, WSL, macOS), if requested, use `tmux` to spawn the next agent vessel and inject the handoff document directly into its prompt; on native Windows 10/11, leave `HANDOFF.md` ready at repo root for the next session.
 
 ## 7. DETACHED EXECUTION PROTOCOL (BACKGROUND ORCHESTRATION)
 A Sovereign OS agent should never paralyze its own primary execution loop by waiting synchronously for long-running tasks. 
-- **The Detached Mandate:** When executing a script, build process, or long-running shell command, you MUST execute it in a detached background terminal using `tmux new-session -d -s <session_name> "command"`. This allows the Operator to attach and monitor progress live.
+- **The Detached Mandate:** When executing a script, build process, or long-running shell command on POSIX hosts (Linux, WSL, macOS) where `tmux` is available, execute it in a detached background terminal using `tmux new-session -d -s <session_name> "command"` so the Operator can attach and monitor progress live. On native Windows 10/11 (or hosts without `tmux`), use your harness's native background task runner or `Start-Process` / background jobs rather than invoking `tmux`.
 
 
 ## 8. THE GITOPS WORKFLOW (WORKTREES)

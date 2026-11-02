@@ -860,6 +860,43 @@ def test_search_sessions_fts5_special_tokens_and_db_error_exit_code(tmp_path):
     assert "ERROR: Session search failed" in bad.stderr
 
 
+def test_windows_agents_md_and_powershell_profile_onedrive_ascii(tmp_path):
+    """Issue #123 (JOSH-W07): AGENTS.md avoids bare python3/unconditional tmux, matches default_AGENTS.md, and $PROFILE handles OneDrive + ASCII."""
+    import sys
+
+    with open("AGENTS.md", "r", encoding="utf-8") as f:
+        root_agents = f.read()
+    with open("joshua_os/.aim_core/templates/default_AGENTS.md", "r", encoding="utf-8") as f:
+        tpl_agents = f.read()
+
+    assert root_agents == tpl_agents
+    assert "`python3 joshua_os/.aim_core/aim_cli.py search" not in root_agents
+    assert r".\aim.ps1 search" in root_agents
+    assert "rc=9009" in root_agents
+    assert "On POSIX hosts" in root_agents
+
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+    import bootstrap_install
+
+    # Clean install with OneDrive\Documents (no pre-existing WindowsPowerShell folder)
+    fake_home = tmp_path / "win_home"
+    (fake_home / "OneDrive" / "Documents").mkdir(parents=True)
+    proj = tmp_path / "my-win-cli"
+    proj.mkdir()
+    (proj / "aim.ps1").write_text("# shim\n", encoding="utf-8")
+
+    bootstrap_install._register_windows_powershell_alias(proj, "my-win-cli", fake_home)
+    prof = fake_home / "OneDrive" / "Documents" / "WindowsPowerShell" / "Microsoft.PowerShell_profile.ps1"
+    assert prof.is_file()
+    content = prof.read_text(encoding="utf-8")
+    assert "# A.I.M. CLI - my-win-cli" in content
+    assert "\u2014" not in content  # No UTF-8 em-dash that breaks Windows-1252 PS 5.1
+    assert content.isascii()
+
+
+
 
 
 
