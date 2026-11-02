@@ -119,6 +119,31 @@ def _git_init_main(target: Path) -> None:
         )
 
 
+def _create_initial_scaffold_commit(target: Path) -> None:
+    """Create an initial baseline scaffold commit on newborn 'main' so worktrees work immediately on Day 0."""
+    to_stage = [
+        rel
+        for rel in (".gitignore", "README.md", "AGENTS.md", "TOOLS.md", "memory-wiki")
+        if (target / rel).exists()
+    ]
+    if not to_stage:
+        return
+    subprocess.run(["git", "add", "--"] + to_stage, cwd=str(target), check=True, capture_output=True)
+    name_chk = subprocess.run(
+        ["git", "config", "user.name"], cwd=str(target), capture_output=True, text=True
+    )
+    email_chk = subprocess.run(
+        ["git", "config", "user.email"], cwd=str(target), capture_output=True, text=True
+    )
+    git_cmd = ["git", "-c", "commit.gpgsign=false"]
+    if name_chk.returncode != 0 or not name_chk.stdout.strip():
+        git_cmd += ["-c", "user.name=J.O.S.H.U.A. Bootstrap"]
+    if email_chk.returncode != 0 or not email_chk.stdout.strip():
+        git_cmd += ["-c", "user.email=joshua@localhost"]
+    git_cmd += ["commit", "-m", "chore: initialize J.O.S.H.U.A. workspace"]
+    subprocess.run(git_cmd, cwd=str(target), check=True, capture_output=True, text=True)
+
+
 def _provision_persona_tools_md(persona_name: str, target: Path, home: Path, src_root: Path) -> bool:
     """Copy persona-specific TOOLS.md from local aim-coagents or GitHub if available."""
     safe_name = os.path.basename(persona_name.strip())
@@ -356,11 +381,14 @@ def install_project(
 
             _copy_if_missing(src_root / "TOOLS.md", target / "TOOLS.md")
 
-            if not (target / ".git").exists():
+            had_git = (target / ".git").exists()
+            if not had_git:
                 _git_init_main(target)
 
             _ensure_gitignore(target)
             _seed_memory_wiki_and_lance(target, cli_name)
+            if not had_git:
+                _create_initial_scaffold_commit(target)
 
         if not skip_deps:
             build_engine_venv(str(dst_os))

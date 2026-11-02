@@ -33,20 +33,27 @@ def _run_script(script_path, args):
 
 def cmd_clean(args):
     """Dispatches to maintenance.py to clean rolling archive and compact LanceDB."""
-    _run_script(os.path.join(AIM_CORE_DIR, "maintenance.py"), [])
+    clean_args = []
+    if getattr(args, "days", None) is not None:
+        clean_args.append(str(args.days))
+    if getattr(args, "immediate", False):
+        clean_args.append("--immediate")
+    _run_script(os.path.join(AIM_CORE_DIR, "maintenance.py"), clean_args)
 
 
 def cmd_audit(args):
     """Generates a strategic synthesis/morning report from recent sessions."""
     from audit_tools import run_audit
-    run_audit(args.n)
+    if run_audit(args.n) is False:
+        sys.exit(1)
 
 
 def cmd_recall(args):
     """Synthesizes memory recall from historical sessions."""
     from recall_tools import run_recall
     query = " ".join(args.query)
-    run_recall(query)
+    if run_recall(query) is False:
+        sys.exit(1)
 
 
 def _ensure_history_synced():
@@ -353,9 +360,12 @@ def cmd_uninstall(args):
         _remove_dir_if_owned(os.path.join(BASE_DIR, "archive", ".raw_jsonl_blackbox"))
         for mem_file in ("HANDOFF.md", "AGENTS.md", "TOOLS.md", ".geminiignore"):
             _remove_file_if_owned(os.path.join(BASE_DIR, mem_file))
-        for maybe_empty in ("archive", "workspace"):
-            candidate = os.path.join(BASE_DIR, maybe_empty)
-            if os.path.isdir(candidate) and not os.path.islink(candidate) and not os.listdir(candidate):
-                os.rmdir(candidate)
+        archive_dir = os.path.join(BASE_DIR, "archive")
+        if os.path.isdir(archive_dir) and not os.path.islink(archive_dir) and not os.listdir(archive_dir):
+            os.rmdir(archive_dir)
+
+    workspace_dir = os.path.join(BASE_DIR, "workspace")
+    if os.path.isdir(workspace_dir) and not os.path.islink(workspace_dir) and not os.listdir(workspace_dir):
+        os.rmdir(workspace_dir)
 
     print("\n[SUCCESS] J.O.S.H.U.A. removed cleanly (host repository files preserved).")

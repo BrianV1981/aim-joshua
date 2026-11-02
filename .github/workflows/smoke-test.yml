@@ -44,6 +44,8 @@ jobs:
           ./aim --help
           ./aim doctor
           ./aim map
+          ./aim health
+          ./aim clean
           ./aim search worktree --top-k 1 --json
 
       - name: Verify CLI executes (Windows PowerShell & CMD)
@@ -53,6 +55,8 @@ jobs:
           .\aim.ps1 --help
           .\aim.ps1 doctor
           .\aim.ps1 map
+          .\aim.ps1 health
+          .\aim.ps1 clean
           .\aim.ps1 search worktree --top-k 1 --json
           cmd /c "aim.cmd doctor"
 

@@ -263,6 +263,20 @@ def cmd_fix(args):
     branch_name = f"fix/issue-{issue_id}"
     worktree_path = os.path.join(PROJECT_ROOT, "workspace", f"issue-{issue_id}")
     print(f"--- A.I.M. FACTORY FLOOR (Issue #{issue_id}) ---")
+    head_chk = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=BASE_DIR,
+        capture_output=True,
+        text=True,
+    )
+    if head_chk.returncode != 0:
+        print(
+            f"[ERROR] Repository at '{BASE_DIR}' has no commits yet (unborn HEAD).\n"
+            f"Create an initial commit first (e.g., 'git add README.md .gitignore && git commit -m \"Initial commit\"') "
+            f"before running '{CLI_NAME} fix {issue_id}'.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     try:
         subprocess.run(["git", "worktree", "add", worktree_path, "-b", branch_name], cwd=BASE_DIR, check=True)
 
@@ -422,19 +436,15 @@ def cmd_promote(args):
             )
             sys.exit(1)
 
-        # Safety Gate 2: Refuse if root repository has uncommitted changes (ignoring untracked workspace/ container)
+        # Safety Gate 2: Refuse if root repository has staged or modified tracked files (untracked scaffold/user files allowed)
         root_status_raw = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "-uno"],
             cwd=repo_root,
             capture_output=True,
             text=True,
             check=True,
         ).stdout
-        root_dirty = [
-            ln
-            for ln in root_status_raw.splitlines()
-            if ln.strip() and not re.match(r"^\?\?\s+workspace(/|$)", ln)
-        ]
+        root_dirty = [ln for ln in root_status_raw.splitlines() if ln.strip()]
         if root_dirty:
             print(
                 f"[ERROR] Root repository '{repo_root}' has uncommitted changes:\n"
@@ -528,13 +538,31 @@ def cmd_promote(args):
         if in_worktree:
             os.chdir(repo_root)
             # Safe because wt_status verified 0 modified/untracked files; --force only clears gitignored CONFIG.json/__pycache__
-            subprocess.run(
+            rm_res = subprocess.run(
                 ["git", "worktree", "remove", current_dir, "--force"],
                 cwd=repo_root,
-                check=True,
                 capture_output=True,
                 text=True,
             )
+            if rm_res.returncode != 0:
+                if os.name == "nt":
+                    # On Windows, a parent shell (cmd/pwsh) invoked from inside current_dir holds an open handle
+                    # preventing final rmdir; clean contents and prune git worktree metadata cleanly.
+                    shutil.rmtree(current_dir, ignore_errors=True)
+                    wt_admin = os.path.join(repo_root, ".git", "worktrees", os.path.basename(current_dir))
+                    if os.path.isdir(wt_admin):
+                        shutil.rmtree(wt_admin, ignore_errors=True)
+                    subprocess.run(
+                        ["git", "worktree", "prune"],
+                        cwd=repo_root,
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                else:
+                    raise subprocess.CalledProcessError(
+                        rm_res.returncode, rm_res.args, output=rm_res.stdout, stderr=rm_res.stderr
+                    )
         subprocess.run(["git", "branch", "-D", current_branch], cwd=repo_root, check=True, capture_output=True, text=True)
 
         print(f"\n[SUCCESS] Promotion complete. You are now on a clean '{default_branch}' branch in the root repository.")
@@ -1158,7 +1186,21 @@ def build_parser() -> argparse.ArgumentParser:
     delegate_parser.add_argument("instruction", help="Prompt/instruction for each file worker")
     delegate_parser.add_argument("--files", nargs="+", required=True, help="Target files to analyze")
 
-    subparsers.add_parser("clean", help="Run rolling archive retention cleanup and safe LanceDB compaction")
+    clean_parser = subparsers.add_parser(
+        "clean", help="Run rolling archive retention cleanup and safe LanceDB compaction"
+    )
+    clean_parser.add_argument(
+        "days",
+        nargs="?",
+        type=int,
+        default=None,
+        help="Optional rolling archive retention window in days",
+    )
+    clean_parser.add_argument(
+        "--immediate",
+        action="store_true",
+        help="Compact LanceDB immediately with zero-second retention window",
+    )
 
     exchange_parser = subparsers.add_parser("exchange", help="Mount, unmount, or list Parquet ROM cartridges")
     exchange_parser.add_argument("exchange_args", nargs=argparse.REMAINDER, help="{import <file> | unplug <kw> | list}")

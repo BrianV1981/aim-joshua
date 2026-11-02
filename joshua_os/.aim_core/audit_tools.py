@@ -24,7 +24,7 @@ def run_audit(n_sessions=5):
 
     if not os.path.exists(db_path):
         print(f"Error: Database not found at {db_path}", file=sys.stderr)
-        return
+        return False
 
     conn = None
     try:
@@ -37,14 +37,14 @@ def run_audit(n_sessions=5):
         rows = c.fetchall()
     except Exception as e:
         print(f"Error reading database: {e}", file=sys.stderr)
-        return
+        return False
     finally:
         if conn is not None:
             conn.close()
 
     if not rows:
         print("No historical sessions found to audit.")
-        return
+        return True
 
     context = ""
     for session_id, timestamp, content in reversed(rows):
@@ -74,3 +74,8 @@ def run_audit(n_sessions=5):
 
     print(f"\n[SUCCESS] Strategic Synthesis complete! Report generated at: {report_path}")
     print("Please review the WEEKLY_SITREP.md file and create new `aim bug` tickets based on the insights.")
+    return True
+
+
+if __name__ == "__main__":
+    sys.exit(0 if run_audit() is not False else 1)

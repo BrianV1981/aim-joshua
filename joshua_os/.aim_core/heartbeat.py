@@ -26,7 +26,7 @@ def check_lancedb() -> bool:
     try:
         from lance_backend import VectorBackend
 
-        backend = VectorBackend(db_path=lance_dir)
+        backend = VectorBackend(path=lance_dir)
         rows = backend.get_table().count_rows()
         print_status("LanceDB Engine", "PASS", f"Healthy ({rows} indexed chunks)")
         return True

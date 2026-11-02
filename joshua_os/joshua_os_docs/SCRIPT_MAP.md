@@ -1,4 +1,4 @@
-# The Codebase Map (`joshua_os/` — v1.1.2)
+# The Codebase Map (`joshua_os/` — v1.1.3)
 
 This document maps every active Python module and hook in `joshua_os/`. Use it to locate exact implementation boundaries before modifying engine behavior.
 

@@ -1,6 +1,6 @@
 # J.O.S.H.U.A. Operating System Protocols (`joshua_os/joshua_os_docs/`)
 
-This directory contains the canonical operational manuals defining the J.O.S.H.U.A. (`v1.1.2`) architecture and behavioral guardrails.
+This directory contains the canonical operational manuals defining the J.O.S.H.U.A. (`v1.1.3`) architecture and behavioral guardrails.
 
 ## 🛑 MANDATORY RE-INDEXING RULE
 These files serve as the foundational handbook ingested into `joshua_os/memory_lance` (and pre-baked into `joshua_os/assets/default_lance` for fresh consumer installations).

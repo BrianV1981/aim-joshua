@@ -368,12 +368,9 @@ def init_workspace(args=None):
     is_light_mode = "--light" in args
     register_hooks(is_light_mode)
 
-    # Base settings and ignores
+    # Base settings and ignores (no empty 0-byte CHANGELOG/CONTRIBUTING/VERSION stubs)
     files = {
-        "README.md": "",
-        "CHANGELOG.md": "",
-        "VERSION": "",
-        "CONTRIBUTING.md": "",
+        "README.md": f"# {os.path.basename(BASE_DIR)}\n",
         ".geminiignore": """workspace/
 archive/
 memory_lance/
@@ -392,7 +389,7 @@ engrams/
             "agent_identity": {
                 "name": "J.O.S.H.U.A.",
                 "role": "Universal Operating Agent and Systems Orchestrator.",
-                "version": "1.1.2"
+                "version": "1.1.3"
             },
             "paths": {
                 "project_root": BASE_DIR,

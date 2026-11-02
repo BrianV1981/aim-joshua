@@ -78,7 +78,7 @@ def test_provider(provider, model, endpoint, brain_type="default_reasoning", aut
 
 def setup_secrets_menu():
     while True:
-        os.system('clear')
+        _clear_screen()
         rprint(Panel("[bold cyan]A.I.M. SECRET VAULT[/bold cyan]\nSovereign Credential Management"))
         
         common_keys = [
@@ -285,7 +285,7 @@ def save_config(config):
 
 def rag_model_matrix_menu():
     while True:
-        os.system('clear')
+        _clear_screen()
         rprint(Panel("[bold green]RAG Model Matrix[/bold green]\nDynamically assign models for specialized RAG pipelines."))
         
         matrix_table = Table(title="RAG Model Assignments")
@@ -334,7 +334,7 @@ def main_menu():
     health_cache = {}
 
     while True:
-        os.system('clear')
+        _clear_screen()
         rprint(Panel("[bold green]A.I.M. SOVEREIGN COCKPIT v2.0[/bold green]\nCognitive Orchestration Layer"))
         
         table = Table(title="Cognitive Status & Health")

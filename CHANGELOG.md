@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.3] - 2026-11-02
+- Fix: Pass `VectorBackend(path=lance_dir)` in `heartbeat.py` (`./aim health` `rc=0`), return `True` from `VectorBackend.compact()` and wire `--immediate` / `[days]` on `./aim clean` (`rc=0`), propagate `rc=1` on missing/corrupt `history.db` in `./aim audit` and `./aim recall`, and replace remaining `os.system('clear')` calls in `aim_config.py` with `_clear_screen()` (#134)
+- Fix: Create an initial baseline scaffold commit on newborn `main` in `bootstrap_install.py` (`clean`/`agent` modes), guard `cmd_fix` against 0-commit unborn `HEAD` repos (`rc=1`), pass `-uno` in `cmd_promote` Safety Gate 2 so untracked root scaffold files do not block `promote`, remove 0-byte `CHANGELOG.md`/`CONTRIBUTING.md`/`VERSION` stubs from `aim_init.py`, and prune empty `workspace/` directories during `./aim uninstall` (#135)
+- Fix: Wire `--vessel-root` / `--vessel` across `cmd_agy_blackbox`, `cmd_grok_blackbox`, `cmd_codex_blackbox`, `_resolve_opencode_db()`, and `cmd_opencode_blackbox` in `cli_vault.py`, backed by unmocked cross-directory CLI subprocess tests in `tests/test_v1_1_3_remediation.py` (#132)
+
+
 ## [v1.1.2] - 2026-11-02
 - Fix: Restrict `./aim uninstall` and `./aim purge` strictly to J.O.S.H.U.A.-owned artifacts (never deleting host repository `.git/`, `venv/`, `requirements.txt`, `LICENSE`, or source files), and remove launcher `$PWD` teardown `git commit` side-effects (#127)
 - Fix: Eliminate Windows `C:\` infinite root-discovery loops (`!= '/'`), guard POSIX `fcntl`/`select`, add `cryptography>=42.0.0` to `requirements.txt`, remove unused `datasets`, preserve user JSONC/third-party `hooks` configs, remove `Escape` before `Enter` in `aim_init.py` tmux paste, make `link_cli_alias.sh` macOS/BSD-portable, and add `windows-latest` CI matrix leg to `smoke-test.yml` (#128, #134)

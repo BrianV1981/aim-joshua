@@ -48,6 +48,11 @@ def cmd_handoff_vnext(args):
     raise SystemExit(subprocess.call(cmd, env=env, cwd=vessel))
 
 
+def _resolve_vessel_root(args) -> str:
+    raw = getattr(args, "vessel_root", None) or getattr(args, "vessel", None)
+    return os.path.abspath(os.path.expanduser(raw)) if raw else os.getcwd()
+
+
 def cmd_vault(args):
     """Operator forensic black box (audit/verify/seal). Non-agent critical path."""
     from blackbox_vault import (
@@ -57,7 +62,7 @@ def cmd_vault(args):
         seal_for_reincarnate,
     )
 
-    vessel = getattr(args, "vessel", None) or os.getcwd()
+    vessel = _resolve_vessel_root(args)
     sub = getattr(args, "vault_command", None)
     force = bool(getattr(args, "force", False))
     if sub == "audit":
@@ -97,6 +102,7 @@ def cmd_agy_blackbox(args):
 
     sid = args.session_id
     force = bool(getattr(args, "force", False))
+    vessel_root = _resolve_vessel_root(args)
     agy_log, probed_paths = find_agy_transcript(sid)
     if not agy_log:
         print(
@@ -106,7 +112,7 @@ def cmd_agy_blackbox(args):
         sys.exit(1)
 
     if vault_session(
-        agy_log, session_id=sid, vessel_root=os.getcwd(), reason="reincarnate", force=force
+        agy_log, session_id=sid, vessel_root=vessel_root, reason="reincarnate", force=force
     ):
         print(f"Sealed AGY session {sid} into blackbox.")
     else:
@@ -119,7 +125,8 @@ def cmd_grok_blackbox(args):
 
     sid = args.session_id
     force = bool(getattr(args, "force", False))
-    if seal_for_reincarnate(os.getcwd(), session_id=sid, force=force):
+    vessel_root = _resolve_vessel_root(args)
+    if seal_for_reincarnate(vessel_root, session_id=sid, force=force):
         print(f"Sealed Grok session {sid} into blackbox.")
     else:
         print(f"ERROR: Failed to seal Grok session {sid}.", file=sys.stderr)
@@ -131,20 +138,22 @@ def cmd_codex_blackbox(args):
 
     sid = args.session_id
     force = bool(getattr(args, "force", False))
-    if seal_for_reincarnate(os.getcwd(), session_id=sid, force=force):
+    vessel_root = _resolve_vessel_root(args)
+    if seal_for_reincarnate(vessel_root, session_id=sid, force=force):
         print(f"Sealed Codex session {sid} into blackbox.")
     else:
         print(f"ERROR: Failed to seal Codex session {sid}.", file=sys.stderr)
         sys.exit(1)
 
 
-def _resolve_opencode_db() -> tuple[str | None, list[str]]:
+def _resolve_opencode_db(vessel_root: str | None = None) -> tuple[str | None, list[str]]:
+    base_root = os.path.abspath(os.path.expanduser(vessel_root)) if vessel_root else os.getcwd()
     probed: list[str] = []
     env_db = os.environ.get("AIM_OPENCODE_DB", "").strip()
     candidates = []
     if env_db:
         candidates.append(os.path.expanduser(env_db))
-    candidates.append(os.path.join(os.getcwd(), "opencode_data", "opencode.db"))
+    candidates.append(os.path.join(base_root, "opencode_data", "opencode.db"))
     candidates.append(os.path.expanduser("~/.local/share/opencode/opencode.db"))
     for c in candidates:
         probed.append(c)
@@ -158,7 +167,8 @@ def cmd_opencode_blackbox(args):
 
     sid = args.session_id
     force = bool(getattr(args, "force", False))
-    db_path, probed = _resolve_opencode_db()
+    vessel_root = _resolve_vessel_root(args)
+    db_path, probed = _resolve_opencode_db(vessel_root=vessel_root)
     if not db_path:
         print(
             f"ERROR: opencode.db not found (searched: {', '.join(probed)})",
@@ -242,7 +252,7 @@ def cmd_opencode_blackbox(args):
             pass
 
         if vault_session(
-            tmp_path, session_id=sid, vessel_root=os.getcwd(), reason="reincarnate", force=force
+            tmp_path, session_id=sid, vessel_root=vessel_root, reason="reincarnate", force=force
         ):
             print(f"Sealed OpenCode session {sid} into blackbox.")
         else:

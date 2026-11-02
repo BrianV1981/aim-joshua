@@ -25,7 +25,7 @@ def run_recall(query, limit=5):
 
     if not os.path.exists(db_path):
         print(f"Error: Database not found at {db_path}", file=sys.stderr)
-        return None
+        return False
 
     fts_query = _sanitize_fts5_query(query)
     if not fts_query:
@@ -49,7 +49,7 @@ def run_recall(query, limit=5):
         rows = c.fetchall()
     except Exception as e:
         print(f"Error reading database: {e}", file=sys.stderr)
-        return None
+        return False
     finally:
         if conn is not None:
             conn.close()
@@ -84,3 +84,11 @@ def run_recall(query, limit=5):
     print("\n------------------------")
 
     return synthesis
+
+
+if __name__ == "__main__":
+    q = " ".join(sys.argv[1:]).strip()
+    if not q:
+        print("Usage: recall_tools.py <query>", file=sys.stderr)
+        sys.exit(2)
+    sys.exit(1 if run_recall(q) is False else 0)

@@ -1,7 +1,7 @@
 # J.O.S.H.U.A.
 **Joint Operational Systems for Heuristic User Automation**
 
-J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve as the foundational brain, memory, and infrastructure for autonomous AI coding agents. External LanceDB (RAG) memory, GitOps guardrails, encrypted Blackbox session continuity, and Parquet "Datajack" knowledge cartridges. v1.1.2 — Production-tested, trenches-first.
+J.O.S.H.U.A. is an open-source, CLI-agnostic Operating System designed to serve as the foundational brain, memory, and infrastructure for autonomous AI coding agents. External LanceDB (RAG) memory, GitOps guardrails, encrypted Blackbox session continuity, and Parquet "Datajack" knowledge cartridges. v1.1.3 — Production-tested, trenches-first.
 
 ## 🚀 Quickstart & Installation
 

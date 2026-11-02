@@ -325,6 +325,7 @@ class VectorBackend:
             tbl = self.get_table()
             retention = timedelta(seconds=0) if immediate else timedelta(minutes=5)
             tbl.optimize(cleanup_older_than=retention)
+            return True
 
     def search(self, query_vec, original_query, top_k=10, session_filter=None, session_id=None):
         table = self.get_table()
