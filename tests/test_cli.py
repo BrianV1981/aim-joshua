@@ -646,4 +646,109 @@ def test_aim_init_find_project_root_terminates_on_windows_drive_root():
         assert isinstance(res, str)
 
 
+def test_agy_2_0_and_legacy_cli_path_resolution_and_blackbox_exit_codes(tmp_path, monkeypatch):
+    """Issue #119 (JOSH-W03): Support ~/.gemini/antigravity (AGY 2.0) + ~/.gemini/antigravity-cli and exit 1 on failure."""
+    import json
+    import sqlite3
+    import sys
+    from pathlib import Path
+    from cryptography.fernet import Fernet
+
+    # 1. Missing session MUST exit 1 via real ./aim subprocess and report searched roots on stderr
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    vessel = tmp_path / "vessel"
+    (vessel / "joshua_os" / ".aim_core").mkdir(parents=True)
+    key_file = tmp_path / "bb.key"
+    key_file.write_bytes(Fernet.generate_key())
+    (vessel / "joshua_os" / ".aim_core" / "CONFIG.json").write_text(
+        json.dumps({"settings": {"blackbox_key_path": str(key_file)}}),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["HOME"] = str(fake_home)
+    env["USERPROFILE"] = str(fake_home)
+    aim_bin = os.path.abspath("./aim")
+
+    miss = subprocess.run(
+        [aim_bin, "agy-blackbox", "--session-id", "missing-uuid-0000"],
+        cwd=str(vessel),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert miss.returncode == 1
+    assert "ERROR: AGY transcript not found" in miss.stderr
+    assert ".gemini/antigravity" in miss.stderr.replace("\\", "/")
+    assert ".gemini/antigravity-cli" in miss.stderr.replace("\\", "/")
+
+    # 2. Seal AGY 2.0 session (~/.gemini/antigravity/brain/<sid>/...)
+    sid_v2 = "agy20-uuid-1111"
+    log_v2 = fake_home / ".gemini" / "antigravity" / "brain" / sid_v2 / ".system_generated" / "logs" / "transcript.jsonl"
+    log_v2.parent.mkdir(parents=True)
+    log_v2.write_text(
+        json.dumps({"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": "Hello AGY 2.0"}) + "\n",
+        encoding="utf-8",
+    )
+    seal_v2 = subprocess.run(
+        [aim_bin, "agy-blackbox", "--session-id", sid_v2],
+        cwd=str(vessel),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert seal_v2.returncode == 0, seal_v2.stderr
+    assert f"Sealed AGY session {sid_v2}" in seal_v2.stdout
+    assert (vessel / "archive" / ".raw_jsonl_blackbox" / f"{sid_v2}.enc").is_file()
+
+    # 3. Seal legacy CLI session (~/.gemini/antigravity-cli/brain/<sid>/...)
+    sid_legacy = "agycli-uuid-2222"
+    log_leg = fake_home / ".gemini" / "antigravity-cli" / "brain" / sid_legacy / ".system_generated" / "logs" / "transcript.jsonl"
+    log_leg.parent.mkdir(parents=True)
+    log_leg.write_text(
+        json.dumps({"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": "Hello Legacy CLI"}) + "\n",
+        encoding="utf-8",
+    )
+    seal_leg = subprocess.run(
+        [aim_bin, "agy-blackbox", "--session-id", sid_legacy],
+        cwd=str(vessel),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert seal_leg.returncode == 0, seal_leg.stderr
+    assert (vessel / "archive" / ".raw_jsonl_blackbox" / f"{sid_legacy}.enc").is_file()
+
+    # 4. AgyAdapter resolves sessions across both roots
+    os_dir = os.path.abspath("joshua_os")
+    core_dir = os.path.abspath("joshua_os/.aim_core")
+    for p in (os_dir, core_dir):
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    monkeypatch.setenv("HOME", str(fake_home))
+    monkeypatch.setenv("USERPROFILE", str(fake_home))
+
+    from handoff.adapters.agy import AgyAdapter
+    adapter = AgyAdapter()
+    assert adapter.resolve(sid_v2, vessel).path == log_v2
+    assert adapter.resolve(sid_legacy, vessel).path == log_leg
+    listed_ids = {r.session_id for r in adapter.list_sessions()}
+    assert {sid_v2, sid_legacy}.issubset(listed_ids)
+
+    # 5. reasoning_utils.cleanup_ephemeral_agy_sessions cleans AGY 2.0 conversation_summaries.db
+    import reasoning_utils
+    sum_db = fake_home / ".gemini" / "antigravity" / "conversation_summaries.db"
+    conn = sqlite3.connect(str(sum_db))
+    conn.execute("CREATE TABLE conversation_summaries (conversation_id TEXT, project_id TEXT, title TEXT, preview TEXT)")
+    conn.execute("INSERT INTO conversation_summaries VALUES ('eph-99', 'ephemeral-internal', 'tmp', 'tmp')")
+    conn.commit()
+    conn.close()
+    eph_brain = fake_home / ".gemini" / "antigravity" / "brain" / "eph-99"
+    eph_brain.mkdir(parents=True)
+    assert reasoning_utils.cleanup_ephemeral_agy_sessions() == 1
+    assert not eph_brain.exists()
+
+
+
 

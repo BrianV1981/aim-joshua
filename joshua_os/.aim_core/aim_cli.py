@@ -787,32 +787,37 @@ def cmd_update(args):
 
 
 def ensure_hooks_mapped():
-    """Silently self-heals stale hook paths in the global Antigravity CLI settings when the workspace is moved or cloned."""
-    settings_path = os.path.expanduser("~/.gemini/antigravity-cli/settings.json")
-    if not os.path.exists(settings_path): return
+    """Silently self-heals stale hook paths in global Antigravity settings (AGY 2.0 + legacy CLI) when the workspace is moved or cloned."""
+    from config_utils import get_agy_settings_paths
+
+    settings_paths = get_agy_settings_paths(existing_only=True)
+    if not settings_paths:
+        return
     try:
         import json
-        with open(settings_path, "r") as f:
-            settings = json.load(f)
-        
         needs_update = False
-        after_hooks = settings.get("hooks", {}).get("AfterTool", [])
-        for entry in after_hooks:
-            for hook in entry.get("hooks", []):
-                if hook.get("name") == "cognitive-mantra":
-                    if "aim_router.py" not in hook.get("command", ""):
-                        needs_update = True
-                        break
-        
+        for settings_path in settings_paths:
+            with open(settings_path, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+            after_hooks = settings.get("hooks", {}).get("AfterTool", [])
+            for entry in after_hooks:
+                for hook in entry.get("hooks", []):
+                    if hook.get("name") == "cognitive-mantra":
+                        if "aim_router.py" not in hook.get("command", ""):
+                            needs_update = True
+                            break
+            if needs_update:
+                break
+
         if needs_update:
             try:
-                import sys
-                sys.path.append(AIM_CORE_DIR)
+                if AIM_CORE_DIR not in sys.path:
+                    sys.path.append(AIM_CORE_DIR)
                 import aim_init
                 aim_init.register_hooks()
-            except:
+            except Exception:
                 pass
-    except:
+    except Exception:
         pass
 
 

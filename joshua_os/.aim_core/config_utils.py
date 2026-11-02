@@ -41,9 +41,55 @@ OS_ROOT = os.path.join(PROJECT_ROOT, "joshua_os")
 AIM_ROOT = OS_ROOT  # Default for most scripts
 CONFIG_PATH = os.path.join(OS_ROOT, ".aim_core/CONFIG.json")
 
+def get_agy_roots(home_dir=None):
+    """Return ordered Antigravity root directories: AGY 2.0 (~/.gemini/antigravity) first, legacy CLI (~/.gemini/antigravity-cli) second."""
+    home = os.path.expanduser(home_dir) if home_dir else os.path.expanduser("~")
+    return [
+        os.path.join(home, ".gemini", "antigravity"),
+        os.path.join(home, ".gemini", "antigravity-cli"),
+    ]
+
+
+def get_primary_agy_root(home_dir=None):
+    """Return the first existing Antigravity root directory, defaulting to ~/.gemini/antigravity."""
+    roots = get_agy_roots(home_dir=home_dir)
+    for r in roots:
+        if os.path.isdir(r):
+            return r
+    return roots[0]
+
+
+def get_agy_brain_dirs(home_dir=None, existing_only=False):
+    """Return ordered Antigravity brain directories across AGY 2.0 and legacy CLI."""
+    dirs = [os.path.join(r, "brain") for r in get_agy_roots(home_dir=home_dir)]
+    if existing_only:
+        return [d for d in dirs if os.path.isdir(d)]
+    return dirs
+
+
+def find_agy_transcript(session_id, home_dir=None):
+    """Locate transcript.jsonl for session_id across AGY 2.0 and legacy CLI roots. Returns (found_path_or_None, probed_paths)."""
+    probed = []
+    for brain_dir in get_agy_brain_dirs(home_dir=home_dir):
+        cand = os.path.join(brain_dir, session_id, ".system_generated", "logs", "transcript.jsonl")
+        probed.append(cand)
+        if os.path.isfile(cand):
+            return cand, probed
+    return None, probed
+
+
+def get_agy_settings_paths(home_dir=None, existing_only=False):
+    """Return ordered Antigravity settings.json paths across AGY 2.0 and legacy CLI."""
+    paths = [os.path.join(r, "settings.json") for r in get_agy_roots(home_dir=home_dir)]
+    if existing_only:
+        return [p for p in paths if os.path.isfile(p)]
+    return paths
+
+
 def load_config():
     """Loads, validates, and auto-repairs paths for the current machine."""
     home = os.path.expanduser("~")
+    primary_agy_brain = os.path.join(get_primary_agy_root(home_dir=home), "brain")
     
     # Baseline defaults for a fresh system
     default_config = {
@@ -56,7 +102,7 @@ def load_config():
             "archive_raw_dir": os.path.join(OS_ROOT, "archive/raw"),
             "continuity_dir": os.path.join(OS_ROOT, "continuity"),
             "src_dir": os.path.join(OS_ROOT, ".aim_core"),
-            "tmp_chats_dir": os.path.expanduser("~/.gemini/antigravity-cli/brain")
+            "tmp_chats_dir": primary_agy_brain
         },
         "models": {
             "embedding_provider": "local",
@@ -109,7 +155,7 @@ def load_config():
                     config['paths'][key] = os.path.join(OS_ROOT, key.replace('_dir', ''))
             
             # Recalculate home-based paths
-            config['paths']['tmp_chats_dir'] = os.path.expanduser("~/.gemini/antigravity-cli/brain")
+            config['paths']['tmp_chats_dir'] = primary_agy_brain
             
             # If we have an Obsidian path, we only update it if it started with /home/
             old_vault = config['settings'].get('obsidian_vault_path', "")

@@ -87,27 +87,23 @@ def cmd_vault(args):
 
 
 def cmd_agy_blackbox(args):
-    from pathlib import Path
     from blackbox_vault import vault_session
+    from config_utils import find_agy_transcript
 
     sid = args.session_id
-    agy_log = (
-        Path.home()
-        / ".gemini"
-        / "antigravity-cli"
-        / "brain"
-        / sid
-        / ".system_generated"
-        / "logs"
-        / "transcript.jsonl"
-    )
-    if agy_log.is_file():
-        if vault_session(str(agy_log), session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
-            print(f"Sealed AGY session {sid} into blackbox.")
-        else:
-            print(f"WARN: Failed to seal AGY session {sid}.")
+    agy_log, probed_paths = find_agy_transcript(sid)
+    if not agy_log:
+        print(
+            f"ERROR: AGY transcript not found for {sid} (searched: {', '.join(probed_paths)})",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if vault_session(agy_log, session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
+        print(f"Sealed AGY session {sid} into blackbox.")
     else:
-        print(f"ERROR: AGY transcript not found for {sid} at {agy_log}")
+        print(f"ERROR: Failed to seal AGY session {sid}.", file=sys.stderr)
+        sys.exit(1)
 
 
 def cmd_grok_blackbox(args):
@@ -117,7 +113,8 @@ def cmd_grok_blackbox(args):
     if seal_for_reincarnate(os.getcwd(), session_id=sid):
         print(f"Sealed Grok session {sid} into blackbox.")
     else:
-        print(f"WARN: Failed to seal Grok session {sid}.")
+        print(f"ERROR: Failed to seal Grok session {sid}.", file=sys.stderr)
+        sys.exit(1)
 
 
 def cmd_codex_blackbox(args):
@@ -127,7 +124,8 @@ def cmd_codex_blackbox(args):
     if seal_for_reincarnate(os.getcwd(), session_id=sid):
         print(f"Sealed Codex session {sid} into blackbox.")
     else:
-        print(f"WARN: Failed to seal Codex session {sid}.")
+        print(f"ERROR: Failed to seal Codex session {sid}.", file=sys.stderr)
+        sys.exit(1)
 
 
 def cmd_opencode_blackbox(args):
@@ -136,8 +134,8 @@ def cmd_opencode_blackbox(args):
     sid = args.session_id
     db_path = os.path.join(os.getcwd(), "opencode_data", "opencode.db")
     if not os.path.exists(db_path):
-        print(f"ERROR: opencode.db not found at {db_path}")
-        return
+        print(f"ERROR: opencode.db not found at {db_path}", file=sys.stderr)
+        sys.exit(1)
 
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
@@ -165,9 +163,13 @@ def cmd_opencode_blackbox(args):
         if vault_session(tmp_path, session_id=sid, vessel_root=os.getcwd(), reason="reincarnate"):
             print(f"Sealed OpenCode session {sid} into blackbox.")
         else:
-            print(f"WARN: Failed to seal OpenCode session {sid}.")
+            print(f"ERROR: Failed to seal OpenCode session {sid}.", file=sys.stderr)
+            sys.exit(1)
+    except SystemExit:
+        raise
     except Exception as e:
-        print(f"ERROR extracting opencode session: {e}")
+        print(f"ERROR extracting opencode session: {e}", file=sys.stderr)
+        sys.exit(1)
     finally:
         if "tmp_path" in locals() and os.path.exists(tmp_path):
             os.remove(tmp_path)

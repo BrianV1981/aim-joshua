@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Handoff / pulse for aim-joshua: AGY brain transcripts → archive → wiki daemon."""
-from config_utils import PROJECT_ROOT
+from config_utils import PROJECT_ROOT, find_agy_transcript, get_agy_brain_dirs, get_agy_roots, get_primary_agy_root
 import os
 import json
 import sys
@@ -40,7 +40,7 @@ os.makedirs(CONTINUITY_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_RAW_DIR, exist_ok=True)
 
 MIN_CONVERSATIONAL_TURNS = 1
-AGY_BRAIN = os.path.expanduser("~/.gemini/antigravity-cli/brain")
+AGY_BRAIN = os.path.join(get_primary_agy_root(), "brain")
 
 
 def atomic_write(file_path, content):
@@ -69,46 +69,45 @@ def session_id_from_agy_path(path: str) -> str:
 def find_agy_transcripts(explicit_session_id=None, project_dir=None):
     found = []
     if explicit_session_id:
-        path = os.path.join(
-            AGY_BRAIN,
-            explicit_session_id,
-            ".system_generated",
-            "logs",
-            "transcript.jsonl",
-        )
-        if os.path.isfile(path):
-            found.append(path)
+        hit, _ = find_agy_transcript(explicit_session_id)
+        if hit:
+            found.append(hit)
         return found
 
-    history_file = os.path.expanduser("~/.gemini/antigravity-cli/history.jsonl")
-    if os.path.isfile(history_file) and project_dir:
-        try:
-            with open(history_file, "r") as f:
-                for line in f:
-                    if not line.strip():
-                        continue
-                    data = json.loads(line)
-                    if data.get("workspace") != project_dir:
-                        continue
-                    cid = data.get("conversationId")
-                    if not cid:
-                        continue
-                    path = os.path.join(
-                        AGY_BRAIN,
-                        cid,
-                        ".system_generated",
-                        "logs",
-                        "transcript.jsonl",
-                    )
-                    if os.path.isfile(path) and path not in found:
-                        found.append(path)
-        except Exception as e:
-            print(f"Handoff Generator: Warning reading history: {e}")
+    for agy_root in get_agy_roots():
+        history_file = os.path.join(agy_root, "history.jsonl")
+        brain_dir = os.path.join(agy_root, "brain")
+        if os.path.isfile(history_file) and project_dir:
+            try:
+                with open(history_file, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if not line.strip():
+                            continue
+                        data = json.loads(line)
+                        if data.get("workspace") != project_dir:
+                            continue
+                        cid = data.get("conversationId")
+                        if not cid:
+                            continue
+                        path = os.path.join(
+                            brain_dir,
+                            cid,
+                            ".system_generated",
+                            "logs",
+                            "transcript.jsonl",
+                        )
+                        if os.path.isfile(path) and path not in found:
+                            found.append(path)
+            except Exception as e:
+                print(f"Handoff Generator: Warning reading history: {e}")
 
-    if not found and os.path.isdir(AGY_BRAIN):
-        found = glob.glob(
-            os.path.join(AGY_BRAIN, "*", ".system_generated", "logs", "transcript.jsonl")
-        )
+    if not found:
+        for brain_dir in get_agy_brain_dirs(existing_only=True):
+            for hit in glob.glob(
+                os.path.join(brain_dir, "*", ".system_generated", "logs", "transcript.jsonl")
+            ):
+                if hit not in found:
+                    found.append(hit)
     found.sort(key=os.path.getmtime, reverse=True)
     return found
 

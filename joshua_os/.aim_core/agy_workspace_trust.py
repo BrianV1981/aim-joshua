@@ -5,7 +5,7 @@ Antigravity CLI workspace trust helper.
 HARD TRUTH (verified 2026-07-15):
   - `agy --dangerously-skip-permissions` skips *tool* permission prompts, NOT the
     "Do you trust the contents of this project" folder gate.
-  - Trust is stored in ~/.gemini/antigravity-cli/settings.json → trustedWorkspaces[]
+  - Trust is stored in ~/.gemini/{antigravity,antigravity-cli}/settings.json → trustedWorkspaces[]
   - Matching is EXACT path (parent entry does NOT trust children).
   - UI is a list with "> Yes, I trust this folder" — send Enter only, not "y".
 
@@ -20,8 +20,25 @@ import time
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-SETTINGS_PATH = Path.home() / ".gemini" / "antigravity-cli" / "settings.json"
-LEGACY_TRUSTED = Path.home() / ".gemini" / "trustedFolders.json"
+
+def _candidate_settings_paths(home: Optional[Path] = None) -> List[Path]:
+    h = home or Path(os.path.expanduser("~"))
+    return [
+        h / ".gemini" / "antigravity" / "settings.json",
+        h / ".gemini" / "antigravity-cli" / "settings.json",
+    ]
+
+
+def _default_settings_path() -> Path:
+    candidates = _candidate_settings_paths()
+    for p in candidates:
+        if p.is_file() or p.parent.is_dir():
+            return p
+    return candidates[0]
+
+
+SETTINGS_PATH = _default_settings_path()
+LEGACY_TRUSTED = Path(os.path.expanduser("~")) / ".gemini" / "trustedFolders.json"
 
 TRUST_PROMPT_MARKERS = (
     "trust the contents",
@@ -35,11 +52,12 @@ def _normalize(path: str) -> str:
     return str(Path(path).expanduser().resolve())
 
 
-def _load_settings() -> dict:
-    if not SETTINGS_PATH.is_file():
+def _load_settings(settings_file: Optional[Path] = None) -> dict:
+    sf = settings_file or SETTINGS_PATH
+    if not sf.is_file():
         return {"trustedWorkspaces": []}
     try:
-        data = json.loads(SETTINGS_PATH.read_text(encoding="utf-8") or "{}")
+        data = json.loads(sf.read_text(encoding="utf-8") or "{}")
         if not isinstance(data, dict):
             return {"trustedWorkspaces": []}
         return data
@@ -47,18 +65,27 @@ def _load_settings() -> dict:
         return {"trustedWorkspaces": []}
 
 
-def _save_settings(data: dict) -> None:
-    SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+def _save_settings(data: dict, settings_file: Optional[Path] = None) -> None:
+    sf = settings_file or SETTINGS_PATH
+    sf.parent.mkdir(parents=True, exist_ok=True)
     # atomic write
-    tmp = SETTINGS_PATH.with_suffix(".json.tmp")
+    tmp = sf.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, SETTINGS_PATH)
+    os.replace(tmp, sf)
 
 
 def list_trusted_workspaces() -> List[str]:
-    data = _load_settings()
-    tw = data.get("trustedWorkspaces") or []
-    return [str(x) for x in tw if x]
+    seen: list[str] = []
+    seen_set: set[str] = set()
+    targets = [SETTINGS_PATH] + [p for p in _candidate_settings_paths() if p != SETTINGS_PATH]
+    for sf in targets:
+        data = _load_settings(sf)
+        for x in (data.get("trustedWorkspaces") or []):
+            s = str(x)
+            if s and s not in seen_set:
+                seen.append(s)
+                seen_set.add(s)
+    return seen
 
 
 def is_workspace_trusted(path: str) -> bool:
@@ -80,7 +107,7 @@ def ensure_workspace_trusted(
     quiet: bool = False,
 ) -> bool:
     """
-    Ensure exact path is in antigravity-cli trustedWorkspaces.
+    Ensure exact path is in Antigravity (AGY 2.0 + legacy CLI) trustedWorkspaces.
     Returns True if already trusted or successfully added.
     """
     try:
@@ -90,40 +117,42 @@ def ensure_workspace_trusted(
             os.makedirs(target, exist_ok=True)
             target = _normalize(path)
 
-        data = _load_settings()
-        tw = list(data.get("trustedWorkspaces") or [])
-        # normalize existing for membership
-        tw_norm = {_normalize(p) if os.path.exists(p) else str(Path(p).resolve()) for p in tw}
-        # simpler: string set as stored
-        tw_set = set(str(p) for p in tw)
-
         to_add = [target]
         if also_parents:
             p = Path(target)
-            home = Path.home().resolve()
+            home = Path(os.path.expanduser("~")).resolve()
             while p != p.parent:
                 if p == home or p == Path("/"):
                     break
                 to_add.append(str(p))
                 p = p.parent
 
-        changed = False
-        for p in to_add:
-            # store resolved absolute form without trailing slash
-            p = str(Path(p).resolve())
-            if p not in tw_set:
-                tw.append(p)
-                tw_set.add(p)
-                changed = True
+        candidates = _candidate_settings_paths()
+        active_files = [sf for sf in candidates if sf.is_file() or sf.parent.is_dir()]
+        if not active_files:
+            active_files = [SETTINGS_PATH]
 
-        if changed:
-            data["trustedWorkspaces"] = tw
-            _save_settings(data)
-            if not quiet:
-                print(f"[TRUST] registered workspace(s) in {SETTINGS_PATH}: {to_add}")
-        else:
-            if not quiet:
-                print(f"[TRUST] already trusted: {target}")
+        any_changed = False
+        for sf in active_files:
+            data = _load_settings(sf)
+            tw = list(data.get("trustedWorkspaces") or [])
+            tw_set = set(str(p) for p in tw)
+            changed = False
+            for p in to_add:
+                p_res = str(Path(p).resolve())
+                if p_res not in tw_set:
+                    tw.append(p_res)
+                    tw_set.add(p_res)
+                    changed = True
+            if changed:
+                data["trustedWorkspaces"] = tw
+                _save_settings(data, sf)
+                any_changed = True
+                if not quiet:
+                    print(f"[TRUST] registered workspace(s) in {sf}: {to_add}")
+
+        if not any_changed and not quiet:
+            print(f"[TRUST] already trusted: {target}")
 
         # Keep legacy trustedFolders.json in sync (parent TRUST_FOLDER for home subtree)
         try:

@@ -576,11 +576,13 @@ def extract_signal(json_path: str) -> ExtractResult:
             return extract_signal_from_agy_transcript(json_path)
         signal = extract_signal_from_chat_style(json_path)
         # Recover: misdetect as chat_style but file is AGY brain transcript
+        norm_json_path = json_path.replace("\\", "/")
         if (
             (not signal or conversational_turn_count(signal) < 1)
             and (
                 json_path.endswith("transcript.jsonl")
-                or "antigravity-cli/brain" in json_path.replace("\\", "/")
+                or "antigravity/brain" in norm_json_path
+                or "antigravity-cli/brain" in norm_json_path
             )
         ):
             agy_sig = extract_signal_from_agy_transcript(json_path)

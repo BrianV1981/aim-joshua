@@ -1,4 +1,4 @@
-from config_utils import PROJECT_ROOT
+from config_utils import PROJECT_ROOT, get_agy_roots
 #!/usr/bin/env python3
 import os
 import json
@@ -70,43 +70,43 @@ def generate_reasoning(prompt, system_instruction="You are a helpful assistant."
     return "Error: Unsupported Provider Configuration."
 
 def cleanup_ephemeral_agy_sessions(project_ids=("ephemeral-internal", "ephemeral-pipeline", "ephemeral-batch")):
-    """Purges headless ephemeral AGY sessions from conversation_summaries.db, conversations/, and brain/."""
+    """Purges headless ephemeral AGY sessions from conversation_summaries.db, conversations/, and brain/ across AGY 2.0 and legacy CLI."""
     import shutil
     import sqlite3
 
-    agy_dir = os.path.expanduser("~/.gemini/antigravity-cli")
-    summary_db = os.path.join(agy_dir, "conversation_summaries.db")
-    if not os.path.isfile(summary_db):
-        return 0
     purged = 0
-    try:
-        conn = sqlite3.connect(summary_db, timeout=10)
-        placeholders = ",".join("?" for _ in project_ids)
-        rows = conn.execute(
-            f"SELECT conversation_id FROM conversation_summaries WHERE project_id IN ({placeholders})",
-            tuple(project_ids),
-        ).fetchall()
-        cids = [r[0] for r in rows if r and r[0]]
-        if cids:
-            conn.executemany(
-                "DELETE FROM conversation_summaries WHERE conversation_id = ?",
-                [(cid,) for cid in cids],
-            )
-            conn.commit()
-        conn.close()
-        for cid in cids:
-            db_file = os.path.join(agy_dir, "conversations", f"{cid}.db")
-            if os.path.isfile(db_file):
-                try:
-                    os.remove(db_file)
-                except OSError:
-                    pass
-            brain_path = os.path.join(agy_dir, "brain", cid)
-            if os.path.isdir(brain_path):
-                shutil.rmtree(brain_path, ignore_errors=True)
-            purged += 1
-    except Exception:
-        pass
+    for agy_dir in get_agy_roots():
+        summary_db = os.path.join(agy_dir, "conversation_summaries.db")
+        if not os.path.isfile(summary_db):
+            continue
+        try:
+            conn = sqlite3.connect(summary_db, timeout=10)
+            placeholders = ",".join("?" for _ in project_ids)
+            rows = conn.execute(
+                f"SELECT conversation_id FROM conversation_summaries WHERE project_id IN ({placeholders})",
+                tuple(project_ids),
+            ).fetchall()
+            cids = [r[0] for r in rows if r and r[0]]
+            if cids:
+                conn.executemany(
+                    "DELETE FROM conversation_summaries WHERE conversation_id = ?",
+                    [(cid,) for cid in cids],
+                )
+                conn.commit()
+            conn.close()
+            for cid in cids:
+                db_file = os.path.join(agy_dir, "conversations", f"{cid}.db")
+                if os.path.isfile(db_file):
+                    try:
+                        os.remove(db_file)
+                    except OSError:
+                        pass
+                brain_path = os.path.join(agy_dir, "brain", cid)
+                if os.path.isdir(brain_path):
+                    shutil.rmtree(brain_path, ignore_errors=True)
+                purged += 1
+        except Exception:
+            pass
     return purged
 
 

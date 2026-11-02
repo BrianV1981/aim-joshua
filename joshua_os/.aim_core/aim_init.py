@@ -217,53 +217,63 @@ def load_existing_identity_defaults():
 
     return defaults
 def register_hooks(is_light_mode=False):
-    settings_path = os.path.expanduser("~/.gemini/antigravity-cli/settings.json")
-    router_src = os.path.join(OS_DIR, ".aim_core/aim_router.py")
-    router_dest = os.path.expanduser("~/.gemini/antigravity-cli/aim_router.py")
+    if AIM_CORE_DIR not in sys.path:
+        sys.path.insert(0, AIM_CORE_DIR)
+    from config_utils import get_agy_roots, get_agy_settings_paths
 
-    if os.path.exists(router_src):
-        import shutil
-        shutil.copy2(router_src, router_dest)
-        os.chmod(router_dest, 0o755)
+    router_src = os.path.join(OS_DIR, ".aim_core", "aim_router.py")
+    for agy_root in get_agy_roots():
+        if os.path.isdir(agy_root) and os.path.exists(router_src):
+            router_dest = os.path.join(agy_root, "aim_router.py")
+            shutil.copy2(router_src, router_dest)
+            if os.name != "nt":
+                os.chmod(router_dest, 0o755)
 
-    if not os.path.exists(settings_path): return
+    existing_settings = get_agy_settings_paths(existing_only=True)
+    if not existing_settings:
+        return
     try:
-        with open(settings_path, 'r') as f: settings = json.load(f)
-        if "hooks" not in settings: settings["hooks"] = {}
+        for settings_path in existing_settings:
+            with open(settings_path, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+            if "hooks" not in settings:
+                settings["hooks"] = {}
 
-        # Enforce global Memory Boundary Marker for A.I.M. Isolation
-        if "context" not in settings: settings["context"] = {}
-        settings["context"]["memoryBoundaryMarkers"] = ["AGENTS.md", ".git"]
-        settings["context"]["discoveryMaxDirs"] = 0
-        settings["context"]["fileName"] = ["AGENTS.md"]
+            # Enforce global Memory Boundary Marker for A.I.M. Isolation
+            if "context" not in settings:
+                settings["context"] = {}
+            settings["context"]["memoryBoundaryMarkers"] = ["AGENTS.md", ".git"]
+            settings["context"]["discoveryMaxDirs"] = 0
+            settings["context"]["fileName"] = ["AGENTS.md"]
 
+            router_dest = os.path.join(os.path.dirname(settings_path), "aim_router.py")
+            if os.path.exists(router_src) and not os.path.exists(router_dest):
+                shutil.copy2(router_src, router_dest)
+                if os.name != "nt":
+                    os.chmod(router_dest, 0o755)
 
-        # [REMOVED] SessionEnd hook for session_summarizer.py
-        # The Scribe/Wiki Ingester should ONLY run on /reincarnate, not every single CLI exit.
-        # It is explicitly called by .aim_core/handoff_pulse_generator.py during handoff.
+            aim_hooks = {
+                "AfterTool": [
+                    ("cognitive-mantra", "cognitive_mantra.py")
+                ]
+            }
 
-        aim_hooks = {
-            "AfterTool": [
-                ("cognitive-mantra", "cognitive_mantra.py")
-            ]
-        }
-        
-        # Clear old A.I.M. hooks to prevent ghost executions (e.g. legacy SessionStart)
-        settings["hooks"] = {}
+            # Clear old A.I.M. hooks to prevent ghost executions (e.g. legacy SessionStart)
+            settings["hooks"] = {}
 
-        # Actually write the hooks to the settings dictionary
-        py_cmd = f'"{VENV_PYTHON}"' if " " in VENV_PYTHON else VENV_PYTHON
-        router_cmd = f'"{router_dest}"' if " " in router_dest else router_dest
-        for event, hooks in aim_hooks.items():
-            settings["hooks"][event] = []
-            for h in hooks:
-                entry = { "name": h[0], "type": "command", "command": f"{py_cmd} {router_cmd} {h[1]}" }
-                if len(h) > 2: entry["matcher"] = h[2]
-                settings["hooks"][event].append({"hooks": [entry]})
-                
-        # Save to disk
-        with open(settings_path, 'w') as f: json.dump(settings, f, indent=2)
-        
+            py_cmd = f'"{VENV_PYTHON}"' if " " in VENV_PYTHON else VENV_PYTHON
+            router_cmd = f'"{router_dest}"' if " " in router_dest else router_dest
+            for event, hooks in aim_hooks.items():
+                settings["hooks"][event] = []
+                for h in hooks:
+                    entry = {"name": h[0], "type": "command", "command": f"{py_cmd} {router_cmd} {h[1]}"}
+                    if len(h) > 2:
+                        entry["matcher"] = h[2]
+                    settings["hooks"][event].append({"hooks": [entry]})
+
+            with open(settings_path, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=2)
+
         print("[OK] Hooks registered via Universal Router.")
     except Exception as e:
         print(f"[ERROR] Hook registration failed: {e}")

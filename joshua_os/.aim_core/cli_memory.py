@@ -12,7 +12,7 @@ _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 if _CORE_DIR not in sys.path:
     sys.path.insert(0, _CORE_DIR)
 
-from config_utils import PROJECT_ROOT, OS_ROOT, resolve_venv_python
+from config_utils import PROJECT_ROOT, OS_ROOT, get_agy_roots, resolve_venv_python
 
 BASE_DIR = PROJECT_ROOT
 OS_DIR = OS_ROOT
@@ -123,8 +123,7 @@ def cmd_sessions(args):
         print("No historical sessions found for this project.")
         return
 
-    agy_conv_dir = os.path.expanduser("~/.gemini/antigravity-cli/conversations")
-    agy_brain_dir = os.path.expanduser("~/.gemini/antigravity-cli/brain")
+    agy_roots = get_agy_roots()
     project_name = os.path.basename(BASE_DIR)
 
     print(f"\n=== PROJECT SESSIONS: {project_name} ({len(rows)} archived) ===")
@@ -132,9 +131,10 @@ def cmd_sessions(args):
     print("-" * 115)
     for sid, ts, turns, title in rows:
         ts_short = (ts or "")[:19].replace("T", " ")
-        is_live = (
-            os.path.isfile(os.path.join(agy_conv_dir, f"{sid}.db"))
-            or os.path.isdir(os.path.join(agy_brain_dir, sid))
+        is_live = any(
+            os.path.isfile(os.path.join(r, "conversations", f"{sid}.db"))
+            or os.path.isdir(os.path.join(r, "brain", sid))
+            for r in agy_roots
         )
         status = "LIVE+VAULT" if is_live else "VAULTED"
         clean_title = (title or "Archived Session").replace("\n", " ").strip()[:40]

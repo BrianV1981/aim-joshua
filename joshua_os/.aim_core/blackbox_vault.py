@@ -220,26 +220,29 @@ def _resolve_os_dir(vessel_root: Path) -> Path:
 
 
 def _lookup_conversation_title(session_id: str) -> str:
-    summary_db = Path.home() / ".gemini" / "antigravity-cli" / "conversation_summaries.db"
-    if not summary_db.is_file():
-        return ""
-    try:
-        import sqlite3
-        conn = sqlite3.connect(f"file:{summary_db}?mode=ro", uri=True)
-        row = conn.execute(
-            "SELECT title, preview FROM conversation_summaries WHERE conversation_id = ?",
-            (session_id,),
-        ).fetchone()
-        conn.close()
-        if row:
-            title = (row[0] or "").strip()
-            if title:
-                return title
-            preview = (row[1] or "").strip().splitlines()
-            if preview:
-                return preview[0][:80]
-    except Exception:
-        pass
+    from config_utils import get_agy_roots
+
+    for agy_root in get_agy_roots():
+        summary_db = Path(agy_root) / "conversation_summaries.db"
+        if not summary_db.is_file():
+            continue
+        try:
+            import sqlite3
+            conn = sqlite3.connect(f"file:{summary_db}?mode=ro", uri=True)
+            row = conn.execute(
+                "SELECT title, preview FROM conversation_summaries WHERE conversation_id = ?",
+                (session_id,),
+            ).fetchone()
+            conn.close()
+            if row:
+                title = (row[0] or "").strip()
+                if title:
+                    return title
+                preview = (row[1] or "").strip().splitlines()
+                if preview:
+                    return preview[0][:80]
+        except Exception:
+            pass
     return ""
 
 
@@ -656,20 +659,13 @@ def _resolve_reincarnate_transcripts(
     if paths:
         return paths, id_from_path
 
-    # AGY brain (soul / aim-joshua — no vessel_paths module)
+    # AGY brain (AGY 2.0 ~/.gemini/antigravity + legacy ~/.gemini/antigravity-cli)
     if session_id:
-        agy = (
-            Path.home()
-            / ".gemini"
-            / "antigravity-cli"
-            / "brain"
-            / session_id
-            / ".system_generated"
-            / "logs"
-            / "transcript.jsonl"
-        )
-        if agy.is_file():
-            return [str(agy)], id_from_path
+        from config_utils import find_agy_transcript
+
+        found_agy, _ = find_agy_transcript(session_id)
+        if found_agy:
+            return [found_agy], id_from_path
 
     # OpenCode archive/raw session-*.json
     raw_dirs = [
