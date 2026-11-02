@@ -498,7 +498,6 @@ def test_issue_132_opencode_session_scoping_shrink_guard_and_wal_mode(tmp_path, 
     )
     assert after_tmp - before_tmp == set()
 
-    monkeypatch.setattr(blackbox_vault, "keyring", None)
     decrypted = blackbox_vault.audit_vault("ses_alpha", vessel_root=str(vessel), to_stdout=False).decode("utf-8")
     assert "AlphaOnlySecretPayload" in decrypted
     assert "BetaOtherSessionSecret" not in decrypted
