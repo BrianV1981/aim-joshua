@@ -40,7 +40,7 @@ def main():
     # 2. Implement local git init (Issue 2)
     git_dir = os.path.join(sandbox_dir, ".git")
     if not os.path.exists(git_dir):
-        run_cmd(["git", "init"], cwd=sandbox_dir)
+        run_cmd(["git", "init", "-b", "main"], cwd=sandbox_dir)
         print(f"[OK] Initialized isolated Git ledger in sandbox.")
         # Create an initial commit so branch exists
         with open(os.path.join(sandbox_dir, ".gitignore"), "w") as f:

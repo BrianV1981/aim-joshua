@@ -98,7 +98,7 @@ setup_arena() {
         if [ ! -d "django_repo" ]; then
             git clone --depth 1 --branch "$TARGET_BRANCH" "$REPO_URL" django_repo >/dev/null 2>&1
             rm -rf django_repo/.git
-            git init >/dev/null 2>&1
+            git init -b main >/dev/null 2>&1
             git add . >/dev/null 2>&1
             git commit -m "Baseline: Vulnerable codebase" >/dev/null 2>&1
         fi
@@ -126,7 +126,7 @@ setup_arena() {
         
         git clone --depth 1 --branch "$TARGET_BRANCH" "$REPO_URL" django_repo >/dev/null 2>&1
         rm -rf django_repo/.git
-        git init >/dev/null 2>&1
+        git init -b main >/dev/null 2>&1
         git add . >/dev/null 2>&1
         git commit -m "Baseline: Vulnerable codebase" >/dev/null 2>&1
         

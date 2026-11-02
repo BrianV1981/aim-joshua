@@ -101,6 +101,24 @@ def _copy_if_missing(src: Path, dst: Path, executable_on_posix: bool = False) ->
         os.chmod(dst, 0o755)
 
 
+def _git_init_main(target: Path) -> None:
+    """Initialize a Git repository explicitly on branch 'main' across Git 2.28+ and legacy Git."""
+    res = subprocess.run(
+        ["git", "init", "-b", "main"],
+        cwd=str(target),
+        capture_output=True,
+        text=True,
+    )
+    if res.returncode != 0:
+        subprocess.run(["git", "init"], cwd=str(target), check=True, capture_output=True)
+        subprocess.run(
+            ["git", "symbolic-ref", "HEAD", "refs/heads/main"],
+            cwd=str(target),
+            check=True,
+            capture_output=True,
+        )
+
+
 def _ensure_gitignore(target: Path) -> None:
     gi_path = target / ".gitignore"
     existing_lines = gi_path.read_text(encoding="utf-8", errors="ignore").splitlines() if gi_path.is_file() else []
@@ -249,7 +267,7 @@ def install_project(
             _copy_if_missing(src_root / "TOOLS.md", target / "TOOLS.md")
 
             if not (target / ".git").exists():
-                subprocess.run(["git", "init"], cwd=str(target), check=True, capture_output=True)
+                _git_init_main(target)
 
             _ensure_gitignore(target)
             _seed_memory_wiki_and_lance(target, cli_name)

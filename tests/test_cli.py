@@ -574,7 +574,7 @@ def test_requirements_linux_marker_and_powershell_shims():
     assert r'-Dest "$HOME\.gemini\skills"' not in readme
 
 
-def test_bootstrap_install_clean_and_agent_modes_and_root_guards(tmp_path):
+def test_bootstrap_install_clean_and_agent_modes_and_root_guards(tmp_path, monkeypatch):
     import json
     import sys
 
@@ -582,6 +582,11 @@ def test_bootstrap_install_clean_and_agent_modes_and_root_guards(tmp_path):
     if core_dir not in sys.path:
         sys.path.insert(0, core_dir)
     import bootstrap_install
+
+    # Force Git default branch to 'master' in env to prove Issue #121 (-b main) overrides it
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "init.defaultBranch")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "master")
 
     fake_home = tmp_path / "home"
     fake_home.mkdir()
@@ -630,6 +635,15 @@ def test_bootstrap_install_clean_and_agent_modes_and_root_guards(tmp_path):
     assert (agent_target / ".git").is_dir()
     assert not (agent_target / ".github").exists()
     assert len((agent_target / "AGENTS.md").read_text(encoding="utf-8").splitlines()) >= 80
+    for repo_path in (clean_target, agent_target):
+        head_ref = subprocess.run(
+            ["git", "symbolic-ref", "--short", "HEAD"],
+            cwd=str(repo_path),
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert head_ref == "main"
 
 
 def test_aim_init_find_project_root_terminates_on_windows_drive_root():
