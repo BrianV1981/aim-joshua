@@ -176,6 +176,14 @@ def _seed_memory_wiki_and_lance(target: Path, cli_name: str) -> None:
     default_lance = target / "joshua_os" / "assets" / "default_lance"
     active_lance = target / "joshua_os" / "memory_lance"
     active_lance.mkdir(parents=True, exist_ok=True)
+    for rel_dir in (
+        Path("archive") / "raw",
+        Path("archive") / "history",
+        Path("archive") / "cartridges",
+        Path("continuity"),
+        Path("workstreams"),
+    ):
+        (target / "joshua_os" / rel_dir).mkdir(parents=True, exist_ok=True)
     if default_lance.is_dir():
         for item in default_lance.iterdir():
             dest_item = active_lance / item.name
@@ -292,7 +300,21 @@ def install_project(
                         shutil.copy2(entry, dest_entry)
             _seed_memory_wiki_and_lance(target, cli_name)
         else:
-            excluded = {"tests", "benchmarks", "memory-wiki", "__pycache__", "venv"}
+            excluded = {
+                "tests",
+                "benchmarks",
+                "memory-wiki",
+                "__pycache__",
+                "venv",
+                "memory_lance",
+                "archive",
+                "continuity",
+                "workstreams",
+                "CONFIG.json",
+                "DAEMON_PULSE.md",
+                "planning-artifacts",
+                "default_engrams",
+            }
             if mode == "agent":
                 excluded.update({"docs", "skills", "workspace"})
 

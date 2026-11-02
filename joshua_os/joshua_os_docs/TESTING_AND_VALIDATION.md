@@ -1,19 +1,22 @@
 # Testing, Validation & The TDD Reflex
 
-This document outlines the mandatory validation protocols for all A.I.M. agents. In the A.I.M. ecosystem, code generation is meaningless without mathematical proof. 
+This document defines the mandatory verification standards for all J.O.S.H.U.A. engine, CLI, and project code changes.
 
-## 1. The Vibe Coding Trap
-"Vibe Coding" refers to an LLM generating code that "looks right" based purely on its pre-trained base weights or conversational momentum, without empirical validation. 
-**This is strictly prohibited.** Raw flagship LLMs operating without an exoskeleton will generate code that fails under production concurrency or breaks legacy systems.
+## 1. Zero Blind Output ("No Vibe Coding")
+Generating code that "looks plausible" without executing real tests is strictly prohibited. Every bug fix, CLI route, path resolver, or RAG behavior change must be proven empirically before promotion to `main`.
 
-## 2. The TDD Reflex (Test-Driven Development)
-A.I.M. agents must operate with a mandatory "TDD Reflex." Every architectural change, feature addition, or bug fix must be mathematically sound and verifiable.
-1.  **Reproduce First:** Before modifying any core logic, the agent must write a failing test case (or execution script) that empirically reproduces the reported bug or demonstrates the missing feature.
-2.  **Implement:** The agent uses its tools to implement the fix.
-3.  **Validate:** The agent runs the test suite. If the test fails, the agent must diagnose the failure, adjust its approach, and try again. 
-4.  **Finality:** Validation is the only path to finality. An agent must never assume success or deploy unverified changes.
+## 2. The TDD Workflow
+1. **Reproduce First:** Write or extend an automated `pytest` test case under `tests/` that reproduces the bug or specifies the new contract.
+2. **Implement Cleanly:** Apply surgical changes inside your isolated `workspace/issue-<id>` worktree.
+3. **Run the Full Warning-Clean Test Gate:**
+   ```bash
+   # Linux / macOS / WSL
+   ./joshua_os/venv/bin/python3 -m pytest tests/ -W error::DeprecationWarning
 
-## 3. The 30% Rule & Context Collapse
-Long-horizon agents degrade mathematically as their context window fills. Past 30% utilization, agents lose epistemic certainty, forget instructions, and begin to hallucinate (Vibe Code).
-*   **The Golden Rule:** Always spin up a new agent BEFORE compression is necessary.
-*   **The Sprint:** Treat terminal sessions like sprint cycles, not marathons. When an agent has completed a distinct logical phase (or begins to thrash), it must execute `/reincarnate` to teleport its specific "Will" (via the Gameplan) to a fresh, unburdened agent session. This ensures Senior-level precision is maintained indefinitely.
+   # Windows 10/11 (PowerShell)
+   .\joshua_os\venv\Scripts\python.exe -m pytest tests\ -W error::DeprecationWarning
+   ```
+4. **Cross-Platform CI Parity:** GitHub Actions (`.github/workflows/smoke-test.yml`) runs both `ubuntu-latest` and `windows-latest` matrix legs on pushes and pull requests. Never introduce POSIX-only path assumptions (`while current != '/':`, unguarded `fcntl`, GNU-only `sed -i`, or bare `python3` subprocesses on Windows).
+
+## 3. Context Hygiene & Sprint Handoffs
+Long-horizon agent sessions lose precision as context windows saturate. Treat complex multi-phase sprints as clean relays: checkpoint durable discoveries mid-session with `/aim-memory-wiki`, and when context pressure builds, seal the session (`./aim <vessel>-blackbox --session-id <id>`) and execute `/aim-handoff` to pass a verified `HANDOFF.md` to a fresh agent session.

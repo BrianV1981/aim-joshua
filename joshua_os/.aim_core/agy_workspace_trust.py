@@ -52,16 +52,23 @@ def _normalize(path: str) -> str:
     return str(Path(path).expanduser().resolve())
 
 
-def _load_settings(settings_file: Optional[Path] = None) -> dict:
+def _load_settings(settings_file: Optional[Path] = None, *, for_write: bool = False) -> Optional[dict]:
     sf = settings_file or SETTINGS_PATH
     if not sf.is_file():
         return {"trustedWorkspaces": []}
+    raw = sf.read_text(encoding="utf-8")
+    if not raw.strip():
+        return {"trustedWorkspaces": []}
     try:
-        data = json.loads(sf.read_text(encoding="utf-8") or "{}")
+        data = json.loads(raw)
         if not isinstance(data, dict):
+            if for_write:
+                return None
             return {"trustedWorkspaces": []}
         return data
     except Exception:
+        if for_write:
+            return None
         return {"trustedWorkspaces": []}
 
 
@@ -134,7 +141,11 @@ def ensure_workspace_trusted(
 
         any_changed = False
         for sf in active_files:
-            data = _load_settings(sf)
+            data = _load_settings(sf, for_write=True)
+            if data is None:
+                if not quiet:
+                    print(f"[TRUST] WARN skipping {sf}: invalid JSON or JSONC comments detected")
+                continue
             tw = list(data.get("trustedWorkspaces") or [])
             tw_set = set(str(p) for p in tw)
             changed = False
@@ -168,20 +179,25 @@ def ensure_workspace_trusted(
 
 
 def _sync_legacy_trusted_folders(path: str) -> None:
-    """Best-effort: ensure ~/.gemini/trustedFolders.json notes the path."""
-    if not LEGACY_TRUSTED.parent.is_dir():
+    """Best-effort: ensure ~/.gemini/trustedFolders.json notes the path without clobbering corrupt/JSONC files."""
+    legacy_file = Path(os.path.expanduser("~")) / ".gemini" / "trustedFolders.json"
+    if not legacy_file.parent.is_dir():
         return
     data = {}
-    if LEGACY_TRUSTED.is_file():
-        try:
-            data = json.loads(LEGACY_TRUSTED.read_text(encoding="utf-8") or "{}")
-        except Exception:
-            data = {}
-    if not isinstance(data, dict):
-        data = {}
-    # TRUST_FOLDER on exact path; preserve existing home directory entries
+    if legacy_file.is_file():
+        raw = legacy_file.read_text(encoding="utf-8")
+        if raw.strip():
+            try:
+                parsed = json.loads(raw)
+                if not isinstance(parsed, dict):
+                    return
+                data = parsed
+            except Exception:
+                return
     data[str(Path(path).resolve())] = "TRUST_FOLDER"
-    LEGACY_TRUSTED.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    tmp = legacy_file.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, legacy_file)
 
 
 def pane_shows_trust_prompt(text: str) -> bool:

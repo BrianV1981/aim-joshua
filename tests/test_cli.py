@@ -82,7 +82,7 @@ def test_legacy_modules_import_without_relative_import_error():
     if core_dir not in sys.path:
         sys.path.insert(0, core_dir)
 
-    for mod_name in ("audit_tools", "recall_tools", "sovereign_sync", "cli_vault", "cli_memory", "aim_cli"):
+    for mod_name in ("audit_tools", "recall_tools", "cli_vault", "cli_memory", "aim_cli"):
         mod = importlib.import_module(mod_name)
         assert mod is not None
 
@@ -108,7 +108,7 @@ def test_cmd_clean_defined_and_dispatches():
 def test_cmd_bug_requires_commanders_intent():
     res = subprocess.run(["./aim", "bug", "Missing flags test"], capture_output=True, text=True)
     assert res.returncode == 1
-    assert "Commander's Intent Required" in res.stdout
+    assert "Commander's Intent Required" in (res.stdout + res.stderr)
 
 
 def test_cmd_bug_dispatches_to_gh_with_intent():
@@ -191,7 +191,7 @@ def test_cmd_fix_creates_worktree_and_copies_config(tmp_path):
 def test_vault_subparser_missing_verb_exits_2():
     res = subprocess.run(["./aim", "vault"], capture_output=True, text=True)
     assert res.returncode == 2
-    assert "Usage: aim vault" in res.stdout
+    assert "Usage: aim vault" in (res.stdout + res.stderr)
 
 
 def test_installers_have_home_guard_and_clean_readme_onboarding(tmp_path):
@@ -431,15 +431,19 @@ def test_aim_init_never_truncates_agents_md_to_stub(tmp_path):
     assert "| **Option A (Default)** | `joshua_os/install.sh` |" in readme_md
     assert "Interactive Onboarding Interview (`./aim init`):" in readme_md
 
-    # 5. Pre-baked default_lance contains v0.8.8 AGENTS.md and Direct-to-main rules
+    # 5. Pre-baked default_lance contains AGENTS.md and Direct-to-main rules
     import lance_backend
-    lance_backend.LANCE_DB_PATH = os.path.abspath("joshua_os/assets/default_lance")
-    vb = lance_backend.VectorBackend()
-    assert vb.path == os.path.abspath("joshua_os/assets/default_lance")
-    hits = vb.search(None, "Agent Memory Exemption", top_k=5)
-    assert len(hits) > 0
-    tts_hits = vb.search(None, "Spoken Summary", top_k=5)
-    assert len(tts_hits) > 0
+    orig_lance_path = lance_backend.LANCE_DB_PATH
+    try:
+        lance_backend.LANCE_DB_PATH = os.path.abspath("joshua_os/assets/default_lance")
+        vb = lance_backend.VectorBackend()
+        assert vb.path == os.path.abspath("joshua_os/assets/default_lance")
+        hits = vb.search(None, "Agent Memory Exemption", top_k=5)
+        assert len(hits) > 0
+        tts_hits = vb.search(None, "Spoken Summary", top_k=5)
+        assert len(tts_hits) > 0
+    finally:
+        lance_backend.LANCE_DB_PATH = orig_lance_path
 
 
 def test_aim_init_preserves_existing_gitignore(tmp_path, monkeypatch):

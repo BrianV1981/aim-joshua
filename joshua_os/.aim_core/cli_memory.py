@@ -6,7 +6,6 @@ import shutil
 import sqlite3
 import subprocess
 import sys
-import traceback
 
 _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 if _CORE_DIR not in sys.path:
@@ -37,28 +36,6 @@ def cmd_clean(args):
     _run_script(os.path.join(AIM_CORE_DIR, "maintenance.py"), [])
 
 
-def cmd_sync(args):
-    """Bakes native LanceDB cartridges and runs Sovereign Sync."""
-    print("--- A.I.M. SYNC ---")
-    try:
-        from sovereign_sync import export_to_parquet, import_from_parquet
-
-        sync_dir = os.path.join(OS_DIR, "archive/sync")
-        os.makedirs(sync_dir, exist_ok=True)
-
-        export_to_parquet(OS_DIR, sync_dir)
-
-        print("[2/3] Executing network sync...")
-        _run_script(os.path.join(AIM_CORE_DIR, "back-populator.py"), [])
-
-        imported = import_from_parquet(OS_DIR, sync_dir)
-        print(f"      Imported {imported} new/updated cartridges.")
-        print("[SUCCESS] Workspace synchronized.")
-    except Exception as e:
-        traceback.print_exc()
-        print(f"[ERROR] Sync failed: {e}")
-
-
 def cmd_audit(args):
     """Generates a strategic synthesis/morning report from recent sessions."""
     from audit_tools import run_audit
@@ -72,11 +49,6 @@ def cmd_recall(args):
     run_recall(query)
 
 
-def cmd_mail(args):
-    """Syncs the Unread Mail tracker from the Swarm Post Office."""
-    _run_script(os.path.join(AIM_CORE_DIR, "sync_mail.py"), [])
-
-
 def _ensure_history_synced():
     """Syncs the project's Blackbox Vault (.enc) into joshua_os/archive/history.db."""
     try:
@@ -88,8 +60,10 @@ def _ensure_history_synced():
 
 def cmd_sessions(args):
     """Lists all handed-off / vaulted sessions for this project (unlimited retention)."""
+    from blackbox_vault import connect_history_db
+
     _ensure_history_synced()
-    history_db = os.path.join(OS_DIR, "archive/history.db")
+    history_db = os.path.join(OS_DIR, "archive", "history.db")
     if not os.path.exists(history_db):
         try:
             subprocess.run(
@@ -105,19 +79,21 @@ def cmd_sessions(args):
             print("No historical sessions found for this project.")
             return
 
-    conn = sqlite3.connect(history_db)
-    c = conn.cursor()
-    cols = {r[1] for r in c.execute("PRAGMA table_info(history)").fetchall()}
-    has_turns = "turn_count" in cols
-    has_title = "title" in cols
-    select_sql = (
-        f"SELECT session_id, timestamp, "
-        f"{'COALESCE(turn_count, 0)' if has_turns else '0'}, "
-        f"{'COALESCE(title, \"\")' if has_title else '\"\"'} "
-        f"FROM history ORDER BY timestamp DESC LIMIT 4000"
-    )
-    rows = c.execute(select_sql).fetchall()
-    conn.close()
+    conn = connect_history_db(history_db)
+    try:
+        c = conn.cursor()
+        cols = {r[1] for r in c.execute("PRAGMA table_info(history)").fetchall()}
+        has_turns = "turn_count" in cols
+        has_title = "title" in cols
+        select_sql = (
+            f"SELECT session_id, timestamp, "
+            f"{'COALESCE(turn_count, 0)' if has_turns else '0'}, "
+            f"{'COALESCE(title, \"\")' if has_title else '\"\"'} "
+            f"FROM history ORDER BY timestamp DESC LIMIT 4000"
+        )
+        rows = c.execute(select_sql).fetchall()
+    finally:
+        conn.close()
 
     if not rows:
         print("No historical sessions found for this project.")
@@ -144,7 +120,7 @@ def cmd_sessions(args):
     print("  • Resume a LIVE session : agy --conversation <SESSION_ID>")
     print("  • Search transcripts    : ./aim search-sessions \"<keyword>\"")
     print("  • NotebookLM Q&A recall : ./aim recall \"<question>\"")
-    print(f"  • Markdown Flight Logs  : {os.path.join(OS_DIR, 'archive/history/')}")
+    print(f"  • Markdown Flight Logs  : {os.path.join(OS_DIR, 'archive', 'history')}")
 
 
 def _sanitize_fts5_query(raw_query: str) -> str:
@@ -176,9 +152,11 @@ def _sanitize_fts5_query(raw_query: str) -> str:
 
 def cmd_search_sessions(args):
     """Searches the full project session history database via FTS5."""
+    from blackbox_vault import connect_history_db
+
     query = " ".join(args.query)
     _ensure_history_synced()
-    history_db = os.path.join(OS_DIR, "archive/history.db")
+    history_db = os.path.join(OS_DIR, "archive", "history.db")
     if not os.path.exists(history_db):
         print("No historical sessions found.")
         return
@@ -192,7 +170,7 @@ def cmd_search_sessions(args):
     conn = None
     sql = "SELECT session_id, timestamp, snippet(history_fts, 2, '...', '...', '...', 15) FROM history_fts WHERE history_fts MATCH ? ORDER BY rank LIMIT 20"
     try:
-        conn = sqlite3.connect(history_db)
+        conn = connect_history_db(history_db)
         c = conn.cursor()
         try:
             c.execute(sql, (fts_query,))
@@ -225,22 +203,6 @@ def cmd_search_sessions(args):
                 pass
 
 
-def cmd_scrape(args):
-    """Scrapes forum threads or GitHub issues into Synapse Markdown docs."""
-    scrape_args = []
-    if args.source:
-        scrape_args += ["--source", args.source]
-    if args.repo:
-        scrape_args += ["--repo", args.repo]
-    if args.query:
-        scrape_args += ["--query", args.query]
-    if args.limit:
-        scrape_args += ["--limit", str(args.limit)]
-    if args.outdir:
-        scrape_args += ["--outdir", args.outdir]
-    _run_script(os.path.join(AIM_CORE_DIR, "aim_scraper.py"), scrape_args)
-
-
 def cmd_bake(args):
     """Dispatches to aim_bake.py."""
     bake_args = [args.directory, args.output]
@@ -253,153 +215,147 @@ def cmd_bake(args):
     _run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_bake.py"), bake_args)
 
 
-def cmd_export(args):
-    """Exports and seeds an engram via BitTorrent Swarm."""
-    target = args.file
-    if not os.path.exists(target):
-        print(f"[ERROR] File not found: {target}")
-        sys.exit(1)
-
-    print("\n[EXPORT] Preparing DataJack Swarm Seed...")
-    torrent_handler = os.path.join(AIM_CORE_DIR, "aim_torrent.py")
-    if not os.path.exists(torrent_handler):
-        print("[ERROR] Torrent handler not found.")
-        sys.exit(1)
-
-    try:
-        subprocess.run([_resolve_venv_python(), torrent_handler, "seed", target], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Seeding failed: {e}")
-        sys.exit(e.returncode)
-
-
 def cmd_exchange(args):
     """Dispatches to aim_exchange.py."""
-    _run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), sys.argv[2:])
+    exchange_args = getattr(args, "exchange_args", None)
+    if exchange_args is None:
+        exchange_args = sys.argv[2:]
+    _run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), list(exchange_args))
 
 
 def cmd_jack_in(args):
-    """Dispatches to aim_exchange.py import, with support for BitTorrent Magnet Links."""
+    """Dispatches to aim_exchange.py import for local Parquet cartridges."""
     target = args.file
-
-    if target.startswith("magnet:?"):
-        print("\n[JACK-IN] Initiating DataJack Swarm Handshake...")
-        print("  Target: Magnet Link Detected")
-
-        temp_dir = os.path.join(OS_DIR, "archive/quarantine")
-        os.makedirs(temp_dir, exist_ok=True)
-
-        try:
-            torrent_handler = os.path.join(AIM_CORE_DIR, "aim_torrent.py")
-            if not os.path.exists(torrent_handler):
-                print("[ERROR] Torrent handler not found. Ensure Phase 38 is fully installed.")
-                sys.exit(1)
-
-            print("  Connecting to swarm. Please wait (this depends on seeder availability)...")
-            result = subprocess.run(
-                [_resolve_venv_python(), torrent_handler, "download", target, temp_dir],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-
-            output_lines = result.stdout.strip().split("\n")
-            downloaded_file = ""
-            for line in reversed(output_lines):
-                if line.startswith("SUCCESS_PATH:"):
-                    downloaded_file = line.replace("SUCCESS_PATH:", "").strip()
-                    break
-
-            if not downloaded_file or not os.path.exists(downloaded_file):
-                print("[ERROR] Swarm download failed or returned invalid file path.")
-                print(f"  DEBUG:\n{result.stdout}\n{result.stderr}")
-                sys.exit(1)
-
-            print(f"[JACK-IN] Swarm payload isolated in Quarantine: {os.path.basename(downloaded_file)}")
-            print("          The Quarantine Daemon will perform heuristic analysis before merging.")
-            return
-        except subprocess.CalledProcessError as e:
-            print(f"[ERROR] DataJack Swarm failure (Code {e.returncode}).")
-            print(f"  DEBUG:\n{e.stdout}\n{e.stderr}")
-            sys.exit(e.returncode)
-
     _run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), ["import", target])
 
 
 def cmd_unplug(args):
     """Dispatches to aim_exchange.py unplug."""
-    _run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), ["unplug"] + sys.argv[2:])
+    keyword = getattr(args, "keyword", None)
+    unplug_args = ["unplug", keyword] if keyword else ["unplug"] + sys.argv[2:]
+    _run_script(os.path.join(AIM_CORE_DIR, "plugins", "datajack", "aim_exchange.py"), unplug_args)
 
 
 def cmd_purge(args):
-    """Executes the Clean Slate Protocol --- (Safety Warning Required) ---"""
+    """Executes the Clean Slate Protocol strictly inside OS_DIR (never touching host repo files)."""
     print("--- A.I.M. Clean Slate Protocol (The Purge) ---")
-    confirm = input("This will permanently delete ALL memory, continuity, and database files. Are you sure? [y/N]: ")
-    if confirm.lower() != "y":
-        return
+    if not getattr(args, "yes", False):
+        try:
+            confirm = input(
+                "This will permanently delete ALL J.O.S.H.U.A. memory, continuity, and database files inside joshua_os/. Are you sure? [y/N]: "
+            )
+        except EOFError:
+            print("ERROR: Non-interactive purge requires --yes (-y).", file=sys.stderr)
+            sys.exit(1)
+        if confirm.strip().lower() != "y":
+            return
 
-    dirs = ["continuity/", "archive/raw/", "archive/history/", "archive/sync/", "workstreams/", "memory_lance/", "archive/cartridges/"]
-    for d in dirs:
-        path = os.path.join(BASE_DIR, d)
+    os_subdirs = (
+        "continuity",
+        os.path.join("archive", "raw"),
+        os.path.join("archive", "history"),
+        os.path.join("archive", "sync"),
+        "workstreams",
+        "memory_lance",
+        os.path.join("archive", "cartridges"),
+    )
+    for rel in os_subdirs:
+        path = os.path.join(OS_DIR, rel)
         if os.path.exists(path):
             shutil.rmtree(path)
             os.makedirs(path, exist_ok=True)
 
-    db_paths = [os.path.join(OS_DIR, "archive/project_core.db"), os.path.join(OS_DIR, "archive/history.db")]
-    for db_path in db_paths:
+    for db_name in ("project_core.db", "history.db", "history.db-wal", "history.db-shm"):
+        db_path = os.path.join(OS_DIR, "archive", db_name)
         if os.path.exists(db_path):
             os.remove(db_path)
 
-    docs = ["ROADMAP.md", "CURRENT_STATE.md", "DECISIONS.md"]
-    for doc in docs:
+    for doc in ("ROADMAP.md", "CURRENT_STATE.md", "DECISIONS.md"):
         doc_path = os.path.join(OS_DIR, "docs", doc)
         if os.path.exists(doc_path):
-            with open(doc_path, "w") as f:
-                f.write(f"# {doc.replace('.md', '').title()}\n\n[PURGED: {datetime.now().strftime('%Y-%m-%d %H:%M')}]\n")
+            with open(doc_path, "w", encoding="utf-8") as f:
+                f.write(
+                    f"# {doc.replace('.md', '').title()}\n\n[PURGED: {datetime.now().strftime('%Y-%m-%d %H:%M')}]\n"
+                )
 
-    print("\n[SUCCESS] A.I.M. has been purged.")
+    print("\n[SUCCESS] A.I.M. memory inside joshua_os/ has been purged.")
+
+
+def _is_upstream_aim_joshua_repo(base_dir: str) -> bool:
+    return (
+        os.path.isfile(os.path.join(base_dir, ".github", "workflows", "smoke-test.yml"))
+        and os.path.isfile(os.path.join(base_dir, "joshua_os", "install-core.sh"))
+        and os.path.isdir(os.path.join(base_dir, "tests"))
+    )
+
+
+def _remove_file_if_owned(path: str) -> None:
+    if os.path.islink(path) or os.path.isfile(path):
+        os.unlink(path)
+
+
+def _remove_dir_if_owned(path: str) -> None:
+    if os.path.islink(path):
+        os.unlink(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
 
 
 def cmd_uninstall(args):
-    """Interactive uninstaller."""
+    """Safely removes J.O.S.H.U.A.-owned artifacts without ever touching host repository files."""
+    if _is_upstream_aim_joshua_repo(BASE_DIR) and not getattr(args, "force_upstream", False):
+        print(
+            "ERROR: Refusing to run uninstall inside the upstream aim-joshua repository without --force-upstream.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     print("\n--- A.I.M. UNINSTALLER ---")
-    confirm = input("\nRemove A.I.M. from your system? [y/N]: ").lower()
-    if confirm != "y":
-        return
+    auto_yes = bool(getattr(args, "yes", False))
+    purge_memory = bool(getattr(args, "purge_memory", False))
 
-    print("\n1. Software Only\n2. Total Purge")
-    choice = input("\nSelect [1-2]: ").strip()
+    if not auto_yes:
+        try:
+            confirm = input("\nRemove J.O.S.H.U.A. from this project? [y/N]: ").strip().lower()
+        except EOFError:
+            print("ERROR: Non-interactive uninstall requires --yes (-y).", file=sys.stderr)
+            sys.exit(1)
+        if confirm != "y":
+            return
 
-    if choice == "2":
-        for item in os.listdir(BASE_DIR):
-            p = os.path.join(BASE_DIR, item)
-            if os.path.isfile(p):
-                os.unlink(p)
-            elif os.path.isdir(p):
-                shutil.rmtree(p)
+        print("\n1. Software Only (joshua_os/ + aim launchers + BOOTSTRAP.md)")
+        print("2. Software + J.O.S.H.U.A. Memory (also removes memory-wiki/, HANDOFF.md, AGENTS.md, TOOLS.md, blackbox)")
+        try:
+            choice = input("\nSelect [1-2]: ").strip()
+        except EOFError:
+            print("ERROR: Non-interactive uninstall requires --yes (-y).", file=sys.stderr)
+            sys.exit(1)
+        if choice == "2":
+            purge_memory = True
+        elif choice == "1":
+            purge_memory = False
+        else:
+            print(f"ERROR: Invalid uninstall selection {choice!r} (expected 1 or 2).", file=sys.stderr)
+            sys.exit(1)
+
+    # Mode 1: Software-only artifacts strictly owned by J.O.S.H.U.A.
+    if os.path.abspath(OS_DIR) != os.path.abspath(BASE_DIR) and os.path.basename(OS_DIR) == "joshua_os":
+        _remove_dir_if_owned(OS_DIR)
     else:
-        dirs = [".aim_core/", "hooks/", "venv/", "archive/experimental/"]
-        for d in dirs:
-            p = os.path.join(BASE_DIR, d)
-            if os.path.exists(p):
-                shutil.rmtree(p)
-        for f in ["setup.sh", "requirements.txt", "LICENSE"]:
-            p = os.path.join(BASE_DIR, f)
-            if os.path.exists(p):
-                os.remove(p)
+        _remove_dir_if_owned(os.path.join(BASE_DIR, "joshua_os"))
 
-    print("\n[SUCCESS] A.I.M. removed.")
+    for launcher_file in ("aim", "aim.ps1", "aim.cmd", "BOOTSTRAP.md"):
+        _remove_file_if_owned(os.path.join(BASE_DIR, launcher_file))
 
+    # Mode 2: Explicit J.O.S.H.U.A. memory state (never touching host .git, venv, src, LICENSE, requirements.txt, etc.)
+    if purge_memory:
+        _remove_dir_if_owned(os.path.join(BASE_DIR, "memory-wiki"))
+        _remove_dir_if_owned(os.path.join(BASE_DIR, "archive", ".raw_jsonl_blackbox"))
+        for mem_file in ("HANDOFF.md", "AGENTS.md", "TOOLS.md", ".geminiignore"):
+            _remove_file_if_owned(os.path.join(BASE_DIR, mem_file))
+        for maybe_empty in ("archive", "workspace"):
+            candidate = os.path.join(BASE_DIR, maybe_empty)
+            if os.path.isdir(candidate) and not os.path.islink(candidate) and not os.listdir(candidate):
+                os.rmdir(candidate)
 
-def cmd_import(args):
-    """Manually ingests raw JSONL, JSON, or MD files into the Subconscious Swarm."""
-    filepath = getattr(args, "file", None)
-    if not filepath:
-        print("Usage: aim import <path/to/file.jsonl | file.md>")
-        sys.exit(1)
-
-    if not os.path.exists(filepath):
-        print(f"[ERROR] File not found: {filepath}")
-        sys.exit(1)
-
-    subprocess.run([sys.executable, os.path.join(OS_DIR, ".aim_core", "memory_salvage.py"), filepath], check=False)
+    print("\n[SUCCESS] J.O.S.H.U.A. removed cleanly (host repository files preserved).")

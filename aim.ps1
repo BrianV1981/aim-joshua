@@ -25,13 +25,4 @@ if (-not $VENV_PY) {
 
 $CLI_SCRIPT = Join-Path $ROOT "joshua_os\.aim_core\aim_cli.py"
 & $VENV_PY $CLI_SCRIPT @args
-$EXIT_CODE = $LASTEXITCODE
-
-if (($PWD.Path -ne $ROOT) -and (Test-Path -LiteralPath ".git")) {
-    Write-Host "[*] Session complete. Committing state to local ledger..."
-    git add memory_lance/ 2>$null
-    git add AGENTS.md 2>$null
-    git commit -m "Auto-commit: Agent session complete" *>$null
-}
-
-exit $EXIT_CODE
+exit $LASTEXITCODE

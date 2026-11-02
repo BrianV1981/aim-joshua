@@ -1,41 +1,35 @@
 #!/usr/bin/env python3
-"""Handoff / pulse for aim-joshua: AGY brain transcripts → archive → wiki daemon."""
-from config_utils import PROJECT_ROOT, find_agy_transcript, get_agy_brain_dirs, get_agy_roots, get_primary_agy_root
-import os
-import json
-import sys
-import glob
-from datetime import datetime
-from reasoning_utils import AIM_ROOT
+"""Handoff / pulse for aim-joshua: AGY brain transcripts -> flight record archive."""
 import argparse
+from datetime import datetime
+import glob
+import json
+import os
+import sys
 
-try:
-    from extract_signal import (
-        extract_signal,
-        skeleton_to_markdown,
-        conversational_turn_count,
-    )
-except ImportError:
-    sys.path.append(os.path.join(AIM_ROOT, ".aim_core"))
-    from extract_signal import (
-        extract_signal,
-        skeleton_to_markdown,
-        conversational_turn_count,
-    )
+_CORE_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CORE_DIR not in sys.path:
+    sys.path.insert(0, _CORE_DIR)
 
-CONFIG_PATH = os.path.join(PROJECT_ROOT, ".aim_core/CONFIG.json")
-CONFIG = {}
-if os.path.isfile(CONFIG_PATH):
-    try:
-        with open(CONFIG_PATH, "r") as f:
-            CONFIG = json.load(f) or {}
-    except Exception as e:
-        print(f"Handoff Generator: Warning loading CONFIG.json: {e}")
-else:
-    print(f"Handoff Generator: No CONFIG at {CONFIG_PATH}; using defaults")
+from config_utils import (
+    CONFIG,
+    CONFIG_PATH,
+    OS_ROOT,
+    PROJECT_ROOT,
+    find_agy_transcript,
+    get_agy_brain_dirs,
+    get_agy_roots,
+    get_primary_agy_root,
+)
+from extract_signal import (
+    conversational_turn_count,
+    extract_signal,
+    skeleton_to_markdown,
+)
 
-CONTINUITY_DIR = os.path.join(AIM_ROOT, ".aim_core", "temp")
-ARCHIVE_RAW_DIR = os.path.join(AIM_ROOT, "archive/raw")
+AIM_ROOT = OS_ROOT
+CONTINUITY_DIR = os.path.join(OS_ROOT, ".aim_core", "temp")
+ARCHIVE_RAW_DIR = os.path.join(OS_ROOT, "archive", "raw")
 os.makedirs(CONTINUITY_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_RAW_DIR, exist_ok=True)
 
@@ -192,38 +186,6 @@ def generate_handoff_pulse(explicit_session_id=None) -> int:
             + "\n"
         )
         atomic_write(clean_path, clean_content)
-
-        cognitive_mode = (CONFIG.get("settings") or {}).get(
-            "cognitive_mode", "monolithic"
-        )
-        if cognitive_mode == "monolithic":
-            import subprocess
-
-            try:
-                log_path = os.path.join(AIM_ROOT, "memory-wiki", "daemon.log")
-                os.makedirs(os.path.dirname(log_path), exist_ok=True)
-                daemon_log = open(log_path, "a")
-                daemon_log.write(
-                    f"\n--- handoff spawn {datetime.now().isoformat()} "
-                    f"archive={archive_path} ---\n"
-                )
-                daemon_log.flush()
-                subprocess.Popen(
-                    [
-                        sys.executable,
-                        "-u",
-                        os.path.join(AIM_ROOT, "hooks", "session_summarizer.py"),
-                        "--reincarnate",
-                        archive_path,
-                        "--bg",
-                    ],
-                    stdout=daemon_log,
-                    stderr=daemon_log,
-                    start_new_session=True,
-                )
-                print("      [Monolithic] Triggered wiki daemon (memory-wiki/daemon.log).")
-            except Exception as e:
-                print(f"      [Monolithic] daemon error: {e}")
 
         pulse_turns = []
         if isinstance(skeleton, list):

@@ -1,21 +1,19 @@
 # The Persistent LLM Wiki (Long-Term Memory)
 
-This document outlines the mechanics of the A.I.M. Persistent Wiki. To prevent "Context Collapse" and token burn, A.I.M. physically separates reference data (RAG Cartridges) from synthesized logic (The Wiki) and offloads wiki maintenance to an event-driven background daemon.
+This document outlines the mechanics of the J.O.S.H.U.A. Persistent Wiki (`memory-wiki/` at the project root). To prevent context collapse and institutional amnesia, J.O.S.H.U.A. pairs structured Markdown synthesis (`memory-wiki/`) with Two-Tier Hybrid RAG (`joshua_os/memory_lance`).
 
-## 1. The Hybrid Search Architecture
-The Wiki operates on a Hybrid Search engine to maximize speed and semantic understanding:
-*   **Hybrid Semantic Search (`aim search`):** To ensure the Conscious Agent can "feel" the architectural decisions via vector embeddings and exact keywords, the synthesized `memory-wiki/*.md` files are ingested natively into the `memory_lance` LanceDB vector store alongside raw session flight recorders.
-*   **Obsidian Native Sync:** The entire `memory-wiki/` directory is purely native Markdown. It can be opened directly as an Obsidian Vault, providing a real-time graphical representation of the project's subconscious memory.
+## 1. Hybrid Search + Plain-Text Markdown
+* **Hybrid Semantic & Keyword Search (`search_lancedb` MCP / `./aim search`):** Synthesized `memory-wiki/**/*.md` pages are indexed directly into `joshua_os/memory_lance` alongside `AGENTS.md` and `joshua_os/joshua_os_docs/` whenever `./aim index` (or `.\aim.ps1 index` on Windows) runs.
+* **Obsidian-Compatible Markdown:** `memory-wiki/` (`index.md`, `log.md`, and `pages/*.md`) uses plain Git-tracked Markdown at the repository root so both humans and agents can inspect architectural history directly.
 
-## 2. The Golden Rule of Epistemic Certainty
-A "Conscious Agent" (the agent the operator is actively using) is responsible for maintaining the wiki through the `aim-memory-wiki` skill. Forcing the primary agent to manually figure out markdown structures without guidance creates severe latency and token burn.
-*   **To Read:** Agents query the `memory-wiki/` folder natively or use `aim search`.
-*   **To Write:** Agents must invoke the `aim-memory-wiki` skill. The legacy `_ingest/` Drop Zone and background daemons have been abolished in favor of Just-In-Time (JIT) active-agent synthesis.
+## 2. Active-Agent Ownership
+The active Conscious Agent maintains `memory-wiki/` synchronously via the `aim-memory-wiki` skill:
+* **To Read:** Query via `search_lancedb` MCP (`./aim search` fallback) or read `memory-wiki/index.md` and `memory-wiki/pages/*.md` directly.
+* **To Write:** Invoke `/aim-memory-wiki` (or let `/aim-handoff` run its Step 1 Auto-Wiki Delta Check). Legacy `_ingest/` drop zones and background summarizer daemons have been retired in favor of deterministic active-agent synthesis.
 
 ## 3. Just-In-Time (JIT) Memory Synthesis (Direct-to-`main` "Save Game")
-Wiki maintenance is handled synchronously by the active agent using the `aim-memory-wiki` skill as a fast, autonomous mid-session checkpoint (or automatically via Step 1 of `aim-handoff` at session closeout):
-1.  **The Trigger:** The user invokes `/aim-memory-wiki` mid-session, or `/aim-handoff` detects unlogged session work in `memory-wiki/log.md`.
-2.  **Synthesis:** The agent synthesizes recent context, extracting tactical takeaways and architectural changes without copying raw transcripts.
-3.  **Surgical Edits:** The agent natively edits `memory-wiki/index.md`, appends an entry to `memory-wiki/log.md`, and surgically modifies or creates markdown files in `memory-wiki/pages/` using standard file edit tools.
-4.  **Vector Ingestion:** If LanceDB is active, the agent runs `./aim index` so the `memory_lance` RAM pool immediately reflects the live `memory-wiki/` files.
-5.  **Direct-to-`main` Auto-Push (GitOps Exemption):** Because `memory-wiki/**` and `HANDOFF.md` represent living OS memory state rather than application code, wiki updates **never** open a GitHub Issue or spawn a `workspace/issue-*` worktree. The agent stages only `git add memory-wiki/` (never `git add .` or `git commit -a`), commits (`docs(wiki): ingest <summary>`), runs `git pull --rebase --autostash origin main`, and pushes directly to `origin/main` with zero Operator confirmation prompts.
+1. **Trigger:** Invoke `/aim-memory-wiki` mid-session, or run `/aim-handoff` at session closeout (which inspects `memory-wiki/log.md` for unlogged session work).
+2. **Synthesis:** Distill architectural decisions, root causes, and verified outcomes without dumping raw session transcripts.
+3. **Surgical Edits:** Update `memory-wiki/index.md`, append a chronological entry to `memory-wiki/log.md`, and create or update topic pages under `memory-wiki/pages/`.
+4. **Vector Ingestion:** Run `./aim index` (POSIX) or `.\aim.ps1 index` (Windows) so `joshua_os/memory_lance` reflects the updated wiki pages immediately.
+5. **Direct-to-`main` Auto-Push (GitOps Exemption):** Because `memory-wiki/**` and `HANDOFF.md` represent living OS memory state rather than application code, wiki updates **never** open a GitHub Issue or spawn a `workspace/issue-*` worktree. Stage only `git add memory-wiki/` (never `git add .` or `git commit -a`), commit (`docs(wiki): ingest <summary>`), run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero Operator confirmation prompts.

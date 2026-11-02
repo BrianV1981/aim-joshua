@@ -1,41 +1,66 @@
 # Contributing to J.O.S.H.U.A.
 
-Welcome to the J.O.S.H.U.A. repository! We strictly enforce a GitOps-based workflow for all contributions to maintain stability and prevent collisions.
+Welcome to the J.O.S.H.U.A. repository! All engine code, CLI, and documentation changes follow an isolated Git worktree + TDD workflow so `main` stays green and reproducible across Linux, macOS, WSL, and Windows 10/11.
 
-## The 3-Step GitOps Pipeline
+## Prerequisites & Contributor Setup
 
-To contribute application code, scripts, or engine configurations, you must use our native CLI tools to manage your workflow. **Do not develop code directly on `main`** *(Note: Agent Memory state in `memory-wiki/**` and `HANDOFF.md` is explicitly exempt and is committed/pushed directly to `origin/main` via `/aim-memory-wiki` and `/aim-handoff`)*.
+1. **Runtime:** Python 3.10+ and Git (plus authenticated `gh` CLI if opening issues/PRs from the terminal).
+2. **Clone & Build Engine Venv (Option C — Core Contributor):**
+   ```bash
+   # Linux / macOS / WSL
+   git clone https://github.com/BrianV1981/aim-joshua.git
+   cd aim-joshua
+   bash joshua_os/setup.sh
+   ./aim doctor
+   ```
+   ```powershell
+   # Windows 10/11 (PowerShell)
+   git clone https://github.com/BrianV1981/aim-joshua.git
+   cd aim-joshua
+   py -3 joshua_os\.aim_core\bootstrap_install.py --mode core --target .
+   .\aim.ps1 doctor
+   ```
 
-### 1. `aim bug` (Report an Issue)
-If you find a bug or want to request a feature, use the `aim bug` command to create a tracked issue on the GitHub board.
+## The GitOps Worktree Pipeline
+
+**Do not develop application or engine code directly on `main`** *(Note: Agent Memory state in `memory-wiki/**` and `HANDOFF.md` is explicitly exempt and is committed/pushed directly to `origin/main` via `/aim-memory-wiki` and `/aim-handoff`)*.
+
+### 1. Open or Claim an Issue (`aim bug` / GitHub Issues)
+Create a structured GitHub issue (passing Commander's Intent flags `--context`, `--failure`, and `--intent`), or open an issue via the GitHub web UI:
 ```bash
-./aim bug "Description of the issue or feature request"
+./aim bug "Fix: short summary of the bug or feature" \
+  --context "Affected module and architectural background" \
+  --failure "Exact error, regression, or capability gap" \
+  --intent "Step-by-step fix and pytest coverage plan"
 ```
-*(Alternatively, you can claim an existing issue using `./aim projects in-progress <issue_id>`)*
+*(Maintainers with Kanban access can claim an existing issue via `./aim projects in-progress <issue_id>`).*
 
-### 2. `aim fix` (Spawn a Workspace)
-Once you have an issue ID, spawn an isolated `git worktree` to begin your development. This prevents branch collisions and keeps your primary repository clean.
+### 2. Spawn an Isolated Worktree (`aim fix`)
+Create an isolated `git worktree` under `workspace/issue-<issue_id>` on branch `fix/issue-<issue_id>`:
 ```bash
 ./aim fix <issue_id>
 cd workspace/issue-<issue_id>
 ```
-Make your code changes, write tests, and ensure everything works empirically within this isolated workspace. You should stage your changes manually using `git add` and `git commit`.
-
-### 3. `aim promote` (Merge and Clean)
-Once your code is tested and committed, promote your isolated workspace back to `main`. This command will automatically:
-- Back up the current `main` branch.
-- Merge your worktree's branch into `main`.
-- Deploy the new baseline.
-- Clean up and delete your local workspace directory.
-
-From within your `workspace/issue-<issue_id>` directory, run:
+Write or update tests alongside your changes and run the full test suite with deprecation warnings treated as errors:
 ```bash
-../aim promote
-```
+# Linux / macOS / WSL (from inside workspace/issue-<issue_id>)
+../../joshua_os/venv/bin/python3 -m pytest tests/ -W error::DeprecationWarning
 
-Finally, mark your issue as done on the board:
+# Windows 10/11 (PowerShell, from inside workspace\issue-<issue_id>)
+..\..\joshua_os\venv\Scripts\python.exe -m pytest tests\ -W error::DeprecationWarning
+```
+Stage specific files surgically (`git add <files>`) and commit (`git commit -m "..."`) — or push your worktree branch to `origin` via `../../aim push "Fix: ..."`.
+
+### 3. Merge or Open a Pull Request
+- **External Contributors (Forks):** Push your `fix/issue-<issue_id>` branch to your fork (`git push -u origin fix/issue-<issue_id>`) and open a Pull Request against `BrianV1981/aim-joshua` `main`. Both `ubuntu-latest` and `windows-latest` CI legs must pass.
+- **Maintainers (Direct Worktree Promotion):** From inside your clean `workspace/issue-<issue_id>` directory (two levels below the repo root), run:
+  ```bash
+  ../../aim promote
+  # Windows PowerShell: ..\..\aim.ps1 promote
+  ```
+  `promote` verifies the worktree has zero uncommitted/untracked changes, backs up `main`, merges `fix/issue-<issue_id>`, pushes to `origin` (when configured), and removes the clean worktree.
+
+Finally, if tracking on GitHub Projects, mark the issue done from the repository root:
 ```bash
 ./aim projects done <issue_id>
 ```
-
-Thank you for contributing!

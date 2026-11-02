@@ -1,43 +1,49 @@
-# A.I.M. Headless Bootstrap Protocol
+# J.O.S.H.U.A. Headless Bootstrap Protocol
 
-This document outlines the standard operating procedure for installing a fresh, isolated instance of the A.I.M. OS into a new project directory. 
-
-This protocol is specifically designed for **Headless / Zero-Touch** deployment by autonomous agents, intentionally bypassing interactive `sudo` prompts and configuration wizards.
+This document outlines the standard procedure for provisioning a fresh, isolated J.O.S.H.U.A. workspace non-interactively across Linux, macOS, WSL, and Windows 10/11.
 
 ## Prerequisites
-Ensure the host system has Python 3 and `git` installed.
+- Python 3.10+ (`python3` on POSIX; `py -3` or `python` on Windows 10/11)
+- Git (`git`)
 
-## Step-by-Step Deployment
+## 1. Automated Cross-Platform Installer (`bootstrap_install.py`)
+The recommended zero-touch entry point for both autonomous agents and CI pipelines is `joshua_os/.aim_core/bootstrap_install.py`:
 
-### 1. Clone the Repository
-Clone the A.I.M. repository directly into the target project folder.
 ```bash
-git clone https://github.com/BrianV1981/aim-joshua.git /path/to/target_directory
-cd /path/to/target_directory
+# Linux / macOS / WSL — Clean Consumer Project
+mkdir -p ~/my-project && cd ~/my-project
+curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install.sh | bash
+
+# Or from an existing local aim-joshua checkout (zero network clone):
+python3 /path/to/aim-joshua/joshua_os/.aim_core/bootstrap_install.py \
+  --mode clean \
+  --target /path/to/my-project \
+  --source /path/to/aim-joshua
 ```
 
-### 2. Isolate the Environment (Agent-Safe)
-**WARNING:** If you are an autonomous agent, DO NOT execute `./setup.sh`. The setup script may trigger interactive `sudo` prompts for OS-level dependencies (like `dbus-x11`), which will block your execution loop.
-
-Instead, manually construct the Python virtual environment and install the verified dependencies:
-```bash
-python3 -m venv venv
-venv/bin/pip install -r requirements.txt
-```
-*(Note: As of the resolution of Issue #599, `pandas` and other critical data-science dependencies are strictly enforced in `requirements.txt` to prevent `bootstrap_brain.py` from failing).*
-
-### 3. Execute Headless Initialization
-Execute the core initialization script using the isolated virtual environment and the `--headless` flag. 
-
-This flag suppresses the interactive TUI (`aim_config.py`), applies default routing configurations, and automatically triggers the `bootstrap_brain.py` sequence to compile the initial LanceDB memory fragments.
-```bash
-venv/bin/python aim_core/aim_init.py --headless
+```powershell
+# Windows 10/11 (PowerShell)
+mkdir C:\Projects\my-project; cd C:\Projects\my-project
+irm https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install.ps1 | iex
 ```
 
-### 4. Verification
-If the deployment is successful, the terminal will output `[SUCCESS] A.I.M. Singularity initialized`. You should verify the generation of the following artifacts:
-- `.aim_core/CONFIG.json` (The primary routing and configuration state)
-- `.gemini/settings.json` (The workspace context bindings)
-- `memory_lance/` (The initialized vector database)
+For Sovereign Co-Agent nodes, use `--mode agent [--persona <blueprint-name>]` (or `install-agent.sh` / `install-agent.ps1`). `bootstrap_install.py` checks `sudo -n true` non-interactively on Linux so headless agents never block on `sudo` password prompts.
 
-The new A.I.M. instance is now fully federated and ready for autonomous task execution.
+## 2. Re-Initializing an Installed Workspace (`aim init --headless`)
+Inside an already-scaffolded project directory, run headless initialization via the engine virtual environment:
+
+```bash
+# Linux / macOS / WSL
+./aim init --headless
+# (Direct venv equivalent: ./joshua_os/venv/bin/python3 joshua_os/.aim_core/aim_init.py --headless)
+
+# Windows 10/11 (PowerShell)
+.\aim.ps1 init --headless
+```
+
+## 3. Verification
+Verify the provisioned workspace artifacts and dependencies:
+- `joshua_os/.aim_core/CONFIG.json` (portable engine configuration)
+- `joshua_os/memory_lance/` (seeded LanceDB Hybrid RAG table)
+- `memory-wiki/` (`index.md`, `log.md`, `pages/`)
+- `./aim doctor` (or `.\aim.ps1 doctor` on Windows) exits `0`

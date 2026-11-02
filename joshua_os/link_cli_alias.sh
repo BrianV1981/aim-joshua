@@ -24,11 +24,11 @@ if [[ ! -f "$VENV_PY" ]]; then
 fi
 
 RC_FILE="$HOME/.bashrc"
-if [[ -f "$HOME/.zshrc" ]]; then
+if [[ -f "$HOME/.zshrc" ]] || [[ "${SHELL:-}" == *"zsh"* ]]; then
   RC_FILE="$HOME/.zshrc"
 fi
 
-SED_ALIAS="alias ${CLI_NAME}='NODE_OPTIONS=\"--max-old-space-size=8192\" ${VENV_PY} ${CLI_PY}'"
+SED_ALIAS="alias ${CLI_NAME}='NODE_OPTIONS=\"--max-old-space-size=8192\" \"${VENV_PY}\" \"${CLI_PY}\"'"
 
 if [[ ! -f "$RC_FILE" ]]; then
   touch "$RC_FILE"
@@ -37,12 +37,28 @@ fi
 if ! grep -q "alias ${CLI_NAME}=" "$RC_FILE" 2>/dev/null; then
   {
     echo ""
-    echo "# A.I.M. CLI — ${CLI_NAME} (project: ${PROJECT_ROOT})"
+    echo "# A.I.M. CLI - ${CLI_NAME} (project: ${PROJECT_ROOT})"
     echo "$SED_ALIAS"
   } >> "$RC_FILE"
   echo "    [SUCCESS] Alias '${CLI_NAME}' added to $RC_FILE"
 else
-  sed -i "s|alias ${CLI_NAME}=.*|${SED_ALIAS}|g" "$RC_FILE"
+  python3 - "$RC_FILE" "$CLI_NAME" "$SED_ALIAS" <<'PY'
+import os, re, sys, tempfile
+rc_path, cli_name, alias_line = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(rc_path, "r", encoding="utf-8", errors="replace") as fh:
+    text = fh.read()
+pattern = re.compile(rf"^alias {re.escape(cli_name)}=.*$", re.MULTILINE)
+updated = pattern.sub(lambda _: alias_line, text)
+fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(rc_path)) or ".", prefix=".rc_tmp_")
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as out:
+        out.write(updated)
+    os.replace(tmp_path, rc_path)
+except Exception:
+    if os.path.exists(tmp_path):
+        os.unlink(tmp_path)
+    raise
+PY
   echo "    [OK] Alias '${CLI_NAME}' already exists (updated path in $RC_FILE)."
 fi
 
@@ -50,27 +66,28 @@ WRAPPER="$PROJECT_ROOT/aim"
 if [[ ! -f "$WRAPPER" ]] || grep -q "aim-agy_os" "$WRAPPER" 2>/dev/null; then
   cat > "$WRAPPER" << 'WRAP'
 #!/usr/bin/env bash
-ROOT="$(dirname "$(readlink -f "$0")")"
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    case "$SOURCE" in
+        /*) ;;
+        *) SOURCE="$DIR/$SOURCE" ;;
+    esac
+done
+ROOT="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=8192}"
-# 1. Execute Core Engine (with worktree venv fallback)
+
+# Execute Core Engine (with worktree venv fallback)
 VENV_PY="$ROOT/joshua_os/venv/bin/python3"
 if [ ! -x "$VENV_PY" ] && [ -x "$ROOT/../../joshua_os/venv/bin/python3" ]; then
     VENV_PY="$ROOT/../../joshua_os/venv/bin/python3"
 elif [ ! -x "$VENV_PY" ]; then
     VENV_PY="python3"
 fi
+
 "$VENV_PY" "$ROOT/joshua_os/.aim_core/aim_cli.py" "$@"
-EXIT_CODE=$?
-
-# 2. Teardown Hook: Commit memory state to local ledger (Issue 15)
-if [ "$PWD" != "$ROOT" ] && [ -d ".git" ]; then
-    echo "[*] Session complete. Committing state to local ledger..."
-    git add memory_lance/ 2>/dev/null || true
-    git add AGENTS.md 2>/dev/null || true
-    git commit -m "Auto-commit: Agent session complete" > /dev/null 2>&1 || true
-fi
-
-exit $EXIT_CODE
+exit $?
 WRAP
   chmod +x "$WRAPPER"
   echo "    [SUCCESS] Local ./aim wrapper written"
@@ -81,7 +98,6 @@ TRUST_INSTALL="$PROJECT_ROOT/joshua_os/scripts/install_agy_trust_wrapper.sh"
 if [[ -f "$TRUST_INSTALL" ]]; then
   bash "$TRUST_INSTALL" || echo "    [WARN] agy trust wrapper install failed (non-fatal)"
 else
-  # headless install-agent may strip scripts/; try copy from .aim_core helper alone
   if [[ -f "$PROJECT_ROOT/joshua_os/.aim_core/agy_workspace_trust.py" ]]; then
     mkdir -p "$HOME/.local/share/aim-joshua"
     cp -a "$PROJECT_ROOT/joshua_os/.aim_core/agy_workspace_trust.py" \

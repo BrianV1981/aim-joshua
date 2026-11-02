@@ -101,9 +101,10 @@ def store_chunks(
                 names = set()
         if table in names:
             tbl = db.open_table(table)
-            # delete existing for session if API supports
+            # delete existing for session if API supports (SQL-quote session_id safely)
             try:
-                tbl.delete(f"session_id = '{session_id}'")
+                quoted_sid = "'" + str(session_id).replace("'", "''") + "'"
+                tbl.delete(f"session_id = {quoted_sid}")
             except Exception:
                 pass
             tbl.add(data)

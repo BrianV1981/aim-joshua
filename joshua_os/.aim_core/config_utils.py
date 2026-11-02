@@ -1,45 +1,55 @@
-import os
+import copy
 import json
+import os
 import sys
-import getpass
+import tempfile
+from pathlib import Path
+
 
 def _merge_defaults(target, defaults):
     changed = False
     for key, value in defaults.items():
         if key not in target:
-            target[key] = value
+            target[key] = copy.deepcopy(value)
             changed = True
         elif isinstance(value, dict) and isinstance(target.get(key), dict):
             if _merge_defaults(target[key], value):
                 changed = True
     return changed
 
-def find_project_root():
+
+def find_project_root(start_dir=None):
     """
-    Dynamically discovers the A.I.M. project root directory.
-    First checks the current working directory to support isolated workspaces.
-    Falls back to the physical installation directory.
+    Dynamically discovers the J.O.S.H.U.A. project root directory across POSIX and Windows.
+    Checks `start_dir` (default `os.getcwd()`) and its parents first to support isolated
+    workspaces/worktrees, then falls back to the physical installation path.
     """
-    # 1. Check current directory and parents (Dynamic Workspace Isolation)
-    current = os.path.abspath(os.getcwd())
-    while True:
-        if os.path.exists(os.path.join(current, "joshua_os", ".aim_core")):
-            return current
-        parent = os.path.dirname(current)
-        if parent == current:
-            break
-        current = parent
-        
-    # 2. Fallback to physical installation path (Global Execution)
-    # Note: If this file is at joshua_os/.aim_core/config_utils.py, 
-    # dirname(dirname(abspath)) points to joshua_os. 
-    # So we go up one more directory to get the project root.
-    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    start = Path(start_dir or os.getcwd()).resolve()
+    for candidate in (start, *start.parents):
+        if (candidate / "joshua_os" / ".aim_core").is_dir():
+            return str(candidate)
+    return str(Path(__file__).resolve().parent.parent.parent)
+
+
+def find_os_root(start_dir=None):
+    """
+    Discover the `joshua_os` engine directory from `start_dir` (or physical module location).
+    Supports both nested `<project>/joshua_os/.aim_core` and flat `<root>/.aim_core` layouts.
+    """
+    start = Path(start_dir or os.getcwd()).resolve()
+    for candidate in (start, *start.parents):
+        if (candidate / "joshua_os" / ".aim_core").is_dir():
+            return str(candidate / "joshua_os")
+        if (candidate / ".aim_core").is_dir() and (candidate / "setup.sh").is_file():
+            return str(candidate)
+    return str(Path(__file__).resolve().parent.parent)
+
 
 PROJECT_ROOT = find_project_root()
 OS_ROOT = os.path.join(PROJECT_ROOT, "joshua_os")
-AIM_ROOT = OS_ROOT  # Default for most scripts
-CONFIG_PATH = os.path.join(OS_ROOT, ".aim_core/CONFIG.json")
+AIM_ROOT = OS_ROOT
+CONFIG_PATH = os.path.join(OS_ROOT, ".aim_core", "CONFIG.json")
+
 
 def get_agy_roots(home_dir=None):
     """Return ordered Antigravity root directories: AGY 2.0 (~/.gemini/antigravity) first, legacy CLI (~/.gemini/antigravity-cli) second."""
@@ -86,23 +96,46 @@ def get_agy_settings_paths(home_dir=None, existing_only=False):
     return paths
 
 
-def load_config():
-    """Loads, validates, and auto-repairs paths for the current machine."""
-    home = os.path.expanduser("~")
+def save_config_atomic(config, config_path=None):
+    """Atomically write CONFIG.json via temporary file + os.replace to prevent concurrent truncation."""
+    target = config_path or CONFIG_PATH
+    parent = os.path.dirname(os.path.abspath(target))
+    os.makedirs(parent, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(dir=parent, prefix=".config_", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(config, fh, indent=2)
+            fh.write("\n")
+        os.replace(tmp_path, target)
+    except Exception:
+        if os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+        raise
+
+
+def build_default_config(project_root=None, os_root=None, home_dir=None):
+    proj = project_root or PROJECT_ROOT
+    os_dir = os_root or OS_ROOT
+    home = os.path.expanduser(home_dir) if home_dir else os.path.expanduser("~")
     primary_agy_brain = os.path.join(get_primary_agy_root(home_dir=home), "brain")
-    
-    # Baseline defaults for a fresh system
-    default_config = {
+    return {
         "paths": {
-            "aim_root": AIM_ROOT,
-            "os_root": OS_ROOT,
-            "core_dir": os.path.join(OS_ROOT, "core"),
-            "docs_dir": os.path.join(OS_ROOT, "docs"),
-            "hooks_dir": os.path.join(OS_ROOT, "hooks"),
-            "archive_raw_dir": os.path.join(OS_ROOT, "archive/raw"),
-            "continuity_dir": os.path.join(OS_ROOT, "continuity"),
-            "src_dir": os.path.join(OS_ROOT, ".aim_core"),
-            "tmp_chats_dir": primary_agy_brain
+            "project_root": proj,
+            "os_root": os_dir,
+            "aim_root": os_dir,
+            "core_dir": os.path.join(os_dir, "core"),
+            "docs_dir": os.path.join(os_dir, "docs"),
+            "hooks_dir": os.path.join(os_dir, "hooks"),
+            "archive_dir": os.path.join(os_dir, "archive"),
+            "archive_raw_dir": os.path.join(os_dir, "archive", "raw"),
+            "memory_dir": os.path.join(os_dir, "memory_lance"),
+            "continuity_dir": os.path.join(os_dir, "continuity"),
+            "src_dir": os.path.join(os_dir, ".aim_core"),
+            "wiki_dir": os.path.join(proj, "memory-wiki"),
+            "tmp_chats_dir": primary_agy_brain,
         },
         "models": {
             "embedding_provider": "local",
@@ -112,8 +145,8 @@ def load_config():
                 "provider": "google",
                 "model": "agy-flash-latest",
                 "endpoint": "https://generativelanguage.googleapis.com",
-                "auth_type": "API Key"
-            }
+                "auth_type": "API Key",
+            },
         },
         "settings": {
             "allowed_root": home,
@@ -125,59 +158,90 @@ def load_config():
             "auto_distill_tier": "T4",
             "auto_rebirth": False,
             "github_projects": {
-                "owner": "BrianV1981",
-                "number": 7,
-                "status_field": "Status"
-            }
-        }
+                "owner": "",
+                "number": 0,
+                "status_field": "Status",
+            },
+        },
     }
 
-    if not os.path.exists(CONFIG_PATH):
+
+def _remap_paths(paths_dict, project_root, os_root, primary_agy_brain):
+    paths_dict["project_root"] = project_root
+    paths_dict["os_root"] = os_root
+    paths_dict["aim_root"] = os_root
+    paths_dict["core_dir"] = os.path.join(os_root, "core")
+    paths_dict["docs_dir"] = os.path.join(os_root, "docs")
+    paths_dict["hooks_dir"] = os.path.join(os_root, "hooks")
+    paths_dict["archive_dir"] = os.path.join(os_root, "archive")
+    paths_dict["archive_raw_dir"] = os.path.join(os_root, "archive", "raw")
+    paths_dict["memory_dir"] = os.path.join(os_root, "memory_lance")
+    paths_dict["continuity_dir"] = os.path.join(os_root, "continuity")
+    paths_dict["src_dir"] = os.path.join(os_root, ".aim_core")
+    paths_dict["wiki_dir"] = os.path.join(project_root, "memory-wiki")
+    paths_dict["tmp_chats_dir"] = primary_agy_brain
+
+
+def load_config(config_path=None):
+    """Loads, validates, and repairs CONFIG.json paths only when the workspace actually moves."""
+    home = os.path.expanduser("~")
+    primary_agy_brain = os.path.join(get_primary_agy_root(home_dir=home), "brain")
+    default_config = build_default_config(PROJECT_ROOT, OS_ROOT, home_dir=home)
+    cfg_file = config_path or CONFIG_PATH
+
+    if not os.path.exists(cfg_file):
         return default_config
 
     try:
-        with open(CONFIG_PATH, 'r') as f:
-            config = json.load(f)
-        changed = False
-        
-        # --- THE PORTABILITY SHIELD ---
-        # If the root in the file doesn't match the current directory, 
-        # we RE-CALCULATE everything based on the current system.
-        if config.get('paths', {}).get('aim_root') != AIM_ROOT:
-            sys.stderr.write(f"[PORTABILITY] System shift detected. Re-mapping paths for this machine...\n")
-            
-            config['paths']['aim_root'] = PROJECT_ROOT
-            config['paths']['os_root'] = OS_ROOT
-            for key in ['core_dir', 'docs_dir', 'hooks_dir', 'memory_dir', 'archive_raw_dir', 'archive_index_dir', 'continuity_dir', 'src_dir']:
-                if key == 'src_dir':
-                    config['paths'][key] = os.path.join(OS_ROOT, ".aim_core")
-                else:
-                    config['paths'][key] = os.path.join(OS_ROOT, key.replace('_dir', ''))
-            
-            # Recalculate home-based paths
-            config['paths']['tmp_chats_dir'] = primary_agy_brain
-            
-            # If we have an Obsidian path, we only update it if it started with /home/
-            old_vault = config['settings'].get('obsidian_vault_path', "")
-            if old_vault.startswith("/home/"):
-                # Extract the old user part and replace it with current
-                parts = old_vault.split('/')
-                if len(parts) > 2:
-                    new_vault = os.path.join(home, *parts[3:])
-                    config['settings']['obsidian_vault_path'] = new_vault
+        with open(cfg_file, "r", encoding="utf-8") as f:
+            disk_config = json.load(f)
+        if not isinstance(disk_config, dict):
+            return default_config
 
-            changed = True
+        saved_paths = disk_config.get("paths")
+        norm_os = os.path.normcase(os.path.abspath(OS_ROOT))
+        norm_proj = os.path.normcase(os.path.abspath(PROJECT_ROOT))
+        disk_dirty = False
 
-        if _merge_defaults(config, default_config):
-            changed = True
+        if isinstance(saved_paths, dict):
+            saved_os = saved_paths.get("os_root")
+            saved_aim = saved_paths.get("aim_root")
+            norm_saved_os = os.path.normcase(os.path.abspath(saved_os)) if saved_os else None
+            norm_saved_aim = os.path.normcase(os.path.abspath(saved_aim)) if saved_aim else None
 
-        if changed:
-            with open(CONFIG_PATH, 'w') as f:
-                json.dump(config, f, indent=2)
-                
-        return config
+            relocated = False
+            if norm_saved_os and norm_saved_os != norm_os:
+                relocated = True
+            elif not norm_saved_os and norm_saved_aim and norm_saved_aim not in (norm_os, norm_proj):
+                relocated = True
+
+            if relocated:
+                sys.stderr.write("[PORTABILITY] System shift detected. Re-mapping paths for this machine...\n")
+                _remap_paths(saved_paths, PROJECT_ROOT, OS_ROOT, primary_agy_brain)
+                settings_block = disk_config.setdefault("settings", {})
+                old_vault = settings_block.get("obsidian_vault_path", "")
+                if isinstance(old_vault, str) and old_vault.startswith("/home/"):
+                    parts = old_vault.split("/")
+                    if len(parts) > 3:
+                        settings_block["obsidian_vault_path"] = os.path.join(home, *parts[3:])
+                disk_dirty = True
+            elif (
+                norm_saved_aim == norm_proj
+                or saved_paths.get("archive_raw_dir") == os.path.join(OS_ROOT, "archive_raw")
+            ):
+                # One-time silent repair for legacy v1.1.1 split-root entries on the same host
+                _remap_paths(saved_paths, PROJECT_ROOT, OS_ROOT, primary_agy_brain)
+                disk_dirty = True
+
+        if disk_dirty:
+            save_config_atomic(disk_config, config_path=cfg_file)
+
+        merged = copy.deepcopy(disk_config)
+        _merge_defaults(merged, default_config)
+        return merged
     except Exception:
         return default_config
+
 
 CONFIG = load_config()
 
@@ -209,4 +273,3 @@ def resolve_venv_python(os_root=None):
         if os.path.exists(cand):
             return cand
     return sys.executable
-

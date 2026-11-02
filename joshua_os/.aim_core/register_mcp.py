@@ -62,14 +62,23 @@ def _is_healthy_existing_entry(cmd: str | None, script: str | None) -> bool:
     return os.path.isfile(cmd) and os.path.isfile(script)
 
 
+class CorruptJsonConfigError(ValueError):
+    """Raised when an existing JSON/JSONC config file cannot be parsed as strict JSON."""
+
+
 def _load_json_dict(path: Path) -> dict:
     if not path.is_file():
         return {}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8") or "{}")
-        return data if isinstance(data, dict) else {}
-    except Exception:
+    raw = path.read_text(encoding="utf-8")
+    if not raw.strip():
         return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise CorruptJsonConfigError(f"{path}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise CorruptJsonConfigError(f"{path}: top-level JSON value is not an object")
+    return data
 
 
 def _write_json_atomic(path: Path, data: dict) -> None:
@@ -81,7 +90,11 @@ def _write_json_atomic(path: Path, data: dict) -> None:
 
 def _upsert_standard_mcp_json(path: Path, venv_py: str, mcp_script: str, force: bool = False) -> bool:
     """Update `{"mcpServers": {"search_lancedb": {"command": ..., "args": [...]}}}`."""
-    data = _load_json_dict(path)
+    try:
+        data = _load_json_dict(path)
+    except CorruptJsonConfigError as exc:
+        print(f"[WARN] Skipping MCP registration (non-standard JSON/JSONC preserved): {exc}", file=sys.stderr)
+        return False
     servers = data.get("mcpServers")
     if not isinstance(servers, dict):
         servers = {}
@@ -105,7 +118,11 @@ def _upsert_standard_mcp_json(path: Path, venv_py: str, mcp_script: str, force: 
 
 def _upsert_opencode_json(path: Path, venv_py: str, mcp_script: str, force: bool = False) -> bool:
     """Update OpenCode `{"mcp": {"search_lancedb": {"type": "local", "command": [...], "enabled": true}}}`."""
-    data = _load_json_dict(path)
+    try:
+        data = _load_json_dict(path)
+    except CorruptJsonConfigError as exc:
+        print(f"[WARN] Skipping OpenCode MCP registration (non-standard JSON/JSONC preserved): {exc}", file=sys.stderr)
+        return False
     if "$schema" not in data:
         data["$schema"] = "https://opencode.ai/config.json"
     mcp_map = data.get("mcp")

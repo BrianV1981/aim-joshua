@@ -1,4 +1,3 @@
-from config_utils import PROJECT_ROOT, get_agy_roots
 #!/usr/bin/env python3
 import os
 import json
@@ -7,23 +6,28 @@ import subprocess
 import requests
 import keyring
 
-# --- CONFIG BOOTSTRAP ---
-def find_aim_root():
-    current = os.path.dirname(os.path.abspath(__file__))
-    while current != '/':
-        if os.path.exists(os.path.join(current, "joshua_os", "setup.sh")): return os.path.join(current, "joshua_os")
-        if os.path.exists(os.path.join(current, "setup.sh")): return current
-        current = os.path.dirname(current)
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
 
-AIM_ROOT = find_aim_root()
-CONFIG_PATH = os.path.join(PROJECT_ROOT, ".aim_core/CONFIG.json")
+from config_utils import CONFIG_PATH, OS_ROOT, PROJECT_ROOT, find_os_root, get_agy_roots
+
+
+def find_aim_root():
+    return find_os_root()
+
+
+AIM_ROOT = OS_ROOT
+
 
 def load_config():
-    if not os.path.exists(CONFIG_PATH): return {}
+    if not os.path.exists(CONFIG_PATH):
+        return {}
     try:
-        with open(CONFIG_PATH, 'r') as f: return json.load(f)
-    except: return {}
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 def generate_reasoning(prompt, system_instruction="You are a helpful assistant.", brain_type="default_reasoning", config=None, timeout=45):
     """

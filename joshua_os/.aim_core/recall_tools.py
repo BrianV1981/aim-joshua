@@ -1,80 +1,86 @@
 import os
-import sqlite3
 import sys
 
 _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 if _CORE_DIR not in sys.path:
     sys.path.insert(0, _CORE_DIR)
 
+from blackbox_vault import connect_history_db, sync_vault_to_history
+from cli_memory import _sanitize_fts5_query
+from config_utils import OS_ROOT, PROJECT_ROOT
 from reasoning_utils import generate_reasoning
 
-def get_base_dir():
-    current = os.path.dirname(os.path.abspath(__file__))
-    while current != '/' and not (os.path.exists(os.path.join(current, ".aim_core/CONFIG.json")) or os.path.exists(os.path.join(current, "setup.sh"))):
-        current = os.path.dirname(current)
-    return current if current != '/' else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def run_recall(query, limit=5):
     """
-    Queries the archive/history.db (using FTS5 if available) for the specific query.
-    Synthesizes the matching session contexts to answer the user's question directly.
+    Queries joshua_os/archive/history.db using FTS5 and synthesizes matching
+    session contexts to answer the user's question directly.
     """
-    base_dir = get_base_dir()
-    db_path = os.path.join(base_dir, "archive/history.db")
+    db_path = os.path.join(OS_ROOT, "archive", "history.db")
     if not os.path.exists(db_path):
         try:
-            from blackbox_vault import sync_vault_to_history
-            sync_vault_to_history()
+            sync_vault_to_history(PROJECT_ROOT)
         except Exception:
             pass
 
     if not os.path.exists(db_path):
-        print(f"Error: Database not found at {db_path}")
+        print(f"Error: Database not found at {db_path}", file=sys.stderr)
         return None
-        
+
+    fts_query = _sanitize_fts5_query(query)
+    if not fts_query:
+        print(f"No historical context found for '{query}'.")
+        return None
+
+    conn = None
     try:
-        conn = sqlite3.connect(db_path)
+        conn = connect_history_db(db_path)
         c = conn.cursor()
-        
-        # We query the FTS table
-        c.execute('''
-            SELECT session_id, timestamp, content 
-            FROM history_fts 
-            WHERE history_fts MATCH ? 
-            ORDER BY rank 
+        c.execute(
+            """
+            SELECT session_id, timestamp, content
+            FROM history_fts
+            WHERE history_fts MATCH ?
+            ORDER BY rank
             LIMIT ?
-        ''', (query, limit))
-        
+            """,
+            (fts_query, limit),
+        )
         rows = c.fetchall()
-        conn.close()
     except Exception as e:
-        print(f"Error reading database: {e}")
+        print(f"Error reading database: {e}", file=sys.stderr)
         return None
+    finally:
+        if conn is not None:
+            conn.close()
 
     if not rows:
         print(f"No historical context found for '{query}'.")
         return None
 
-    # Combine matching sessions into a single context
     context = ""
-    for row in rows:
-        session_id, timestamp, content = row
+    for session_id, timestamp, content in rows:
         context += f"--- Session: {session_id} | Date: {timestamp} ---\n{content}\n\n"
 
     print(f"Recalling memory from {len(rows)} historical session(s)...")
-    
-    prompt = f"You are tasked with answering a user's question using ONLY the provided historical session transcripts.\n"
-    prompt += f"Question/Query: \"{query}\"\n\n"
-    prompt += "Synthesize the findings and output a precise memory recall of the exact conversation context.\n"
-    prompt += "Do not hallucinate external knowledge. If the answer is not in the context, state that you cannot recall.\n\n"
-    prompt += f"HISTORICAL CONTEXT:\n{context}"
 
-    system_instruction = "You are the A.I.M. Panopticon Protocol. You provide exact, synthesized memory recall based only on the provided session JSON transcripts."
-    
+    prompt = (
+        "You are tasked with answering a user's question using ONLY the provided historical session transcripts.\n"
+        f'Question/Query: "{query}"\n\n'
+        "Synthesize the findings and output a precise memory recall of the exact conversation context.\n"
+        "Do not hallucinate external knowledge. If the answer is not in the context, state that you cannot recall.\n\n"
+        f"HISTORICAL CONTEXT:\n{context}"
+    )
+
+    system_instruction = (
+        "You are the A.I.M. Panopticon Protocol. You provide exact, synthesized memory recall "
+        "based only on the provided session transcripts."
+    )
+
     synthesis = generate_reasoning(prompt, system_instruction=system_instruction)
 
     print("\n--- 🧠 MEMORY RECALL ---\n")
     print(synthesis)
     print("\n------------------------")
-    
+
     return synthesis

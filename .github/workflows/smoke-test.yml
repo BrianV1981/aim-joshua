@@ -12,7 +12,11 @@ on:
 
 jobs:
   smoke-test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -22,20 +26,43 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Setup environment and install dependencies
+      - name: Setup environment and install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           cd joshua_os
           ./setup.sh
 
-      - name: Verify CLI executes
+      - name: Setup environment and install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -c "import sys; sys.path.insert(0, 'joshua_os/.aim_core'); import bootstrap_install; bootstrap_install.build_engine_venv('joshua_os')"
+
+      - name: Verify CLI executes (Linux)
+        if: runner.os == 'Linux'
         run: |
           ./aim --help
           ./aim doctor
           ./aim map
-          ./aim search worktree --top-k 1
+          ./aim search worktree --top-k 1 --json
 
-      - name: Run Pytest
+      - name: Verify CLI executes (Windows PowerShell & CMD)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          source joshua_os/venv/bin/activate
-          pip install pytest
-          pytest tests/
+          .\aim.ps1 --help
+          .\aim.ps1 doctor
+          .\aim.ps1 map
+          .\aim.ps1 search worktree --top-k 1 --json
+          cmd /c "aim.cmd doctor"
+
+      - name: Run Pytest (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          ./joshua_os/venv/bin/python3 -m pytest tests/ -W error::DeprecationWarning
+
+      - name: Run Pytest (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\joshua_os\venv\Scripts\python.exe -m pytest tests/ -W error::DeprecationWarning

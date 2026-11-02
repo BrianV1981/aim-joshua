@@ -53,16 +53,16 @@ A Sovereign OS agent should never paralyze its own primary execution loop by wai
 
 
 ## 8. THE GITOPS WORKFLOW (WORKTREES)
-You operate in a highly parallel, multi-agent environment. To prevent collisions, you must **never** perform application code development directly on the `main` branch (note: Agent Memory in `memory-wiki/**` and `HANDOFF.md` is explicitly exempt per §9).
+You operate in a highly parallel, multi-agent environment. To prevent collisions, you must **never** perform application code development directly on the `main` branch (note: Agent Memory in `memory-wiki/**` and `HANDOFF.md` is explicitly exempt per §9; Turn-1 `Operator Name` personalization in `AGENTS.md` is also permitted directly).
 
-1. **Spawning the Sandbox (`aim fix`):** When assigned a code/config task or issue, you must run `aim fix <issue_id>`. This commands the OS to spawn a physically isolated `git worktree` under the `workspace/` directory (e.g., `workspace/issue-42`). You will execute all your coding, testing, and staging exclusively inside this worktree folder.
+1. **Spawning the Sandbox (`aim fix`):** When assigned a code/config task or issue, run `./aim fix <issue_id>` (or `.\aim.ps1 fix <issue_id>` on Windows; in local-only repositories without GitHub Issues or an `origin` remote, pass any task slug such as `local-1`). This spawns a physically isolated `git worktree` under `workspace/` (e.g., `workspace/issue-42`). Execute all coding, testing, and staging exclusively inside this worktree folder.
 2. **Surgical Staging:** Even within your worktree, never use `git add .` blindly. Stage specific files to avoid committing localized test artifacts.
 
 2.5. **The Agentic Gatekeeper (Pre-Flight Checks):** Before staging or promoting, J.O.S.H.U.A. acts as an automated gatekeeper. Ensure all TDD tests pass, code is secure, and architectural mandates from `AGENTS.md` are validated.
-3. **The Teardown (`aim promote`):** Once your code is empirically proven to work, you must run `aim promote` from inside your worktree. This will automatically archive the main branch, safely merge your worktree's branch into main, and cleanly delete your isolated workspace directory.
+3. **The Teardown (`aim promote`):** Once all worktree changes are committed and empirically proven to work, run `../../aim promote` (POSIX) or `..\..\aim.ps1 promote` (Windows) from inside `workspace/issue-<id>`. This verifies the worktree is clean, archives `main`, safely merges your worktree branch into `main` (pushing to `origin` when configured, or merging locally in local-only repos), and deletes your isolated worktree directory.
 
 ## 8b. THE BOARD PROTOCOL (GITHUB PROJECTS)
-GitHub Projects is the shared kanban SoT for multi-agent work. Issues are the work units; the Project board is where status lives.
+When a GitHub repository and `gh` CLI (`project` scope) are configured, GitHub Projects serves as the shared kanban SoT for multi-agent work.
 
 1. **See the board:** `aim projects board` (or `aim projects board --status "In Progress"` / `--json`).
 2. **Claim work:** Before coding, `aim projects in-progress <issue_id>` so other agents share the same page.
@@ -76,11 +76,11 @@ Config: `AIM_PROJECTS_NUMBER`, `AIM_PROJECTS_OWNER`, optional `AIM_PROJECTS_REPO
 The `memory-wiki/` directory is the persistent, compounding LLM knowledge base. 
 - You MUST explicitly invoke the `aim-memory-wiki` skill to document new architectural decisions, structural discoveries, or major workflow changes.
 - Do not let critical context die with your session. Extract tactical takeaways and integrate them into the wiki index and log before ending your shift.
-- **Agent Memory Exemption (Direct-to-`main`):** `memory-wiki/` and `HANDOFF.md` are living OS memory state, not application code. Do NOT open a GitHub issue or spawn a worktree for pure wiki/handoff updates. Stage only the explicit memory paths (`git add memory-wiki/` and/or `git add HANDOFF.md` — strictly forbidding `git add .` or `git commit -a`), commit, run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero Operator confirmation prompts.
+- **Agent Memory Exemption (Direct-to-`main`):** `memory-wiki/` and `HANDOFF.md` are living OS memory state, not application code. Do NOT open a GitHub issue or spawn a worktree for pure wiki/handoff updates. Stage only the explicit memory paths (`git add memory-wiki/` and/or `git add HANDOFF.md` — strictly forbidding `git add .` or `git commit -a`), commit, run `git pull --rebase --autostash origin main`, and push directly to `origin/main` with zero Operator confirmation prompts (in local-only repos without `origin`, commit directly on `main`).
 
 
 ## 10. PLAIN-TEXT & CLI ASCENDANCY
 **THE UNIX PHILOSOPHY MANDATE**
-Linux is the ultimate agentic platform because of its reliance on CLI tools and plain-text configuration files. J.O.S.H.U.A. must embrace this:
-- **CLI-First Architecture:** Any new functionality or modules built for J.O.S.H.U.A. must be instrumented through CLI commands (e.g., `joshua.ps1` or shell scripts).
+CLI tools and plain-text configuration files are the universal substrate for autonomous agents across Linux, macOS, WSL, and Windows:
+- **CLI-First Architecture:** Any new functionality or modules built for J.O.S.H.U.A. must be instrumented through CLI commands (`./aim` on POSIX and `.\aim.ps1` / `aim.cmd` on Windows).
 - **Configuration Drift:** Ensure all environment settings, prompts, and tool configurations remain in flat, easily parsable files (Markdown, JSON, YAML) so agents can natively read and write to them without relying on fragile UI wrappers.

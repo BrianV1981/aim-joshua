@@ -1,9 +1,10 @@
-# A.I.M. Core Engine (`src/`)
+# J.O.S.H.U.A. Core Engine (`joshua_os/.aim_core/`)
 
-This directory contains the internal Python engine that powers the A.I.M. exoskeleton. These files are typically NOT invoked directly by the Operator; they are called by the `aim_core/aim_cli.py` router, the background `daemon`, or the Antigravity CLI `hooks/`.
+This directory contains the Python runtime modules that power the J.O.S.H.U.A. exoskeleton across Linux, macOS, WSL, and Windows 10/11. Operators and agents typically invoke these modules through `./aim` (POSIX) or `.\aim.ps1` / `aim.cmd` (Windows).
 
 ## Key Components
-*   **`reasoning_utils.py`**: The API Bridge. Handles routing payloads to Google Antigravity, Anthropic, OpenRouter, Codex, or Local Ollama. It manages subprocess execution and parses stdout/stderr to protect the agent from brittle CLI outputs.
-*   **`plugins/datajack/forensic_utils.py`**: Contains the RAG 5.21 Length-Constrained Accumulator chunking algorithm, embedding functions, and ingestion utilities.
-*   **`mcp_server.py`**: The Universal IDE interface. Runs a FastMCP server that exposes the A.I.M. database and skills directly to Cursor, Claude Code, or VS Code.
-*   **`retriever.py` & `lance_backend.py`**: The core Hybrid RAG memory engine powered by LanceDB.
+* **`aim_cli.py`, `cli_memory.py`, `cli_vault.py`**: The central CLI router, memory/cartridge maintenance commands, and encrypted Blackbox Vault handlers.
+* **`mcp_lancedb.py`, `retriever.py`, `lance_backend.py`**: The FastMCP `search_lancedb` server and Two-Tier Hybrid RAG engine (LanceDB vectors + Tantivy BM25 FTS + RRF reranking + zero-copy Parquet cartridge search).
+* **`bootstrap_install.py` & `bootstrap_brain.py`**: Pure-Python cross-platform project installer (`clean`, `agent`, `core` modes) and incremental SHA-256 cached LanceDB indexer.
+* **`blackbox_vault.py` & `extract_signal.py`**: Fernet (`AES-128-CBC + HMAC-SHA256`) at-rest session archival, manifest verification, noise-reduced Flight Record extraction, and SQLite WAL/FTS5 `history.db` indexing.
+* **`config_utils.py`, `register_mcp.py`, `agy_workspace_trust.py`**: Portable `CONFIG.json` resolution, non-destructive multi-harness MCP registration, and Antigravity workspace trust management.

@@ -1,0 +1,2 @@
+{"timestamp":"2026-11-02T12:00:00Z","params":{"update":{"sessionUpdate":"user_message_chunk","content":{"type":"text","text":"Verify staged handoff vNext pipeline."}}}}
+{"timestamp":"2026-11-02T12:00:05Z","params":{"update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Staged handoff vNext pipeline verified cleanly."}}}}

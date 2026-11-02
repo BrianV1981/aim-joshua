@@ -1,24 +1,27 @@
-# The Blackbox Vault (Forensic Anti-Tampering)
+# The Blackbox Vault (Encrypted At-Rest Session Archival)
 
-## The Origin & Purpose
-The Blackbox Vault was engineered to solve a critical security vulnerability in autonomous AI swarms: **Agent Tampering.** 
+## Purpose & Threat Model
+The Blackbox Vault (`<project_root>/archive/.raw_jsonl_blackbox/`) provides portable, encrypted-at-rest archival and cryptographic SHA-256 manifest verification for raw coding-agent session transcripts across harnesses (`agy`, `grok`, `opencode`, `codex`).
 
-There have been documented cases of autonomous agents editing their own session histories or logs to "cover up" mistakes, hallucinate successes, or retroactively justify failures. To prevent this, J.O.S.H.U.A. implements a **Forensic Blackbox Vault**.
+- **Cipher & Key Management:** Raw transcript payloads are encrypted with `cryptography.fernet.Fernet` (**`AES-128-CBC + HMAC-SHA256`** authenticated encryption). Keys are stored in the host OS keyring (`aim-system:blackbox-key`) with fallback to a `0600` host file (`~/.aim/blackbox.key`, or `settings.blackbox_key_path` in `CONFIG.json`).
+- **Honest Same-UID Threat Model:** Encryption protects archived `.enc` blobs at rest (for example when backing up `archive/.raw_jsonl_blackbox/` to cloud storage, NAS, or Git) and detects accidental truncation or post-hoc file edits via `manifest.jsonl` SHA-256 digests. Because local CLI agents execute under the Operator's OS user account (UID), the Blackbox Vault is **not** a kernel-enforced privilege boundary against a rogue same-UID local process — and sealing also indexes noise-reduced Markdown summaries into local gitignored `joshua_os/archive/history/` and SQLite WAL `joshua_os/archive/history.db` so `./aim sessions` and `./aim search-sessions` work instantaneously.
+- **Shrink-Overwrite Protection:** If `<session_id>.enc` already exists in the vault and a subsequent seal attempt supplies fewer plaintext bytes than previously recorded in `manifest.jsonl`, `vault_session()` refuses to overwrite the larger archive unless `--force` is explicitly passed. When a session grows (e.g., re-sealed later in the same conversation), the previous `.enc` snapshot is preserved under `archive/.raw_jsonl_blackbox/snapshots/` before atomically replacing `<session_id>.enc`.
 
-## Operator-Exclusive Access
-The Vault is designed to be an **Operator-locked, password-protected archive**. 
-- It is an immutable append-only storage system for raw session flight recorders.
-- **Agents CANNOT decrypt or read the vault.** Agents are only permitted to *seal* their sessions into it before terminating.
-- Only the Operator possesses the keyring password required to decrypt and audit the historical sessions.
-
-## The Sealing Protocol
-Before an agent's context window is terminated (either via handoff or task completion), the agent is forced to execute the sealing command:
+## Sealing Commands
+Before closing out a session during `/aim-handoff`, seal the active session transcript:
 ```bash
-aim <vessel>-blackbox --session-id <uuid>
+./aim agy-blackbox --session-id <uuid>
+./aim grok-blackbox --session-id <id>
+./aim opencode-blackbox --session-id <id>
+./aim codex-blackbox --session-id <id>
+# Or seal any raw JSONL transcript path directly:
+./aim vault seal --path /path/to/transcript.jsonl --session-id <id>
 ```
-*Example:* `aim agy-blackbox --session-id 12345`
+Temporary staging files created during sealing or history indexing use `0600` `tempfile.mkstemp` handles and are unlinked unconditionally inside `finally:` blocks.
 
-This command extracts the raw `.jsonl` or SQLite transcripts directly from the CLI's internal hidden cache, encrypts them using the system keyring (or a fallback key), and locks them into the vault. Once sealed, the agent has no ability to alter the record.
-
-## Audit & Verification
-If an Operator suspects an agent has entered a hallucinatory loop or tampered with project files, the Operator can decrypt the Vault to review the exact, unadulterated thought processes and tool calls the agent made during that session.
+## Operator Audit & Verification
+```bash
+./aim vault verify <session_id>    # Verify SHA-256 digest against live file or decrypted blob
+./aim vault audit <session_id>     # Decrypt session plaintext to stdout
+./aim vault doctor                 # Inspect OS keyring and ~/.aim/blackbox.key permissions
+```

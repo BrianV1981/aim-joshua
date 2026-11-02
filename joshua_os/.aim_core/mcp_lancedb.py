@@ -102,7 +102,6 @@ def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
         sys.path.insert(0, core_path)
 
     try:
-        import lance_backend
         from retriever import perform_search
 
         # Rule 1 (Strict Project Isolation): If local DB exists, never scan subfolders.
@@ -127,21 +126,20 @@ def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
             elif os.path.isdir(seed_db):
                 db_path = seed_db
 
+        # Pass explicit db_path to perform_search without mutating module-global LANCE_DB_PATH (Issue #130)
         if subfolder_dbs:
             results = []
             for sub_name, sub_db in subfolder_dbs:
-                lance_backend.LANCE_DB_PATH = sub_db
-                sub_hits = perform_search(query, top_k=top_k) or []
+                sub_hits = perform_search(query, top_k=top_k, db_path=sub_db) or []
                 for hit in sub_hits:
                     hit_copy = dict(hit)
-                    orig_src = hit_copy.get('filename') or hit_copy.get('source_db') or hit_copy.get('session_id') or 'Unknown'
-                    hit_copy['filename'] = f"[{sub_name}] {orig_src}"
+                    orig_src = hit_copy.get("filename") or hit_copy.get("source_db") or hit_copy.get("session_id") or "Unknown"
+                    hit_copy["filename"] = f"[{sub_name}] {orig_src}"
                     results.append(hit_copy)
-            results.sort(key=lambda r: r.get('score', 0.0), reverse=True)
+            results.sort(key=lambda r: r.get("score", 0.0), reverse=True)
             results = results[:top_k]
         else:
-            lance_backend.LANCE_DB_PATH = db_path
-            results = perform_search(query, top_k=top_k)
+            results = perform_search(query, top_k=top_k, db_path=db_path)
         
         if not results:
             return f"No fragments found for query: '{query}'"

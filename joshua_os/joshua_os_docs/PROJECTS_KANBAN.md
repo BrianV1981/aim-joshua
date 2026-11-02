@@ -1,27 +1,23 @@
-# Project Management (Kanban)
+# Project Management (GitHub Projects Kanban)
 
-## The `aim projects` Wrapper
-J.O.S.H.U.A. includes a built-in wrapper for the GitHub CLI (`gh project`) to manage multi-agent work streams directly via terminal commands. This allows agents to natively interface with Kanban boards without breaking workflow.
-- Located in `joshua_os/.aim_core/aim_projects.py` and accessed via `aim projects` (or optionally linked globally as `aim-projects`).
+## The `aim projects` Integration
+J.O.S.H.U.A. includes a native GitHub Projects v2 Kanban integration (`joshua_os/.aim_core/aim_projects.py`, invoked via `./aim projects` on POSIX or `.\aim.ps1 projects` on Windows) so multiple agents can coordinate issue status from the terminal.
 
 ## Agent Board Protocol
-Agents must adhere to the following strict GitOps protocol to prevent collisions across parallel environments:
+1. **Read the board:** `aim projects board` (or `aim projects board --status "In Progress"` / `--json`)
+2. **Claim work:** `aim projects in-progress <issue_id>`
+3. **Execute in isolation:** `aim fix <issue_id>` (work inside `workspace/issue-<issue_id>`)
+4. **Ship:** After promoting to `main` via `aim promote`, mark complete with `aim projects done <issue_id>`
+5. **Blocked:** `aim projects blocked <issue_id>` when waiting on Operator input or external dependencies.
 
-1. **Read the board**: `aim projects board`
-   *Query the active project board to find available tasks or see active work.*
-2. **Claim work**: `aim projects in-progress <issue_id>`
-   *Move the task to the "In Progress" column on the Kanban board so other agents know it is actively being worked on.*
-3. **Execute**: `aim fix <issue_id>`
-   *Spawn a highly isolated Git worktree for the task to avoid colliding with `main`.*
-4. **Ship**: `aim projects done <issue_id>`
-   *Once the task is promoted to `main` via `aim promote`, officially close it on the Kanban board.*
-5. **Blocked**: `aim projects blocked <issue_id>`
-   *If waiting on Operator input, DNS, or external dependencies.*
-
-## Operator Prerequisites
-The active GitHub CLI account (`gh auth status`) MUST have the specific project OAuth scopes to modify the board. If `aim projects doctor` reveals missing scopes, the Operator must run:
+## Prerequisites & Configuration
+Requires an authenticated GitHub CLI (`gh auth status`) with `project` scopes:
 ```bash
 gh auth refresh -h github.com -s project,read:project
 ```
 
-Configuration relies on setting `AIM_PROJECTS_OWNER` and `AIM_PROJECTS_NUMBER` (and optionally `AIM_PROJECTS_REPO`) via environment variables or inside `CONFIG.json`.
+Configure per repository via environment variables or `joshua_os/.aim_core/CONFIG.json` (`settings.github_projects`):
+- `AIM_PROJECTS_NUMBER` (required — your GitHub Project number, e.g. `1`)
+- `AIM_PROJECTS_OWNER` (optional — auto-detected from `git remote.origin.url`, falling back to `@me`)
+- `AIM_PROJECTS_STATUS_FIELD` (optional — defaults to `Status`)
+- `AIM_PROJECTS_REPO` (optional — `owner/repo` for auto-adding issues onto the board)

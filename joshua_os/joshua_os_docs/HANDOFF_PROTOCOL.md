@@ -1,38 +1,38 @@
-# A.I.M. Handoff & Retrieval Protocols
+# J.O.S.H.U.A. Handoff & Retrieval Protocols
 
-This document formalizes the exact sequence of events that occur during an A.I.M. Handoff (formerly known as Reincarnation). This protocol exists to prevent context window bloat (the "Amnesia Problem") while preserving absolute epistemic continuity across agent lifetimes.
+This document formalizes the session closeout ("Agent Handoff") and LanceDB retrieval protocols across Linux, macOS, WSL, and Windows 10/11.
 
 ---
 
 ## The 3-Step Handoff Pipeline
 
-When an agent's context window fills up, or a specific vessel is needed, the agent must undergo an **Agent Handoff**.
+When an agent's context window approaches capacity or a task shifts to a fresh session, execute an **Agent Handoff**:
 
-### 1. The Blackbox Vault Sealing (Forensic Archive)
-Before exiting the current session, the agent MUST seal the session into the immutable, Operator-locked blackbox vault. This extracts raw session history natively to prevent agents from tampering with or covering up their own mistakes.
-- **Action:** Execute the vessel-specific blackbox command (e.g., `aim agy-blackbox --session-id <uuid>`, `aim grok-blackbox`, etc.).
+### 1. Seal the Session into the Blackbox Vault
+Before exiting the session, archive the raw session transcript into `<project_root>/archive/.raw_jsonl_blackbox/` using the harness-specific sealer:
+- **Linux / macOS / WSL:** `./aim agy-blackbox --session-id <uuid>` (or `grok-blackbox`, `opencode-blackbox`, `codex-blackbox`)
+- **Windows 10/11:** `.\aim.ps1 agy-blackbox --session-id <uuid>`
 
-### 2. The `aim-handoff` Skill (One-Command Closeout with Auto-Wiki Delta)
-The agent invokes the `aim-handoff` skill to close out the session in a single turn:
-- **Step 1 — Idempotent Auto-Wiki Delta Check:** Before updating `HANDOFF.md`, the agent inspects `memory-wiki/log.md`. If work or architectural decisions occurred since the last `/aim-memory-wiki` checkpoint (or if `/aim-memory-wiki` was not run during the session), `aim-handoff` automatically synthesizes those updates into `memory-wiki/` first. If `memory-wiki/` is already current for the session, it skips straight to `HANDOFF.md`.
-- **Step 2 — Surgical `HANDOFF.md` Update:** The agent appends completed session work to `§0` and updates `§2` / `§9` for the incoming session using surgical edits (`0–9` gold-standard template).
-- **Step 3 — Single Atomic Push to `main` (Zero Prompts):** Both `memory-wiki/**` and `HANDOFF.md` are living OS memory state exempt from GitHub Issues and worktrees. The agent runs:
+*(Note: Antigravity transcripts are resolved automatically across both Antigravity 2.0 `~/.gemini/antigravity/brain/` and legacy `~/.gemini/antigravity-cli/brain/`).*
+
+### 2. Invoke `aim-handoff` (Auto-Wiki Delta + `HANDOFF.md`)
+Invoke the `aim-handoff` skill to close out memory state in a single turn:
+- **Step 1 — Idempotent Auto-Wiki Delta Check:** Inspect `memory-wiki/log.md` first. If session work or architectural decisions occurred since the last `/aim-memory-wiki` checkpoint, synthesize those updates into `memory-wiki/` (`index.md`, `log.md`, `pages/*.md`) and run `./aim index` (POSIX) or `.\aim.ps1 index` (Windows).
+- **Step 2 — Surgical `HANDOFF.md` Update:** Append completed work to `§0` and update active mission/next steps (`0–9` template).
+- **Step 3 — Direct-to-`main` Atomic Push:** Stage only explicit memory state and push directly to `origin/main` (when `origin` is configured) with zero prompts:
   ```bash
   git add memory-wiki/ HANDOFF.md
   git diff --cached --quiet || git commit -m "docs(handoff): update memory-wiki and HANDOFF.md for session closeout"
   git pull --rebase --autostash origin main
   git push origin main
   ```
-  *(Strictly forbidding `git add .` or `git commit -a`, and executing with zero Operator confirmation prompts).*
 
-### 3. The Baton Pass
-The agent uses Tmux to spawn the next agent vessel and injects the handoff document directly into its prompt.
-- **Execution:** The current agent creates a detached `tmux` session, loads the `HANDOFF.md` into the buffer, pastes it, and submits it to the new agent.
+### 3. Baton Pass
+- **POSIX (`tmux`):** Optionally spawn or target a `tmux` session, paste the handoff prompt via `tmux load-buffer` + `tmux paste-buffer -p`, and submit `Enter` in a separate command (never send `Escape` before `Enter` in Antigravity 1.4.4+ / 2.0).
+- **Windows 10/11 / IDE:** Leave `HANDOFF.md` ready at the repository root for the next session.
 
 ---
 
-## LanceDB Retrieval
-A.I.M. uses LanceDB for semantic hybrid retrieval (RAG 5.21). When an agent needs to retrieve factual knowledge, it must natively act as a retrieval agent. 
-- Agents must execute the raw Python CLI script explicitly rather than relying on bash aliases: 
-  `python3 joshua_os/.aim_core/aim_cli.py search "<query>"`
-- The LanceDB memory pool is dynamically routed; it uses `memory_lance/` at the OS root, or `./memory_lance` if operating inside a sandbox directory.
+## Cross-Platform LanceDB Retrieval
+1. **Primary (Native MCP):** Call the `search_lancedb` MCP tool (`joshua_os/.aim_core/mcp_lancedb.py`).
+2. **Fallback (CLI):** Use the project wrapper (`./aim search "<query>"` on POSIX; `.\aim.ps1 search "<query>"` or `aim.cmd search "<query>"` on Windows) or the engine venv Python (`./joshua_os/venv/bin/python3 joshua_os/.aim_core/aim_cli.py search "<query>"` on POSIX; `.\joshua_os\venv\Scripts\python.exe joshua_os\.aim_core\aim_cli.py search "<query>"` on Windows — never bare `python3` on Windows).

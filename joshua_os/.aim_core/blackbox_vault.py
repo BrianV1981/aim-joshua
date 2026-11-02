@@ -39,7 +39,7 @@ MANIFEST_NAME = "manifest.jsonl"
 
 
 def _log(msg: str) -> None:
-    print(msg, flush=True)
+    print(msg, file=sys.stderr, flush=True)
 
 
 def find_vessel_root(start: Optional[str] = None) -> Path:
@@ -246,6 +246,22 @@ def _lookup_conversation_title(session_id: str) -> str:
     return ""
 
 
+def connect_history_db(db_path: Path | str, *, readonly: bool = False):
+    """Open history.db with WAL mode and a 5s busy timeout for safe concurrent access."""
+    import sqlite3
+
+    p = Path(db_path)
+    if readonly:
+        conn = sqlite3.connect(f"file:{p}?mode=ro", uri=True, timeout=5.0)
+        conn.execute("PRAGMA busy_timeout=5000;")
+        return conn
+    p.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(p), timeout=5.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    return conn
+
+
 def index_session_to_history(
     raw_bytes: bytes,
     session_id: str,
@@ -259,7 +275,6 @@ def index_session_to_history(
     if not raw_bytes or session_id.startswith("hermetic-"):
         return False
     try:
-        import sqlite3
         import tempfile
 
         here = Path(__file__).resolve().parent
@@ -271,19 +286,23 @@ def index_session_to_history(
             skeleton_to_markdown,
         )
 
-        with tempfile.NamedTemporaryFile(
-            mode="wb", suffix="_transcript.jsonl", delete=False
-        ) as tmp:
-            tmp.write(raw_bytes)
-            tmp_path = tmp.name
-
+        fd, tmp_path = tempfile.mkstemp(prefix="aim_bb_", suffix="_transcript.jsonl")
         try:
+            with os.fdopen(fd, "wb") as tmp_f:
+                tmp_f.write(raw_bytes)
+            try:
+                os.chmod(tmp_path, 0o600)
+            except OSError:
+                pass
             skeleton = extract_signal(tmp_path)
             turns = conversational_turn_count(skeleton)
             md_content = skeleton_to_markdown(skeleton, session_id)
         finally:
             if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
 
         title = _lookup_conversation_title(session_id)
         if not title and isinstance(skeleton, list):
@@ -307,7 +326,7 @@ def index_session_to_history(
         md_path.write_text(md_content, encoding="utf-8")
 
         db_path = os_dir / "archive" / "history.db"
-        conn = sqlite3.connect(str(db_path))
+        conn = connect_history_db(db_path)
         try:
             conn.execute(
                 """
@@ -379,6 +398,7 @@ def vault_session(
     session_id: Optional[str] = None,
     vessel_root: Optional[str] = None,
     reason: str = "reincarnate",
+    force: bool = False,
 ) -> bool:
     """
     Encrypt raw session bytes into the vessel black box.
@@ -438,29 +458,73 @@ def vault_session(
         raw = Path(source_path).read_bytes()
         digest = _sha256(raw)
 
-        # idempotent if same hash already sealed
+        # Inspect manifest for idempotency and shrink-overwrite protection
         man = box / MANIFEST_NAME
+        prev_max_bytes = 0
+        prev_last_digest: Optional[str] = None
         if man.is_file():
             for line in man.read_text(encoding="utf-8", errors="replace").splitlines():
                 try:
                     prev = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if prev.get("session_id") == sid and prev.get("sha256_plaintext") == digest:
+                if prev.get("session_id") != sid:
+                    continue
+                if prev.get("sha256_plaintext") == digest and vault_path.is_file():
                     index_session_to_history(raw, sid, root, sealed_at=prev.get("sealed_at"))
                     _log(f"[VAULT] already sealed session={sid} sha256={digest[:12]}…")
                     return True
+                try:
+                    prev_max_bytes = max(prev_max_bytes, int(prev.get("bytes") or 0))
+                except (TypeError, ValueError):
+                    pass
+                if prev.get("sha256_plaintext"):
+                    prev_last_digest = str(prev.get("sha256_plaintext"))
+
+        if vault_path.is_file() and prev_max_bytes > len(raw) and not force:
+            print(
+                f"[VAULT] ERROR refusing to overwrite larger sealed session={sid} "
+                f"(existing={prev_max_bytes}B > new={len(raw)}B) without --force",
+                file=sys.stderr,
+            )
+            return False
 
         key, key_src = get_or_create_key(
             root, key_path_override=settings.get("blackbox_key_path")
         )
         fernet = Fernet(key)
         encrypted = fernet.encrypt(raw)
-        vault_path.write_bytes(encrypted)
+
+        archived_snapshot: Optional[str] = None
+        if vault_path.is_file() and prev_last_digest and prev_last_digest != digest:
+            snap_dir = box / "snapshots"
+            snap_dir.mkdir(parents=True, exist_ok=True)
+            snap_path = snap_dir / f"{sid}.{prev_last_digest[:12]}.enc"
+            if not snap_path.exists():
+                snap_path.write_bytes(vault_path.read_bytes())
+                try:
+                    os.chmod(snap_path, 0o600)
+                except OSError:
+                    pass
+            archived_snapshot = str(snap_path)
+
+        import tempfile
+
+        fd_enc, tmp_enc = tempfile.mkstemp(prefix=f".{sid}_", suffix=".enc.tmp", dir=str(box))
         try:
-            os.chmod(vault_path, 0o600)
-        except OSError:
-            pass
+            with os.fdopen(fd_enc, "wb") as enc_f:
+                enc_f.write(encrypted)
+            try:
+                os.chmod(tmp_enc, 0o600)
+            except OSError:
+                pass
+            os.replace(tmp_enc, str(vault_path))
+        finally:
+            if os.path.exists(tmp_enc):
+                try:
+                    os.unlink(tmp_enc)
+                except OSError:
+                    pass
 
         entry = {
             "session_id": sid,
@@ -473,6 +537,8 @@ def vault_session(
             "vessel_root": str(root),
             "key_source": key_src.split(":")[0],
         }
+        if archived_snapshot:
+            entry["archived_blob_path"] = archived_snapshot
         _append_manifest(box, entry)
         index_session_to_history(raw, sid, root, sealed_at=entry["sealed_at"])
         _log(
@@ -562,15 +628,20 @@ def sync_vault_to_history(vessel_root: Optional[str] = None) -> int:
     db_path = os_dir / "archive" / "history.db"
     existing_ids: set[str] = set()
     if db_path.is_file():
+        conn = None
         try:
-            import sqlite3
-            conn = sqlite3.connect(str(db_path))
+            conn = connect_history_db(db_path)
             existing_ids = {
                 r[0] for r in conn.execute("SELECT session_id FROM history").fetchall()
             }
-            conn.close()
         except Exception:
             existing_ids = set()
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
     indexed = 0
     for enc_file in sorted(box.glob("*.enc")):
@@ -701,6 +772,8 @@ def _resolve_reincarnate_transcripts(
 def seal_for_reincarnate(
     workspace: str,
     session_id: Optional[str] = None,
+    *,
+    force: bool = False,
 ) -> bool:
     """
     Resolve raw transcript for reincarnating session and seal once.
@@ -738,6 +811,7 @@ def seal_for_reincarnate(
             session_id=sid,
             vessel_root=workspace,
             reason="reincarnate",
+            force=force,
         )
     except Exception as e:
         _log(f"[VAULT] WARN seal_for_reincarnate: {e}")
@@ -748,7 +822,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(
             "Usage:\n"
-            "  blackbox_vault.py seal <path> [--session-id ID] [--vessel ROOT]\n"
+            "  blackbox_vault.py seal <path> [--session-id ID] [--vessel ROOT] [--force]\n"
             "  blackbox_vault.py audit <session_id> [--vessel ROOT]\n"
             "  blackbox_vault.py verify <session_id> [--vessel ROOT] [--live PATH]\n"
         )
@@ -763,17 +837,19 @@ if __name__ == "__main__":
         return default
 
     vessel = _opt("--vessel")
+    force_flag = "--force" in sys.argv
     if cmd == "seal" and len(sys.argv) > 2:
         ok = vault_session(
             sys.argv[2],
             session_id=_opt("--session-id"),
             vessel_root=vessel,
             reason="reincarnate",
+            force=force_flag,
         )
         sys.exit(0 if ok else 1)
     if cmd == "audit" and len(sys.argv) > 2:
-        audit_vault(sys.argv[2], vessel_root=vessel)
-        sys.exit(0)
+        plain = audit_vault(sys.argv[2], vessel_root=vessel)
+        sys.exit(0 if plain is not None else 1)
     if cmd == "verify" and len(sys.argv) > 2:
         ok = verify_manifest(
             sys.argv[2], vessel_root=vessel, live_path=_opt("--live")

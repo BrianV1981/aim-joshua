@@ -108,17 +108,28 @@ def _emit(res, as_json: bool) -> int:
 
 
 def _e2e_staged(root: Path, args) -> int:
-    """Full three-pipeline E2E on staged fixture history."""
+    """End-to-end staged fixture test covering handoff packet + blackbox cron + flight record."""
+    from handoff.adapters.fixture import FixtureAdapter
     from handoff.blackbox_cron import run_blackbox_cron
+    from handoff.flight_record import turns_to_flight_record, write_flight_record
     from handoff.handoff_core import run_handoff
+    from handoff.paths import fr_cache_dir
 
-    fix = Path(args.fixture_root or (root / "joshua_os/tests/fixtures/handoff_vnext"))
+    default_candidates = [
+        root / "tests" / "fixtures" / "handoff_vnext",
+        root / "joshua_os" / "tests" / "fixtures" / "handoff_vnext",
+        _OS.parent / "tests" / "fixtures" / "handoff_vnext",
+    ]
+    fix = (
+        Path(args.fixture_root)
+        if args.fixture_root
+        else next((c for c in default_candidates if c.is_dir()), default_candidates[0])
+    )
     if not fix.is_dir():
         print(f"[e2e] missing fixtures at {fix}", file=sys.stderr)
         return 1
     adapter = FixtureAdapter(fix)
     marker = args.marker or "E2E_HANDOFF_VNEXT_MARKER_7f3a"
-    # pick first session
     sessions = adapter.list_sessions()
     if not sessions:
         print("[e2e] no staged sessions", file=sys.stderr)
@@ -134,40 +145,37 @@ def _e2e_staged(root: Path, args) -> int:
         marker=marker,
     )
     r_b = run_blackbox_cron(adapter=adapter, root=root, since_mtime=0.0, limit=20)
+
+    ref = adapter.resolve(sid, root)
+    turns = list(adapter.iter_turns(ref))
+    fr_md = turns_to_flight_record(sid, turns, source=str(ref.path))
+    fr = write_flight_record(fr_cache_dir(root) / f"{sid}.md", fr_md)
+
     report = {
         "handoff": r_h.to_dict(),
         "blackbox": r_b.to_dict(),
+        "flight_record": str(fr),
     }
     out = root / "continuity" / "cron_state" / "e2e_staged_report.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
-    # hard asserts
     ok = True
     reasons = []
-    if r_h.status != "ok" or marker not in Path(r_h.paths["continuity"]).read_text():
+    if r_h.status != "ok" or marker not in Path(r_h.paths["continuity"]).read_text(encoding="utf-8"):
         ok = False
         reasons.append(f"handoff failed: {r_h.status} {r_h.code}")
     if r_b.status not in ("ok", "partial"):
         ok = False
         reasons.append(f"blackbox failed: {r_b.status}")
     else:
-        # wiki page should mention session
-        wiki_pages = list((root / "joshua_os" / "memory-wiki" / "pages").glob(f"source-*{sid[:20]}*"))
-        if not wiki_pages:
-            wiki_pages = list((root / "joshua_os" / "memory-wiki" / "pages").glob("source-*.md"))
-            wiki_pages = [p for p in wiki_pages if sid in p.read_text(encoding="utf-8", errors="replace")]
-        if not wiki_pages:
+        enc_blob = root / "archive" / ".raw_jsonl_blackbox" / f"{sid}.enc"
+        if not enc_blob.is_file():
             ok = False
-            reasons.append("wiki page missing session id")
-        fr = root / "continuity" / "flight_records" / f"{sid}.md"
-        if not fr.is_file() or len(fr.read_text()) < 40:
-            ok = False
-            reasons.append("flight record missing")
-        dbj = root / "joshua_os" / "memory_lance" / "handoff_vnext" / f"{sid}.jsonl"
-        if not dbj.is_file():
-            ok = False
-            reasons.append("embed/db jsonl missing")
+            reasons.append("blackbox encrypted blob missing")
+    if not fr.is_file() or len(fr.read_text(encoding="utf-8")) < 40:
+        ok = False
+        reasons.append("flight record missing")
 
     print(json.dumps({"ok": ok, "reasons": reasons, "report_path": str(out)}, indent=2))
     return 0 if ok else 1

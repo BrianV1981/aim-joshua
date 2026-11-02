@@ -205,7 +205,9 @@ def load_existing_identity_defaults():
         with open(operator_profile_path, "r", encoding="utf-8") as f:
             defaults["grok_profile"] = f.read().strip() or defaults.get("grok_profile", "")
 
-    config_path = os.path.join(CORE_DIR, "CONFIG.json")
+    config_path = os.path.join(AIM_CORE_DIR, "CONFIG.json")
+    if not os.path.exists(config_path):
+        config_path = os.path.join(CORE_DIR, "CONFIG.json")
     if os.path.exists(config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -216,6 +218,25 @@ def load_existing_identity_defaults():
             pass
 
     return defaults
+
+
+_AIM_HOOK_NAMES = {
+    "cognitive-mantra",
+    "session-summarizer",
+    "failsafe-context-snapshot",
+    "coreference-rewriter",
+}
+
+
+def _is_aim_hook_entry(hook_obj: dict) -> bool:
+    if not isinstance(hook_obj, dict):
+        return False
+    if hook_obj.get("name") in _AIM_HOOK_NAMES:
+        return True
+    cmd = str(hook_obj.get("command") or "")
+    return "aim_router.py" in cmd or "joshua_os/hooks" in cmd or "joshua_os\\hooks" in cmd
+
+
 def register_hooks(is_light_mode=False):
     if AIM_CORE_DIR not in sys.path:
         sys.path.insert(0, AIM_CORE_DIR)
@@ -235,22 +256,60 @@ def register_hooks(is_light_mode=False):
     try:
         for settings_path in existing_settings:
             with open(settings_path, "r", encoding="utf-8") as f:
-                settings = json.load(f)
-            if "hooks" not in settings:
+                raw_text = f.read()
+            if not raw_text.strip():
+                settings = {}
+            else:
+                try:
+                    settings = json.loads(raw_text)
+                except json.JSONDecodeError as exc:
+                    print(
+                        f"[WARN] Skipping hook registration in {settings_path}: non-standard JSON/JSONC preserved ({exc})",
+                        file=sys.stderr,
+                    )
+                    continue
+                if not isinstance(settings, dict):
+                    print(
+                        f"[WARN] Skipping hook registration in {settings_path}: top-level JSON is not an object",
+                        file=sys.stderr,
+                    )
+                    continue
+
+            if not isinstance(settings.get("hooks"), dict):
                 settings["hooks"] = {}
 
             # Enforce global Memory Boundary Marker for A.I.M. Isolation
-            if "context" not in settings:
+            if not isinstance(settings.get("context"), dict):
                 settings["context"] = {}
             settings["context"]["memoryBoundaryMarkers"] = ["AGENTS.md", ".git"]
             settings["context"]["discoveryMaxDirs"] = 0
             settings["context"]["fileName"] = ["AGENTS.md"]
 
             router_dest = os.path.join(os.path.dirname(settings_path), "aim_router.py")
-            if os.path.exists(router_src) and not os.path.exists(router_dest):
+            if os.path.exists(router_src):
                 shutil.copy2(router_src, router_dest)
                 if os.name != "nt":
                     os.chmod(router_dest, 0o755)
+
+            # Remove stale A.I.M. hook entries while preserving all user-configured third-party hooks
+            cleaned_hooks = {}
+            for event_name, groups in settings["hooks"].items():
+                if not isinstance(groups, list):
+                    cleaned_hooks[event_name] = groups
+                    continue
+                kept_groups = []
+                for grp in groups:
+                    if isinstance(grp, dict) and isinstance(grp.get("hooks"), list):
+                        remaining = [h for h in grp["hooks"] if not _is_aim_hook_entry(h)]
+                        if remaining:
+                            grp_copy = dict(grp)
+                            grp_copy["hooks"] = remaining
+                            kept_groups.append(grp_copy)
+                    elif not _is_aim_hook_entry(grp):
+                        kept_groups.append(grp)
+                if kept_groups:
+                    cleaned_hooks[event_name] = kept_groups
+            settings["hooks"] = cleaned_hooks
 
             aim_hooks = {
                 "AfterTool": [
@@ -258,25 +317,25 @@ def register_hooks(is_light_mode=False):
                 ]
             }
 
-            # Clear old A.I.M. hooks to prevent ghost executions (e.g. legacy SessionStart)
-            settings["hooks"] = {}
-
             py_cmd = f'"{VENV_PYTHON}"' if " " in VENV_PYTHON else VENV_PYTHON
             router_cmd = f'"{router_dest}"' if " " in router_dest else router_dest
             for event, hooks in aim_hooks.items():
-                settings["hooks"][event] = []
+                settings["hooks"].setdefault(event, [])
                 for h in hooks:
                     entry = {"name": h[0], "type": "command", "command": f"{py_cmd} {router_cmd} {h[1]}"}
                     if len(h) > 2:
                         entry["matcher"] = h[2]
                     settings["hooks"][event].append({"hooks": [entry]})
 
-            with open(settings_path, "w", encoding="utf-8") as f:
+            tmp_settings = settings_path + ".tmp"
+            with open(tmp_settings, "w", encoding="utf-8") as f:
                 json.dump(settings, f, indent=2)
+                f.write("\n")
+            os.replace(tmp_settings, settings_path)
 
         print("[OK] Hooks registered via Universal Router.")
     except Exception as e:
-        print(f"[ERROR] Hook registration failed: {e}")
+        print(f"[ERROR] Hook registration failed: {e}", file=sys.stderr)
         sys.exit(1)
 
 def trigger_bootstrap():
@@ -301,7 +360,7 @@ def init_workspace(args=None):
     
     # 1. Mechanical Provisioning (Folders & Settings)
     dirs = ["archive/raw", "archive/history", "archive/sync", "archive/cartridges",
-            "continuity/private", "continuity", "workstreams", "hooks", "scripts", "projects", "foundry", ".aim_core", "planning-artifacts", "workspace"]
+            "continuity/private", "continuity", "workstreams", "hooks", "scripts", "projects", "foundry", ".aim_core", "workspace"]
     for d in dirs: os.makedirs(os.path.join(OS_DIR, d), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, ".gemini"), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, "memory-wiki", "pages"), exist_ok=True)
@@ -319,7 +378,6 @@ def init_workspace(args=None):
 archive/
 memory_lance/
 foundry/
-planning-artifacts/
 engrams/
 """,
         ".gemini/settings.json": """{
@@ -334,12 +392,20 @@ engrams/
             "agent_identity": {
                 "name": "J.O.S.H.U.A.",
                 "role": "Universal Operating Agent and Systems Orchestrator.",
-                "version": "1.0.0"
+                "version": "1.1.2"
             },
             "paths": {
-                "continuity_dir": os.path.join(OS_DIR, "continuity"),
+                "project_root": BASE_DIR,
+                "os_root": OS_DIR,
+                "aim_root": OS_DIR,
+                "core_dir": os.path.join(OS_DIR, "core"),
+                "docs_dir": os.path.join(OS_DIR, "docs"),
+                "hooks_dir": os.path.join(OS_DIR, "hooks"),
                 "archive_dir": os.path.join(OS_DIR, "archive"),
+                "archive_raw_dir": os.path.join(OS_DIR, "archive", "raw"),
                 "memory_dir": os.path.join(OS_DIR, "memory_lance"),
+                "continuity_dir": os.path.join(OS_DIR, "continuity"),
+                "src_dir": os.path.join(OS_DIR, ".aim_core"),
                 "wiki_dir": os.path.join(BASE_DIR, "memory-wiki")
             },
             "settings": {
@@ -465,8 +531,10 @@ engrams/
                 subprocess.run(
                     ["tmux", "paste-buffer", "-p", "-t", session_name], check=True
                 )
+                time.sleep(0.3)
+                # AGY 1.4.4+ / 2.0 rule: NEVER send Escape before Enter (Escape wipes [Pasted text] chip)
                 subprocess.run(
-                    ["tmux", "send-keys", "-t", session_name, "Escape", "Enter"],
+                    ["tmux", "send-keys", "-t", session_name, "Enter"],
                     check=True,
                 )
                 injected = True
@@ -478,7 +546,8 @@ engrams/
             print("[WARNING] Could not deterministically confirm CLI ready state. Falling back to blind injection.")
             subprocess.run(["tmux", "set-buffer", bootstrap_content], check=True)
             subprocess.run(["tmux", "paste-buffer", "-p", "-t", session_name], check=True)
-            subprocess.run(["tmux", "send-keys", "-t", session_name, "Escape", "Enter"], check=True)
+            time.sleep(0.3)
+            subprocess.run(["tmux", "send-keys", "-t", session_name, "Enter"], check=True)
         print(f"[SUCCESS] The A.I.M. Architect has awakened in the background.")
         print(f"""
 Please attach to the session to complete your interview:""")

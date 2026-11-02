@@ -9,8 +9,7 @@ import math
 from google import genai
 
 # --- CONFIGURATION (Dynamic Load) ---
-from config_utils import CONFIG, AIM_ROOT, PROJECT_ROOT
-CONFIG_PATH = os.path.join(PROJECT_ROOT, ".aim_core/CONFIG.json")
+from config_utils import CONFIG, AIM_ROOT, PROJECT_ROOT, CONFIG_PATH
 
 # --- PROVIDER LOGIC ---
 PROVIDER_TYPE = CONFIG['models'].get('embedding_provider', 'local') # google, local (ollama), openai-compat

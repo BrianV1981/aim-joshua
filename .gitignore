@@ -47,3 +47,5 @@ joshua_os/memory-wiki/_raw_logs/
 # Caches / local
 .pytest_cache/
 joshua_os/memory-wiki/daemon.log
+**/.lance.lock
+continuity/

@@ -1,54 +1,42 @@
 #!/usr/bin/env python3
-import sys
 import os
+import sys
 
 print("--- A.I.M. DOCTOR ---")
 print("Validating environment...")
 
 has_errors = False
 
-# Check python version
 v = sys.version_info
 print(f"Python Version: {v.major}.{v.minor}.{v.micro}")
-if v.major < 3 or (v.major == 3 and v.minor < 8):
-    print("[ERROR] A.I.M. requires Python 3.8+")
+if v.major < 3 or (v.major == 3 and v.minor < 10):
+    print("[ERROR] J.O.S.H.U.A. requires Python 3.10+")
     has_errors = True
 else:
     print("[OK] Python Version")
 
-# Check required paths
 core_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(core_dir)
 
-if not os.path.exists(os.path.join(root_dir, 'memory_lance')):
-    print("[WARNING] memory_lance directory not found! Run initialization.")
-else:
+if os.path.exists(os.path.join(root_dir, "memory_lance")):
     print("[OK] Memory Subsystem")
+elif os.path.exists(os.path.join(root_dir, "assets", "default_lance")):
+    print("[OK] Memory Subsystem (default_lance seed ready)")
+else:
+    print("[WARNING] memory_lance directory not found! Run './aim index'.")
 
-# Check some basic imports
-try:
-    import lancedb
-    print("[OK] lancedb installed")
-except ImportError:
-    print("[ERROR] lancedb not installed. Run: pip install -r requirements.txt")
-    has_errors = True
-
-try:
-    import datasets
-    print("[OK] datasets installed")
-except ImportError:
-    print("[ERROR] datasets not installed. Run: pip install -r requirements.txt")
-    has_errors = True
-
-try:
-    import pandas
-    print("[OK] pandas installed")
-except ImportError:
-    print("[ERROR] pandas not installed. Run: pip install -r requirements.txt")
-    has_errors = True
+for pkg_name, import_name in (
+    ("lancedb", "lancedb"),
+    ("pandas", "pandas"),
+    ("cryptography", "cryptography"),
+    ("fastmcp", "fastmcp"),
+):
+    try:
+        __import__(import_name)
+        print(f"[OK] {pkg_name} installed")
+    except ImportError:
+        print(f"[ERROR] {pkg_name} not installed. Run: pip install -r joshua_os/requirements.txt")
+        has_errors = True
 
 print("--- DOCTOR COMPLETE ---")
-if has_errors:
-    sys.exit(1)
-else:
-    sys.exit(0)
+sys.exit(1 if has_errors else 0)

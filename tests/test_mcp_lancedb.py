@@ -20,7 +20,10 @@ def test_search_lancedb_no_results(mock_perform_search, mock_getcwd):
     result = search_lancedb("test query")
     
     assert "No fragments found" in result
-    mock_perform_search.assert_called_once_with("test query", top_k=10)
+    assert mock_perform_search.call_count == 1
+    assert mock_perform_search.call_args[0] == ("test query",)
+    assert mock_perform_search.call_args[1]["top_k"] == 10
+    assert isinstance(mock_perform_search.call_args[1].get("db_path"), str)
 
 @patch("mcp_lancedb.os.getcwd")
 @patch("retriever.perform_search")
@@ -39,6 +42,9 @@ def test_search_lancedb_with_results(mock_perform_search, mock_getcwd):
 @patch("mcp_lancedb.os.getcwd")
 @patch("retriever.perform_search")
 def test_search_lancedb_with_context(mock_perform_search, mock_getcwd):
+    import lance_backend
+    orig_lance_path = lance_backend.LANCE_DB_PATH
+
     # Mock context
     ctx = MagicMock()
     ctx.request_context.session.client_params.model_extra = {
@@ -48,9 +54,10 @@ def test_search_lancedb_with_context(mock_perform_search, mock_getcwd):
     
     search_lancedb("test query", ctx=ctx)
     
-    # Check that LANCE_DB_PATH was set using the custom workspace path
-    import lance_backend
-    assert lance_backend.LANCE_DB_PATH == "/my/custom/workspace/joshua_os/memory_lance"
+    # Explicit db_path passed without mutating global lance_backend.LANCE_DB_PATH (Issue #130)
+    expected_db = os.path.join("/my/custom/workspace", "joshua_os", "memory_lance")
+    mock_perform_search.assert_called_once_with("test query", top_k=10, db_path=expected_db)
+    assert lance_backend.LANCE_DB_PATH == orig_lance_path
 
 
 @patch("retriever.perform_search")
@@ -77,9 +84,8 @@ def test_search_lancedb_umbrella_subfolder_fallback(mock_perform_search, tmp_pat
     (tmp_path / "agent-a" / "joshua_os" / "memory_lance").mkdir(parents=True)
     (tmp_path / "agent-b" / "joshua_os" / "memory_lance").mkdir(parents=True)
 
-    def side_effect(query, top_k=10):
-        import lance_backend
-        if "agent-a" in lance_backend.LANCE_DB_PATH:
+    def side_effect(query, top_k=10, db_path=None):
+        if "agent-a" in (db_path or ""):
             return [{"filename": "a_doc.md", "content": "From A", "score": 0.75}]
         return [{"filename": "b_doc.md", "content": "From B", "score": 0.92}]
 
@@ -237,7 +243,8 @@ def test_search_lancedb_desktop_fallback_to_os_root_when_no_workspace_folders(mo
              patch("mcp_lancedb.os.getcwd", return_value=str(app_bin_dir)), \
              patch.dict(os.environ, {"AIM_WORKSPACE_ROOT": ""}, clear=False):
             out = search_lancedb("desktop query", top_k=3, ctx=ctx)
-            assert lance_backend.LANCE_DB_PATH == str(installed_db)
+            assert mock_perform_search.call_args[1]["db_path"] == str(installed_db)
+            assert lance_backend.LANCE_DB_PATH == orig_lance_path
             assert "Desktop fallback hit" in out
 
         # Also verify $HOME cwd without workspaceFolders does NOT umbrella-scan unrelated $HOME/* projects
@@ -248,7 +255,8 @@ def test_search_lancedb_desktop_fallback_to_os_root_when_no_workspace_folders(mo
              patch("mcp_lancedb.os.path.expanduser", side_effect=lambda p: str(fake_home) if p == "~" else p), \
              patch.dict(os.environ, {"AIM_WORKSPACE_ROOT": ""}, clear=False):
             out_home = search_lancedb("desktop home query", top_k=3, ctx=ctx)
-            assert lance_backend.LANCE_DB_PATH == str(installed_db)
+            assert mock_perform_search.call_args[1]["db_path"] == str(installed_db)
+            assert lance_backend.LANCE_DB_PATH == orig_lance_path
             assert "[unrelated-proj]" not in out_home
     finally:
         lance_backend.LANCE_DB_PATH = orig_lance_path

@@ -1,4 +1,3 @@
-from config_utils import PROJECT_ROOT
 #!/usr/bin/env python3
 import os
 import json
@@ -13,27 +12,24 @@ from rich.table import Table
 from rich import print as rprint
 import questionary
 
-# --- DYNAMIC ROOT DISCOVERY ---
-def find_aim_root():
-    current = os.path.abspath(os.getcwd())
-    while current != '/':
-        if os.path.exists(os.path.join(current, "core", "CONFIG.json")) or os.path.exists(os.path.join(current, "setup.sh")):
-            return current
-        current = os.path.dirname(current)
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
 
-AIM_ROOT = find_aim_root()
-src_dir = os.path.join(AIM_ROOT, ".aim_core")
-if src_dir not in sys.path: sys.path.append(src_dir)
-
+from config_utils import CONFIG_PATH, OS_ROOT, PROJECT_ROOT, resolve_venv_python, save_config_atomic
 from reasoning_utils import generate_reasoning
 from aim_vault import get_key, set_key
 
-CONFIG_PATH = os.path.join(PROJECT_ROOT, ".aim_core/CONFIG.json")
+AIM_ROOT = OS_ROOT
+
+
+def _clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
+
 
 def load_config():
     if os.path.exists(CONFIG_PATH):
-        with open(CONFIG_PATH, 'r') as f:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     return {}
 
@@ -241,60 +237,49 @@ def setup_cognitive_tier(tier_name):
             save_config(CONFIG)
 
 def mcp_server_menu():
+    venv_py = resolve_venv_python(AIM_ROOT)
+    mcp_script = os.path.join(AIM_ROOT, ".aim_core", "mcp_lancedb.py")
     while True:
-        os.system('clear')
-        rprint(Panel("[bold green]A.I.M. MCP SERVER CONTROL[/bold green]\nModel Context Protocol Integration"))
-        
-        # Check if server is running (rudimentary check via pgrep)
-        try:
-            subprocess.run(["pgrep", "-f", ".aim_core/mcp_server.py"], check=True, capture_output=True)
-            status = "[bold green]ONLINE (Background)[/bold green]"
-        except subprocess.CalledProcessError:
-            status = "[bold red]OFFLINE[/bold red]"
-            
-        rprint(f"Server Status: {status}\n")
-        rprint("[cyan]Connection String for IDEs (Cursor/VSCode):[/cyan]")
-        rprint(f"[yellow]{AIM_ROOT}/venv/bin/python3 {AIM_ROOT}/.aim_core/mcp_server.py[/yellow]\n")
-        
+        _clear_screen()
+        rprint(Panel("[bold green]A.I.M. MCP SERVER CONTROL[/bold green]\nModel Context Protocol Integration (search_lancedb)"))
+        status = "[bold green]READY (stdio)[/bold green]" if os.path.isfile(mcp_script) else "[bold red]MISSING[/bold red]"
+        rprint(f"Server Script: {status}\n")
+        rprint("[cyan]Connection Command for IDEs & CLIs:[/cyan]")
+        rprint(f"[yellow]{venv_py} {mcp_script}[/yellow]\n")
+
         choice = questionary.select(
             "MCP Actions:",
             choices=[
-                "1. Launch MCP Inspector (Web UI Test)",
-                "2. View MCP Client Setup Instructions",
-                "3. Back"
-            ]
+                "1. Auto-Register search_lancedb Across Detected Harnesses",
+                "2. View Manual MCP Client JSON Snippet",
+                "3. Back",
+            ],
         ).ask()
-        
-        if choice == "3. Back": break
-        
+
+        if not choice or choice == "3. Back":
+            break
+
         if "1." in choice:
-            rprint("[cyan]Launching FastMCP Inspector... (Press Ctrl+C to exit)[/cyan]")
-            fastmcp_bin = os.path.join(AIM_ROOT, "venv/bin/fastmcp")
-            try:
-                subprocess.run([fastmcp_bin, "inspector", os.path.join(AIM_ROOT, ".aim_core/mcp_server.py")])
-            except KeyboardInterrupt: pass
+            import register_mcp
+
+            touched = register_mcp.register_all_harnesses(project_root=PROJECT_ROOT, force=True)
+            rprint(f"[green]Registered search_lancedb for: {', '.join(touched)}[/green]")
+            input("\nPress Enter to continue...")
         elif "2." in choice:
-            rprint("\n[bold cyan]--- Claude Desktop Setup ---[/bold cyan]")
-            rprint("Add the following to your claude_desktop_config.json:")
             config_example = {
                 "mcpServers": {
-                    "aim-engram": {
-                        "command": os.path.join(AIM_ROOT, "venv/bin/python3"),
-                        "args": [os.path.join(AIM_ROOT, ".aim_core/mcp_server.py")]
+                    "search_lancedb": {
+                        "command": venv_py,
+                        "args": [mcp_script],
                     }
                 }
             }
             rprint(f"[yellow]{json.dumps(config_example, indent=2)}[/yellow]")
-            rprint("\n[bold cyan]--- Cursor / VS Code Setup ---[/bold cyan]")
-            rprint("1. Open MCP settings in your IDE.")
-            rprint("2. Add a new 'stdio' server.")
-            rprint(f"3. Command: [yellow]{os.path.join(AIM_ROOT, 'venv/bin/python3')}[/yellow]")
-            rprint(f"4. Args: [yellow]{os.path.join(AIM_ROOT, '.aim_core/mcp_server.py')}[/yellow]")
             input("\nPress Enter to continue...")
 
+
 def save_config(config):
-    with open(CONFIG_PATH, 'w') as f:
-        json.dump(config, f, indent=2)
+    save_config_atomic(config, config_path=CONFIG_PATH)
 
 
 

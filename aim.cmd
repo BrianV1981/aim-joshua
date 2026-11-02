@@ -14,15 +14,4 @@ if not exist "%VENV_PY%" (
 )
 
 "%VENV_PY%" "%ROOT%\joshua_os\.aim_core\aim_cli.py" %*
-set "EXIT_CODE=%ERRORLEVEL%"
-
-if /I not "%CD%"=="%ROOT%" (
-    if exist ".git" (
-        echo [*] Session complete. Committing state to local ledger...
-        git add memory_lance/ 2>nul
-        git add AGENTS.md 2>nul
-        git commit -m "Auto-commit: Agent session complete" >nul 2>&1
-    )
-)
-
-exit /b %EXIT_CODE%
+exit /b %ERRORLEVEL%

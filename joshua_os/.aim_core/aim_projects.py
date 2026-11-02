@@ -102,6 +102,20 @@ def _load_config_settings() -> dict:
         return {}
 
 
+def _detect_owner_from_git_remote() -> Optional[str]:
+    proc = subprocess.run(
+        ["git", "config", "--get", "remote.origin.url"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    url = (proc.stdout or "").strip()
+    if not url:
+        return None
+    m = re.search(r"github\.com[:/]([^/]+)/[^/]+?(?:\.git)?$", url)
+    return m.group(1) if m else None
+
+
 def resolve_project_config(
     owner: Optional[str] = None,
     number: Optional[int] = None,
@@ -112,20 +126,21 @@ def resolve_project_config(
     o = (
         owner
         or os.environ.get("AIM_PROJECTS_OWNER")
-        or file_cfg.get("owner")
+        or (file_cfg.get("owner") or "").strip()
+        or _detect_owner_from_git_remote()
         or "@me"
     )
     n_raw = (
         number
         if number is not None
-        else os.environ.get("AIM_PROJECTS_NUMBER")
-        or file_cfg.get("number")
+        else (os.environ.get("AIM_PROJECTS_NUMBER") or file_cfg.get("number"))
     )
     if n_raw is None or n_raw == "":
         n = None
     else:
         try:
-            n = int(n_raw)
+            parsed_n = int(n_raw)
+            n = parsed_n if parsed_n > 0 else None
         except (TypeError, ValueError):
             _eprint(f"[ERROR] Invalid project number: {n_raw!r}")
             sys.exit(1)
@@ -520,8 +535,8 @@ def cmd_list_projects(owner: str) -> None:
             print(f"         {url}")
     print(
         "\nSet default:\n"
-        "  export AIM_PROJECTS_OWNER=BrianV1981\n"
-        "  export AIM_PROJECTS_NUMBER=7"
+        "  export AIM_PROJECTS_OWNER=<owner>\n"
+        "  export AIM_PROJECTS_NUMBER=<number>"
     )
 
 
@@ -595,7 +610,7 @@ def cmd_doctor(cfg: dict) -> None:
             print(
                 "\n[ACTION] Active gh account needs project scope:\n"
                 "  gh auth refresh -h github.com -s project,read:project\n"
-                "  # ensure BrianV1981 (or board owner) is the active account:\n"
+                "  # ensure the board owner is the active account:\n"
                 "  gh auth switch --user <owner>"
             )
         sys.exit(1)
@@ -630,7 +645,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         default=None,
         help="Single-select field name (default: Status)",
     )
-    parser.add_argument("--repo", default=None, help="nameWithOwner for issue add (e.g. BrianV1981/aim-ld)")
+    parser.add_argument("--repo", default=None, help="nameWithOwner for issue add (e.g. my-org/my-repo)")
 
     sub = parser.add_subparsers(dest="action")
 
@@ -676,10 +691,10 @@ def main(argv: Optional[list[str]] = None) -> None:
             "\nExamples:\n"
             "  aim projects doctor\n"
             "  aim projects list\n"
-            "  export AIM_PROJECTS_NUMBER=7 AIM_PROJECTS_OWNER=BrianV1981\n"
+            "  export AIM_PROJECTS_NUMBER=1 AIM_PROJECTS_OWNER=@me\n"
             "  aim projects board\n"
-            "  aim projects in-progress 206\n"
-            "  aim projects done 206\n"
+            "  aim projects in-progress 42\n"
+            "  aim projects done 42\n"
         )
         sys.exit(0)
 

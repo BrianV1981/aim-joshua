@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.1.2] - 2026-11-02
+- Fix: Restrict `./aim uninstall` and `./aim purge` strictly to J.O.S.H.U.A.-owned artifacts (never deleting host repository `.git/`, `venv/`, `requirements.txt`, `LICENSE`, or source files), and remove launcher `$PWD` teardown `git commit` side-effects (#127)
+- Fix: Eliminate Windows `C:\` infinite root-discovery loops (`!= '/'`), guard POSIX `fcntl`/`select`, add `cryptography>=42.0.0` to `requirements.txt`, remove unused `datasets`, preserve user JSONC/third-party `hooks` configs, remove `Escape` before `Enter` in `aim_init.py` tmux paste, make `link_cli_alias.sh` macOS/BSD-portable, and add `windows-latest` CI matrix leg to `smoke-test.yml` (#128, #134)
+- Fix: Resolve perpetual `[PORTABILITY]` `CONFIG.json` rewrite loop in `config_utils.py`, unify config path lookups, write `CONFIG.json` atomically only on actual workspace relocation, and remove hardcoded `BrianV1981` Project `#7` defaults (#129)
+- Fix: Add cross-platform LanceDB write locking (`fcntl`/`msvcrt`), SQL literal quoting, 5-minute live compaction window, explicit `db_path` plumbing without global `LANCE_DB_PATH` mutation, and SHA-256 cached vector preservation during offline `./aim index` runs (#130)
+- Fix: Align Blackbox Vault docs with Fernet (`AES-128-CBC + HMAC-SHA256`) at-rest threat model, scope `opencode-blackbox` by `WHERE session_id = ?`, clean `0600` `/tmp` staging files in `finally:`, enable SQLite WAL on `history.db`, and guard against shrink-overwriting larger `.enc` archives without `--force` (#132)
+- Fix: Guard `cmd_promote` with pre-merge `git status --porcelain` clean-worktree check + local-only repo support, harden `cmd_update` with release-tag resolution (`--ref`) + Zip-Slip path traversal validation, wire `delegate`/`unplug`/`handoff-vnext e2e-staged`, prune ~4,000 LOC of dead zombie scripts, reconcile root & `joshua_os_docs/` manuals, and re-bake `default_lance` (#131, #133, #134, #135)
+
+
 ## [v1.1.1] - 2026-11-02
 - Fix: Deduplicate `./aim index` via single-batch `upsert_fragments`, repo-relative `session_id` keys, single-pass LanceDB FTS rebuild, and `table.optimize` compaction (#122)
 - Fix: Prevent Windows PowerShell 5.1 `py.exe -3` array-splat hang in `joshua_os/install*.ps1` (#117)

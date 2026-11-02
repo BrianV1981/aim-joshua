@@ -1,84 +1,40 @@
-# The Codebase Map (A.I.M. v1.61.3)
+# The Codebase Map (`joshua_os/` — v1.1.2)
 
-This document is the literal map of every internal script running the A.I.M. OS. Use it to understand where business logic lives. All scripts have been flattened into the `aim_core/` directory to simplify the architecture.
-
----
-
-## 1. Core Engines (Database, Retrieval, Config)
-*The pure Python engines driving the backend architecture and LanceDB integration.*
-
-*   **`lance_backend.py`**: The LanceDB PyArrow wrapper. Manages RAG 5.21 schema definition and vector database connectivity.
-*   **`retriever.py`**: A.I.M. Autonomous Knowledge Retriever (Native LanceDB/Parquet). The Hybrid RAG search engine combining vector embeddings with Tantivy FTS.
-*   **`reasoning_utils.py`**: The universal LLM client. Dynamically routes API calls based on the Tiers defined in `CONFIG.json`.
-*   **`config_utils.py`**: The single source of truth for loading, validating, and auto-repairing `.aim_core/CONFIG.json` paths.
-*   **`bootstrap_brain.py`**: The initialization engine. Re-indexes core documents into `memory_lance`.
+This document maps every active Python module and hook in `joshua_os/`. Use it to locate exact implementation boundaries before modifying engine behavior.
 
 ---
 
-## 2. Command Line Interface (CLI & Routing)
-*The front-end commands accessible via the `aim` global alias.*
-
-*   **`aim_cli.py`**: The central router. Parses all `aim` commands and dispatches the corresponding script.
-*   **`aim_router.py`**: Handles dynamic routing algorithms.
-*   **`aim_config.py`**: The Interactive TUI (Cockpit) for managing API Keys, LLM Cognitive Tiers, and MCP Servers.
-*   **`aim_push.sh`**: The GitOps validation wrapper enforcing branch/issue protocols and semantic versioning.
-*   **`aim_batch_merge.py`**: Utility for merging multiple open `fix/issue-*` branches into main.
-*   **`aim_delegate.py`**: A.I.M. Dynamic Sub-Agent Delegation protocol for distributed processing.
-*   **`aim_init.py`**: The setup wizard executed upon first repository installation to build the databases, wiki, and hooks.
-*   **`memory_salvage.py`**: Recovery script to safely extract the signal from a corrupted V8 heap crash.
-*   **`aim_doctor.py`**: Validates system dependencies and environment integrity (Node versions, LanceDB, API keys).
+## 1. Core Storage, Retrieval & Configuration (`joshua_os/.aim_core/`)
+* **`config_utils.py`**: Portable `CONFIG.json` loader (`joshua_os/.aim_core/CONFIG.json`), atomic relocation-only config persistence, Antigravity 2.0 + legacy path resolution, and cross-platform venv Python discovery.
+* **`lance_backend.py`**: PyArrow/LanceDB table wrapper (`memory_lance`), cross-platform file write lock (`fcntl`/`msvcrt`), SQL literal quoting, `EntityIntersectionReranker` (Reciprocal Rank Fusion), and safe version compaction.
+* **`retriever.py`**: Two-Tier Hybrid RAG search engine combining LanceDB (`memory_lance` + optional umbrella fallback) with zero-copy mounted `.parquet` cartridges and N-1/N+1 sandwich context expansion.
+* **`mcp_lancedb.py`**: FastMCP server exposing `search_lancedb` over stdio with dynamic workspace root resolution and zero global path mutation.
+* **`bootstrap_brain.py`**: Incremental foundation/wiki indexer (`AGENTS.md`, `joshua_os_docs/`, `memory-wiki/`) with SHA-256 chunk vector caching so offline runs preserve existing 768-dim embeddings.
+* **`reasoning_utils.py`**: Multi-provider LLM client (Antigravity headless, Anthropic, OpenAI/OpenRouter, Ollama, Codex) configured via `CONFIG.json` and OS keyring.
 
 ---
 
-## 3. Lifecycle, Memory & Continuity
-*Scripts that manage the agent's context, history, and autonomous operations.*
-
-
-*   **`handoff_pulse_generator.py`**: Generates the `CURRENT_PULSE.md` and `LAST_SESSION_FLIGHT_RECORDER.md`, and triggers vector ingestion.
-*   **`extract_signal.py`**: The Zero-Token Scribe. Uses pure Python to strip 85% of JSON noise from native CLI transcripts.
-*   **`session_porter.py`**: Fast mirroring of global CLI transcripts to the local raw archive.
-
-*   **`maintenance.py`**: Automated janitor for purging logs and maintaining retention policies.
-*   **`heartbeat.py`**: Zero-token diagnostic tool verifying system integrity.
-*   **`blackbox_vault.py`**: Encrypted storage for raw JSONL sessions.
-*   **`audit_tools.py`**: Audits recent history to generate Weekly Sitreps.
-*   **`recall_tools.py`**: Legacy history querying fallback.
+## 2. CLI Routers, Installers & Onboarding (`joshua_os/.aim_core/`)
+* **`aim_cli.py`**: Primary CLI entry point (`COMMAND_HANDLERS`), GitOps worktree commands (`bug`, `bug-operator`, `fix`, `promote`, `push`, `prune-remote`, `merge-batch`), and release-pinned Zip-Slip-guarded `cmd_update`.
+* **`cli_memory.py`**: Memory, cartridge, and lifecycle handlers (`sessions`, `search-sessions`, `bake`, `exchange`, `jack-in`, `unplug`, `clean`, `audit`, `recall`, `OS_DIR`-scoped `purge`, and host-safe `uninstall`).
+* **`cli_vault.py`**: CLI handlers for `vault`, `handoff-vnext`, `agy-blackbox`, `grok-blackbox`, `codex-blackbox`, and `WHERE session_id = ?`-scoped `opencode-blackbox`.
+* **`bootstrap_install.py`**: Pure-Python cross-platform installer (`--mode clean|agent|core`) invoked by `install*.sh` and `install*.ps1`.
+* **`aim_init.py`**: Workspace initializer, `AGENTS.md` template/persona provisioner, non-destructive Antigravity hook registrar, and POSIX `tmux` onboarding launcher.
+* **`register_mcp.py` & `agy_workspace_trust.py`**: Non-destructive `search_lancedb` MCP auto-registration (preserving JSONC/malformed user files) and Antigravity trusted-workspace registration.
+* **`aim_projects.py`**: GitHub Projects v2 GraphQL/`gh project` Kanban integration (`board`, `in-progress`, `done`, `blocked`, `doctor`).
+* **`aim_config.py`, `aim_doctor.py`, `aim_batch_merge.py`, `aim_delegate.py`, `aim_router.py`**: Interactive configuration menu, dependency validator, batch branch merger, parallel file analyzer, and hook path router.
 
 ---
 
-## 4. Connectivity, Sync & Tools
-*Bridges to external services, IDEs, and the P2P Swarm.*
-
-*   **`aim_vault.py`**: A.I.M. Secret Vault Manager for holding API keys securely without putting them in plaintext configs.
-*   **`aim_calc.py`**: Agent-Native Scientific Calculator.
-*   **`aim_scraper.py`**: Scrapes GitHub Issues and forums into Synapse Markdown docs.
-*   **`mcp_server.py`**: Model Context Protocol server enabling external IDEs (Cursor/VS Code) to query the databases and read memories.
-*   **`aim_torrent.py`**: The P2P DataJack Swarm daemon for sharing `.parquet` cartridges.
-*   **`aim_swarm.py`**: Generic swarm orchestration wrapper.
-*   **`sovereign_sync.py`**: Converts LanceDB tables into `.jsonl` files in `archive/sync/`.
-*   **`back-populator.py`**: Rebuilds LanceDB from `.jsonl` sync files.
-*   **`obsidian_sync.py`**: Outbound Obsidian Bridge. Mirrors memory to a local Obsidian Vault.
-
-*   **`sync_issue_tracker.py`**: Synchronizes remote GitHub issues to `ISSUE_TRACKER.md`.
-*   **`sync_mail.py`**: Synchronizer for Swarm Post Office / Unread Mail.
+## 3. Session Continuity, Vault & Maintenance (`joshua_os/.aim_core/` & `joshua_os/handoff/`)
+* **`blackbox_vault.py`**: Fernet (`AES-128-CBC + HMAC-SHA256`) at-rest session sealer (`archive/.raw_jsonl_blackbox/`), shrink-overwrite guard (`--force`), SHA-256 manifest verifier, and SQLite WAL `history.db` indexer.
+* **`aim_vault.py`**: OS keyring secret helper and `aim vault doctor` diagnostics.
+* **`extract_signal.py` & `session_naming.py`**: Pure-Python transcript noise stripper and human-readable Flight Record renderer.
+* **`handoff_pulse_generator.py`, `heartbeat.py`, `maintenance.py`, `audit_tools.py`, `recall_tools.py`**: Continuity pulse generator, `aim health` check, rolling archive janitor + locked LanceDB compaction, and session synthesis helpers.
+* **`joshua_os/handoff/` (`cli.py`, `handoff_core.py`, `blackbox_cron.py`, `flight_record.py`, `embed_store.py`, `packet.py`, `paths.py`, `adapters/`)**: Structured Handoff vNext pipeline (`handoff`, `blackbox-cron`, `e2e-staged`).
 
 ---
 
-## 5. Benchmarks & Testing
-*Automated, repeatable testing harnesses for the platform.*
-
-*   **`setup_environments.sh` & `setup_standard_environments.sh`**: Creates boilerplate folders for A/B testing frameworks.
-*   **`calculate_economics.py`**: Calculates benchmark economics from raw JSON logs.
-*   **`recover_json_logs.py`**: A.I.M. Benchmark JSON Recovery Protocol to extract logs for proof.
-*   **`run_amnesia_killer.py`**: Amnesia Killer Demo Harness.
-*   **`run_vibe_killer.py`**: Vibe Killer 60-Turn Demo Harness.
-
----
-
-## 6. DataJack Plugins (`aim_core/plugins/datajack/`)
-*The plugin architecture for forging and inspecting immutable ROM cartridges.*
-
-*   **`aim_bake.py`**: Compiles text directories into portable highly-compressed `.parquet` cartridges.
-*   **`aim_exchange.py`**: Handles ingestion and mounting of cartridges.
-*   **`forensic_utils.py`**: Contains the RAG 5.21 Length-Constrained Accumulator chunking algorithm and ingestion utilities.
-*   **`quarantine_daemon.py`**: Background watchdog verifying Swarm cartridge integrity and scanning for prompt injections.
+## 4. DataJack Plugins & Hooks
+* **`joshua_os/.aim_core/plugins/datajack/` (`aim_bake.py`, `aim_exchange.py`, `forensic_utils.py`)**: Length-Constrained Accumulator text chunker, `.parquet` ROM compiler, and local cartridge mount/unplug manager.
+* **`joshua_os/hooks/cognitive_mantra.py`**: Active `AfterTool` anti-drift reminder hook invoked through `aim_router.py`.
