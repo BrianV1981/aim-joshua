@@ -119,6 +119,33 @@ def _git_init_main(target: Path) -> None:
         )
 
 
+def _provision_persona_tools_md(persona_name: str, target: Path, home: Path, src_root: Path) -> bool:
+    """Copy persona-specific TOOLS.md from local aim-coagents or GitHub if available."""
+    safe_name = os.path.basename(persona_name.strip())
+    if not safe_name or (target / "TOOLS.md").exists():
+        return False
+    local_candidates = [
+        home / "aim-coagents" / "blueprints" / safe_name / "TOOLS.md",
+        src_root.parent / "aim-coagents" / "blueprints" / safe_name / "TOOLS.md",
+    ]
+    for cand in local_candidates:
+        if cand.is_file():
+            shutil.copy2(cand, target / "TOOLS.md")
+            return True
+    import urllib.request
+    url = f"https://raw.githubusercontent.com/BrianV1981/aim-coagents/main/blueprints/{safe_name}/TOOLS.md"
+    try:
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            if resp.status == 200:
+                content = resp.read().decode("utf-8")
+                if content.strip():
+                    (target / "TOOLS.md").write_text(content, encoding="utf-8")
+                    return True
+    except Exception:
+        pass
+    return False
+
+
 def _ensure_gitignore(target: Path) -> None:
     gi_path = target / ".gitignore"
     existing_lines = gi_path.read_text(encoding="utf-8", errors="ignore").splitlines() if gi_path.is_file() else []
@@ -259,7 +286,15 @@ def install_project(
             import aim_init
 
             if mode == "agent" and persona_name:
-                aim_init.provision_agents_md(str(target), persona_name=persona_name)
+                status = aim_init.provision_agents_md(str(target), persona_name=persona_name)
+                _provision_persona_tools_md(persona_name, target, home, src_root)
+                if status == "persona_blueprint":
+                    print(f"    [*] Installed Co-Agent persona blueprint: {persona_name}")
+                else:
+                    print(
+                        f"    [!] Persona '{persona_name}' not found in aim-coagents; "
+                        f"installed J.O.S.H.U.A. AGENTS.md ({status})."
+                    )
             else:
                 _copy_if_missing(src_root / "AGENTS.md", target / "AGENTS.md")
                 aim_init.provision_agents_md(str(target), persona_name=None)
@@ -286,9 +321,19 @@ def install_project(
             detect_path_binaries=(home_dir is None),
         )
 
-        # Register AGY trusted workspace when running against real HOME
+        # Register AGY trusted workspace (and POSIX trust helper persistence) when running against real HOME
         if home_dir is None:
             try:
+                if os.name != "nt":
+                    trust_src = dst_os / ".aim_core" / "agy_workspace_trust.py"
+                    if trust_src.is_file():
+                        share_dir = Path.home() / ".local" / "share" / "aim-joshua"
+                        share_dir.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(trust_src, share_dir / "agy_workspace_trust.py")
+                    wrapper_sh = dst_os / "scripts" / "install_agy_trust_wrapper.sh"
+                    if wrapper_sh.is_file() and shutil.which("bash"):
+                        subprocess.run(["bash", str(wrapper_sh)], check=False)
+
                 import agy_workspace_trust
 
                 agy_workspace_trust.ensure_workspace_trusted(str(target), quiet=True)

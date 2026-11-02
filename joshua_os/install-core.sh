@@ -2,54 +2,46 @@
 # A.I.M. Core Contributor Installer
 # curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install-core.sh | bash
 
-set -e
+set -euo pipefail
 echo "--- J.O.S.H.U.A. CORE CONTRIBUTOR INSTALLER ---"
 
 CURRENT_DIR=$(pwd)
-CLI_NAME=$(basename "$CURRENT_DIR")
-
 if [ "$CURRENT_DIR" = "$HOME" ] || [ "$CURRENT_DIR" = "/" ]; then
-    echo "[ERROR] Refusing to install directly in $CURRENT_DIR."
-    echo "Please create and cd into a dedicated directory first:"
-    echo "  mkdir -p ~/aim-joshua-dev && cd ~/aim-joshua-dev"
+    echo "[ERROR] Refusing to install directly in $CURRENT_DIR." >&2
+    echo "Please create and cd into a dedicated directory first:" >&2
+    echo "  mkdir -p ~/aim-joshua-dev && cd ~/aim-joshua-dev" >&2
     exit 1
 fi
 
-echo "[*] Step 1: Provisioning Local Operating System..."
-
-# Clone the engine directly into a temporary hidden folder to avoid empty directory conflicts
-git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git .aim_temp_clone
-cd .aim_temp_clone
-
-echo "    [*] Building Engine Virtual Environment..."
-./joshua_os/setup.sh
-
-# Safely merge the Engine components into the host project
-echo "[*] Step 2: Scaffolding Sovereign Environment..."
-
-shopt -s dotglob
-cp -a * ../
-cd ..
-rm -rf .aim_temp_clone
-shopt -u dotglob
-
-# Base OS Provisioning (Moving the pre-baked DB to the active layer)
-mkdir -p joshua_os/memory_lance
-cp -r joshua_os/assets/default_lance/* joshua_os/memory_lance/
-
-echo "    [*] Registering MCP Server (Auto-Detecting Harnesses)..."
-./joshua_os/venv/bin/python3 ./joshua_os/.aim_core/register_mcp.py --project-root "$CURRENT_DIR"
-
-echo "    [*] Linking Local Alias ($CLI_NAME)..."
-bash ./joshua_os/link_cli_alias.sh "$CURRENT_DIR" "$CLI_NAME"
-
-if [[ -f ./joshua_os/.aim_core/agy_workspace_trust.py ]]; then
-    PYTHONPATH="./joshua_os/.aim_core${PYTHONPATH:+:$PYTHONPATH}" \
-        python3 ./joshua_os/.aim_core/agy_workspace_trust.py "$CURRENT_DIR" || true
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "[ERROR] python3 (3.10+) is required on PATH." >&2
+    exit 1
 fi
 
-echo ""
-echo "--- INSTALLATION COMPLETE ---"
-echo "You are a Core Contributor. The .git history and developer folders (tests/, benchmarks/) have been preserved."
-echo "A default AGENTS.md blueprint has been provided."
-echo ""
+TEMP_CLONE=""
+cleanup() {
+    local rc=$?
+    if [ -n "$TEMP_CLONE" ] && [ -d "$TEMP_CLONE" ]; then
+        rm -rf "$TEMP_CLONE"
+    fi
+    exit "$rc"
+}
+trap cleanup EXIT
+
+if [ -n "${AIM_INSTALL_SOURCE:-}" ] && [ -f "$AIM_INSTALL_SOURCE/joshua_os/.aim_core/bootstrap_install.py" ]; then
+    SOURCE_ROOT="$AIM_INSTALL_SOURCE"
+else
+    TEMP_CLONE="$CURRENT_DIR/.aim_temp_clone"
+    rm -rf "$TEMP_CLONE"
+    echo "[*] Step 1: Cloning J.O.S.H.U.A. Operating System..."
+    git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git "$TEMP_CLONE"
+    SOURCE_ROOT="$TEMP_CLONE"
+fi
+
+EXTRA_ARGS=()
+[ "${AIM_SKIP_DEPS:-0}" = "1" ] && EXTRA_ARGS+=("--skip-deps")
+[ -n "${AIM_HOME_OVERRIDE:-}" ] && EXTRA_ARGS+=("--home" "$AIM_HOME_OVERRIDE")
+[ "${AIM_SKIP_SHELL_RC:-0}" = "1" ] && EXTRA_ARGS+=("--skip-shell-rc")
+
+python3 "$SOURCE_ROOT/joshua_os/.aim_core/bootstrap_install.py" \
+    --mode core --source "$SOURCE_ROOT" --target "$CURRENT_DIR" "${EXTRA_ARGS[@]}"

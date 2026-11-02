@@ -2,81 +2,46 @@
 # A.I.M. Clean OS Installer (Default)
 # curl -fsSL https://raw.githubusercontent.com/BrianV1981/aim-joshua/main/joshua_os/install.sh | bash
 
-set -e
+set -euo pipefail
 echo "--- J.O.S.H.U.A. CLEAN INSTALLER ---"
 
 CURRENT_DIR=$(pwd)
-CLI_NAME=$(basename "$CURRENT_DIR")
-
 if [ "$CURRENT_DIR" = "$HOME" ] || [ "$CURRENT_DIR" = "/" ]; then
-    echo "[ERROR] Refusing to install directly in $CURRENT_DIR."
-    echo "Please create and cd into a dedicated project directory first:"
-    echo "  mkdir -p ~/my-project && cd ~/my-project"
+    echo "[ERROR] Refusing to install directly in $CURRENT_DIR." >&2
+    echo "Please create and cd into a dedicated project directory first:" >&2
+    echo "  mkdir -p ~/my-project && cd ~/my-project" >&2
     exit 1
 fi
 
-echo "[*] Step 1: Provisioning Local Operating System..."
-
-# Clone the engine directly into a temporary hidden folder to avoid empty directory conflicts
-git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git .aim_temp_clone
-cd .aim_temp_clone
-
-echo "    [*] Building Engine Virtual Environment..."
-./joshua_os/setup.sh
-
-# Safely merge the Engine components into the host project
-echo "[*] Step 2: Scaffolding Sovereign Environment..."
-
-rm -rf joshua_os/tests/ joshua_os/benchmarks/ joshua_os/memory-wiki/
-
-cp -a joshua_os ../
-cp -n AGENTS.md ../ 2>/dev/null || true
-cp -n TOOLS.md ../ 2>/dev/null || true
-cp -n aim.ps1 ../ 2>/dev/null || true
-cp -n aim.cmd ../ 2>/dev/null || true
-
-cd ..
-rm -rf .aim_temp_clone
-
-if [ ! -d ".git" ]; then
-    git init
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "[ERROR] python3 (3.10+) is required on PATH." >&2
+    exit 1
 fi
 
-# Ensure J.O.S.H.U.A. OS exoskeleton is gitignored in consumer projects
-touch .gitignore
-for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do
-    base="${entry%/}"
-    if ! grep -qxE "/?${base}(/|/\*)?" .gitignore 2>/dev/null; then
-        echo "$entry" >> .gitignore
+TEMP_CLONE=""
+cleanup() {
+    local rc=$?
+    if [ -n "$TEMP_CLONE" ] && [ -d "$TEMP_CLONE" ]; then
+        rm -rf "$TEMP_CLONE"
     fi
-done
+    exit "$rc"
+}
+trap cleanup EXIT
 
-mkdir -p memory-wiki/pages
-[ ! -f memory-wiki/index.md ] && printf "# %s — Memory Wiki Index\n\n## Core Pages\n" "$CLI_NAME" > memory-wiki/index.md
-[ ! -f memory-wiki/log.md ] && printf "# %s — Memory Wiki Log\n" "$CLI_NAME" > memory-wiki/log.md
-
-[ ! -f README.md ] && echo "# $CLI_NAME" > README.md
-
-# Base OS Provisioning (Moving the pre-baked DB to the active layer)
-mkdir -p joshua_os/memory_lance
-cp -r joshua_os/assets/default_lance/* joshua_os/memory_lance/
-
-echo "    [*] Registering MCP Server (Auto-Detecting Harnesses)..."
-./joshua_os/venv/bin/python3 ./joshua_os/.aim_core/register_mcp.py --project-root "$CURRENT_DIR"
-
-echo "    [*] Linking Local Alias ($CLI_NAME)..."
-bash ./joshua_os/link_cli_alias.sh "$CURRENT_DIR" "$CLI_NAME"
-
-if [[ -f ./joshua_os/.aim_core/agy_workspace_trust.py ]]; then
-    PYTHONPATH="./joshua_os/.aim_core${PYTHONPATH:+:$PYTHONPATH}" \
-        python3 ./joshua_os/.aim_core/agy_workspace_trust.py "$CURRENT_DIR" || true
+if [ -n "${AIM_INSTALL_SOURCE:-}" ] && [ -f "$AIM_INSTALL_SOURCE/joshua_os/.aim_core/bootstrap_install.py" ]; then
+    SOURCE_ROOT="$AIM_INSTALL_SOURCE"
+else
+    TEMP_CLONE="$CURRENT_DIR/.aim_temp_clone"
+    rm -rf "$TEMP_CLONE"
+    echo "[*] Step 1: Cloning J.O.S.H.U.A. Operating System..."
+    git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git "$TEMP_CLONE"
+    SOURCE_ROOT="$TEMP_CLONE"
 fi
 
-echo ""
-echo "--- INSTALLATION COMPLETE ---"
-echo "You have successfully installed the clean J.O.S.H.U.A. OS into $CURRENT_DIR."
-echo "Next steps:"
-echo "  1. source ~/.bashrc"
-echo "  2. $CLI_NAME doctor"
-echo "  3. Customize AGENTS.md for $CLI_NAME and run: ./aim index"
-echo ""
+EXTRA_ARGS=()
+[ "${AIM_SKIP_DEPS:-0}" = "1" ] && EXTRA_ARGS+=("--skip-deps")
+[ -n "${AIM_HOME_OVERRIDE:-}" ] && EXTRA_ARGS+=("--home" "$AIM_HOME_OVERRIDE")
+[ "${AIM_SKIP_SHELL_RC:-0}" = "1" ] && EXTRA_ARGS+=("--skip-shell-rc")
+
+python3 "$SOURCE_ROOT/joshua_os/.aim_core/bootstrap_install.py" \
+    --mode clean --source "$SOURCE_ROOT" --target "$CURRENT_DIR" "${EXTRA_ARGS[@]}"

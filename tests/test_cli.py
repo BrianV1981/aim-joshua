@@ -192,23 +192,70 @@ def test_vault_subparser_missing_verb_exits_2():
     assert "Usage: aim vault" in res.stdout
 
 
-def test_installers_have_home_guard_and_clean_readme_onboarding():
+def test_installers_have_home_guard_and_clean_readme_onboarding(tmp_path):
     with open("joshua_os/install.sh", "r", encoding="utf-8") as f:
         install_sh = f.read()
     with open("joshua_os/install-agent.sh", "r", encoding="utf-8") as f:
         install_agent_sh = f.read()
+    with open("joshua_os/install-core.sh", "r", encoding="utf-8") as f:
+        install_core_sh = f.read()
     with open("README.md", "r", encoding="utf-8") as f:
         readme = f.read()
 
-    assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_sh
-    assert "cp -a joshua_os ../" in install_sh
-    assert "cp -a * ../" not in install_sh
-    assert 'for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do' in install_sh
-    assert 'if [ "$CURRENT_DIR" = "$HOME" ]' in install_agent_sh
+    # Issue #126 (JOSH-031): All 3 POSIX installers are thin shims with $HOME guard delegating to bootstrap_install.py
+    for script_body, expected_mode in (
+        (install_sh, "--mode clean"),
+        (install_agent_sh, "--mode agent"),
+        (install_core_sh, "--mode core"),
+    ):
+        assert 'if [ "$CURRENT_DIR" = "$HOME" ] || [ "$CURRENT_DIR" = "/" ]' in script_body
+        assert "bootstrap_install.py" in script_body
+        assert expected_mode in script_body
+        assert "cp -a * ../" not in script_body
+
     assert 'PERSONA_NAME="${1:-}"' in install_agent_sh
-    assert 'for entry in "joshua_os/" "aim" "aim.ps1" "aim.cmd" "workspace/" "archive/"; do' in install_agent_sh
     assert "mkdir -p ~/my-project && cd ~/my-project" in readme
     assert "Customizing J.O.S.H.U.A. for Your New Project" in readme
+
+    # End-to-end execution of POSIX shims against tmp_path (verifies ./aim launcher, git init -b main, README title)
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    env = os.environ.copy()
+    env.update(
+        {
+            "AIM_INSTALL_SOURCE": os.getcwd(),
+            "AIM_SKIP_DEPS": "1",
+            "AIM_HOME_OVERRIDE": str(fake_home),
+            "AIM_SKIP_SHELL_RC": "1",
+        }
+    )
+
+    clean_proj = tmp_path / "posix-clean-app"
+    clean_proj.mkdir()
+    res_clean = subprocess.run(
+        ["bash", os.path.abspath("joshua_os/install.sh")],
+        cwd=str(clean_proj),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert res_clean.returncode == 0, res_clean.stderr
+    assert (clean_proj / "aim").is_file() and os.access(clean_proj / "aim", os.X_OK)
+    assert (clean_proj / "README.md").read_text(encoding="utf-8") == "# posix-clean-app\n"
+
+    agent_proj = tmp_path / "posix-agent-node"
+    agent_proj.mkdir()
+    res_agent = subprocess.run(
+        ["bash", os.path.abspath("joshua_os/install-agent.sh"), "offline-test-persona"],
+        cwd=str(agent_proj),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert res_agent.returncode == 0, res_agent.stderr
+    assert (agent_proj / "aim").is_file() and os.access(agent_proj / "aim", os.X_OK)
+    assert (agent_proj / "README.md").read_text(encoding="utf-8") == "# posix-agent-node\n"
+    assert "J.O.S.H.U.A. (offline-test-persona)" in (agent_proj / "AGENTS.md").read_text(encoding="utf-8")
 
 
 def test_ensure_consumer_gitignore_populates_and_skips_upstream(tmp_path):
