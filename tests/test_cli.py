@@ -555,6 +555,11 @@ def test_requirements_linux_marker_and_powershell_shims():
         with open(ps1, "r", encoding="utf-8") as f:
             body = f.read()
         assert "bootstrap_install.py" in body
+        # Issue #117 (JOSH-W01): Never array-splat dash-prefixed flags (@("-3")) on Windows PS 5.1
+        for forbidden_splat in ("@prefixArgs", "@PyArgs", "@InstallArgs", '@("py", "-3")'):
+            assert forbidden_splat not in body, f"{ps1} contains PS 5.1 splat hazard {forbidden_splat}"
+        assert "$null | & py -3 -c $probe" in body
+        assert "& py -3 $BootstrapScript --mode " in body
 
     with open("README.md", "r", encoding="utf-8") as f:
         readme = f.read()

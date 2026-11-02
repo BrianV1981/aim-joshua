@@ -21,31 +21,49 @@ if (($CurrentDir.TrimEnd('\') -ieq $HomePath.TrimEnd('\')) -or ($CurrentDir.Trim
 }
 
 function Resolve-JoshuaPython {
-    foreach ($candidate in @(@("py", "-3"), @("python"), @("python3"))) {
-        $exe = $candidate[0]
-        $prefixArgs = if ($candidate.Length -gt 1) { $candidate[1..($candidate.Length - 1)] } else { @() }
+    $probe = "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)"
+    if (Get-Command "py" -ErrorAction SilentlyContinue) {
+        $null | & py -3 -c $probe 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            return "py-3"
+        }
+    }
+    foreach ($exe in @("python", "python3")) {
         if (Get-Command $exe -ErrorAction SilentlyContinue) {
-            & $exe @prefixArgs -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)" 2>$null
+            $null | & $exe -c $probe 2>$null
             if ($LASTEXITCODE -eq 0) {
-                return ,$candidate
+                return $exe
             }
         }
     }
     throw "[ERROR] Python 3.10+ is required on PATH."
 }
 
-$PyCmd = Resolve-JoshuaPython
-$PyExe = $PyCmd[0]
-$PyArgs = if ($PyCmd.Length -gt 1) { $PyCmd[1..($PyCmd.Length - 1)] } else { @() }
-
+$PySpec = Resolve-JoshuaPython
 $TempClone = Join-Path $CurrentDir ".aim_temp_clone"
 try {
-    if (Test-Path $TempClone) { Remove-Item -Recurse -Force $TempClone }
-    git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git $TempClone
-    if ($LASTEXITCODE -ne 0) { throw "git clone failed." }
-    $InstallArgs = @((Join-Path $TempClone "joshua_os\.aim_core\bootstrap_install.py"), "--mode", "agent", "--source", $TempClone, "--target", $CurrentDir)
-    if ($PersonaName) { $InstallArgs += @("--persona", $PersonaName) }
-    & $PyExe @PyArgs @InstallArgs
+    if ($env:AIM_INSTALL_SOURCE -and (Test-Path (Join-Path $env:AIM_INSTALL_SOURCE "joshua_os\.aim_core\bootstrap_install.py"))) {
+        $SourceRoot = $env:AIM_INSTALL_SOURCE
+    } else {
+        if (Test-Path $TempClone) { Remove-Item -Recurse -Force $TempClone }
+        git clone --depth 1 https://github.com/BrianV1981/aim-joshua.git $TempClone
+        if ($LASTEXITCODE -ne 0) { throw "git clone failed." }
+        $SourceRoot = $TempClone
+    }
+    $BootstrapScript = Join-Path $SourceRoot "joshua_os\.aim_core\bootstrap_install.py"
+    if ($PersonaName) {
+        if ($PySpec -eq "py-3") {
+            & py -3 $BootstrapScript --mode agent --source $SourceRoot --target $CurrentDir --persona $PersonaName
+        } else {
+            & $PySpec $BootstrapScript --mode agent --source $SourceRoot --target $CurrentDir --persona $PersonaName
+        }
+    } else {
+        if ($PySpec -eq "py-3") {
+            & py -3 $BootstrapScript --mode agent --source $SourceRoot --target $CurrentDir
+        } else {
+            & $PySpec $BootstrapScript --mode agent --source $SourceRoot --target $CurrentDir
+        }
+    }
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } finally {
     if (Test-Path $TempClone) { Remove-Item -Recurse -Force $TempClone -ErrorAction SilentlyContinue }
