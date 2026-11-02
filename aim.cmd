@@ -13,6 +13,4 @@ if not exist "%VENV_PY%" (
     )
 )
 
-(
-    "%VENV_PY%" "%ROOT%\joshua_os\.aim_core\aim_cli.py" %* && exit /b 0 || call exit /b %%ERRORLEVEL%%
-)
+(goto) 2>nul & "%VENV_PY%" "%ROOT%\joshua_os\.aim_core\aim_cli.py" %*

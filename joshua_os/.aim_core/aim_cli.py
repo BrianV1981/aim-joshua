@@ -14,6 +14,7 @@ import urllib.request
 import zipfile
 
 # --- VENV BOOTSTRAP ---
+os.environ.setdefault("NODE_OPTIONS", "--max-old-space-size=8192")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 aim_root = os.path.dirname(current_dir)
 venv_python = (
