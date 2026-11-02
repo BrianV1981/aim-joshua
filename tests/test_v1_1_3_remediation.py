@@ -448,6 +448,7 @@ def test_issue_135_unmocked_day0_empty_dir_existing_repo_and_unborn_head_e2e(tmp
     # (c) Manual 0-commit git init -> ./aim fix 1 must fail cleanly with rc=1 and never create an orphan worktree
     unborn = tmp_path / "manual-unborn-repo"
     unborn.mkdir()
+    subprocess.run(["git", "init", "-b", "main"], cwd=str(unborn), env=env, check=True, capture_output=True)
     res_inst_c = subprocess.run(
         [
             sys.executable,
@@ -469,11 +470,6 @@ def test_issue_135_unmocked_day0_empty_dir_existing_repo_and_unborn_head_e2e(tmp
         text=True,
     )
     assert res_inst_c.returncode == 0
-    # Simulate a user manually wiping .git and running bare git init -b main with 0 commits
-    import shutil
-
-    shutil.rmtree(unborn / ".git")
-    subprocess.run(["git", "init", "-b", "main"], cwd=str(unborn), env=env, check=True, capture_output=True)
 
     unborn_aim = _consumer_launcher(unborn)
     res_fix_c = subprocess.run(
