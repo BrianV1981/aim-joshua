@@ -750,5 +750,51 @@ def test_agy_2_0_and_legacy_cli_path_resolution_and_blackbox_exit_codes(tmp_path
     assert not eph_brain.exists()
 
 
+def test_search_sessions_fts5_special_tokens_and_db_error_exit_code(tmp_path):
+    """Issue #124 (JOSH-029): './aim search-sessions' handles hyphens, dots, and # cleanly and exits 1 on DB errors."""
+    import sqlite3
+
+    vessel = tmp_path / "fts-project"
+    arch_dir = vessel / "joshua_os" / "archive"
+    (vessel / "joshua_os" / ".aim_core").mkdir(parents=True)
+    arch_dir.mkdir(parents=True)
+
+    hist_db = arch_dir / "history.db"
+    conn = sqlite3.connect(str(hist_db))
+    conn.execute("CREATE TABLE history (session_id TEXT PRIMARY KEY, timestamp TEXT, turn_count INTEGER, title TEXT)")
+    conn.execute("CREATE VIRTUAL TABLE history_fts USING fts5(session_id, timestamp, content)")
+    sid = "sess-fts-0124"
+    body = "Shipped aim-joshua v1.0.0 fix for JOSH-029 in mcp_lancedb.py closing issue #116."
+    conn.execute("INSERT INTO history VALUES (?, ?, ?, ?)", (sid, "2026-11-02T12:00:00Z", 4, "FTS5 Test"))
+    conn.execute("INSERT INTO history_fts VALUES (?, ?, ?)", (sid, "2026-11-02T12:00:00Z", body))
+    conn.commit()
+    conn.close()
+
+    aim_bin = os.path.abspath("./aim")
+    for token in ("aim-joshua", "JOSH-029", "v1.0.0", "mcp_lancedb.py", "#116", "NOT aim-joshua", "aim-joshua AND v1.0.0"):
+        res = subprocess.run(
+            [aim_bin, "search-sessions", token],
+            cwd=str(vessel),
+            capture_output=True,
+            text=True,
+        )
+        assert res.returncode == 0, f"Failed on {token!r}: {res.stderr}"
+        assert sid in res.stdout, f"Expected {sid} in results for {token!r}, got:\n{res.stdout}"
+        assert "OperationalError" not in res.stdout
+        assert "OperationalError" not in res.stderr
+
+    # Corrupt history.db must exit 1 with error on stderr
+    hist_db.write_bytes(b"corrupt-non-sqlite-payload")
+    bad = subprocess.run(
+        [aim_bin, "search-sessions", "aim-joshua"],
+        cwd=str(vessel),
+        capture_output=True,
+        text=True,
+    )
+    assert bad.returncode == 1
+    assert "ERROR: Session search failed" in bad.stderr
+
+
+
 
 

@@ -147,6 +147,33 @@ def cmd_sessions(args):
     print(f"  • Markdown Flight Logs  : {os.path.join(OS_DIR, 'archive/history/')}")
 
 
+def _sanitize_fts5_query(raw_query: str) -> str:
+    """Convert arbitrary user search text (hyphens, dots, #, paths) into a safe SQLite FTS5 MATCH expression."""
+    import re
+
+    tokens = (raw_query or "").strip().split()
+    if not tokens:
+        return ""
+
+    out: list[str] = []
+    pending_op: str | None = None
+    for tok in tokens:
+        if tok in ("AND", "OR", "NOT"):
+            if out and pending_op is None:
+                pending_op = tok
+            continue
+        cleaned = tok.strip('"')
+        if not re.search(r"\w", cleaned):
+            continue
+        quoted = '"' + cleaned.replace('"', '""') + '"'
+        if pending_op and out:
+            out.append(pending_op)
+        pending_op = None
+        out.append(quoted)
+
+    return " ".join(out)
+
+
 def cmd_search_sessions(args):
     """Searches the full project session history database via FTS5."""
     query = " ".join(args.query)
@@ -156,22 +183,46 @@ def cmd_search_sessions(args):
         print("No historical sessions found.")
         return
 
-    conn = sqlite3.connect(history_db)
-    c = conn.cursor()
+    fts_query = _sanitize_fts5_query(query)
+    if not fts_query:
+        print(f"\n--- SEARCH RESULTS: {query} ---")
+        print("No matches found.")
+        return
+
+    conn = None
     sql = "SELECT session_id, timestamp, snippet(history_fts, 2, '...', '...', '...', 15) FROM history_fts WHERE history_fts MATCH ? ORDER BY rank LIMIT 20"
     try:
-        c.execute(sql, (query,))
+        conn = sqlite3.connect(history_db)
+        c = conn.cursor()
+        try:
+            c.execute(sql, (fts_query,))
+        except sqlite3.OperationalError as op_err:
+            if "fts5: syntax error" in str(op_err).lower():
+                import re
+                fallback_q = " ".join(f'"{w}"' for w in re.findall(r"\w+", query))
+                if not fallback_q:
+                    print(f"\n--- SEARCH RESULTS: {query} ---")
+                    print("No matches found.")
+                    return
+                c.execute(sql, (fallback_q,))
+            else:
+                raise
         rows = c.fetchall()
         print(f"\n--- SEARCH RESULTS: {query} ---")
         if not rows:
             print("No matches found.")
         for r in rows:
-            print(f"\nSession: {r[0]} ({r[1][:19].replace('T', ' ')})")
+            print(f"\nSession: {r[0]} ({(r[1] or '')[:19].replace('T', ' ')})")
             print(f"Match: {r[2]}")
     except Exception as e:
-        traceback.print_exc()
-        print(f"Search failed: {e}")
-    conn.close()
+        print(f"ERROR: Session search failed: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def cmd_scrape(args):
