@@ -420,15 +420,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skip-shell-rc", action="store_true", help="Skip shell RC / PowerShell profile alias registration")
     args = parser.parse_args(argv)
 
+    skip_deps = bool(args.skip_deps or os.environ.get("AIM_SKIP_DEPS") == "1")
+    home_override = args.home or os.environ.get("AIM_HOME_OVERRIDE") or None
+    skip_shell_rc = bool(args.skip_shell_rc or os.environ.get("AIM_SKIP_SHELL_RC") == "1")
+    source_override = args.source or os.environ.get("AIM_INSTALL_SOURCE") or None
+
     try:
         installed = install_project(
             target_dir=args.target,
             mode=args.mode,
-            source_dir=args.source,
+            source_dir=source_override,
             persona_name=args.persona,
-            skip_deps=args.skip_deps,
-            home_dir=args.home,
-            skip_shell_rc=args.skip_shell_rc,
+            skip_deps=skip_deps,
+            home_dir=home_override,
+            skip_shell_rc=skip_shell_rc,
         )
     except Exception as exc:
         print(str(exc), file=sys.stderr)

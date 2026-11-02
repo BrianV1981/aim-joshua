@@ -21,6 +21,7 @@ import pyarrow.parquet as pq
 import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+AIM_BIN = os.path.join(REPO_ROOT, "aim.cmd" if os.name == "nt" else "aim")
 CORE_DIR = os.path.join(REPO_ROOT, "joshua_os", ".aim_core")
 OS_DIR = os.path.join(REPO_ROOT, "joshua_os")
 for _p in (OS_DIR, CORE_DIR):
@@ -145,9 +146,8 @@ def test_issue_127_launcher_never_mutates_caller_pwd_git_repo_and_keeps_json_cle
         ["git", "rev-parse", "HEAD"], cwd=str(caller_repo), capture_output=True, text=True, check=True
     ).stdout.strip()
 
-    aim_bin = os.path.join(REPO_ROOT, "aim")
     res = subprocess.run(
-        [aim_bin, "search", "worktree", "--top-k", "1", "--json"],
+        [AIM_BIN, "search", "worktree", "--top-k", "1", "--json"],
         cwd=str(caller_repo),
         capture_output=True,
         text=True,
@@ -460,11 +460,17 @@ def test_issue_132_opencode_session_scoping_shrink_guard_and_wal_mode(tmp_path, 
     conn.commit()
     conn.close()
 
+    import tempfile
+
     env = os.environ.copy()
     env["AIM_OPENCODE_DB"] = str(oc_db)
-    aim_bin = os.path.join(REPO_ROOT, "aim")
+    aim_bin = AIM_BIN
 
-    before_tmp = set(glob.glob("/tmp/aim_oc_*") + glob.glob("/tmp/aim_bb_*"))
+    tmp_root = tempfile.gettempdir()
+    before_tmp = set(
+        glob.glob(os.path.join(tmp_root, "aim_oc_*"))
+        + glob.glob(os.path.join(tmp_root, "aim_bb_*"))
+    )
 
     # Missing session must fail-closed with rc=1
     miss = subprocess.run(
@@ -486,7 +492,10 @@ def test_issue_132_opencode_session_scoping_shrink_guard_and_wal_mode(tmp_path, 
     )
     assert ok.returncode == 0, ok.stderr
 
-    after_tmp = set(glob.glob("/tmp/aim_oc_*") + glob.glob("/tmp/aim_bb_*"))
+    after_tmp = set(
+        glob.glob(os.path.join(tmp_root, "aim_oc_*"))
+        + glob.glob(os.path.join(tmp_root, "aim_bb_*"))
+    )
     assert after_tmp - before_tmp == set()
 
     monkeypatch.setattr(blackbox_vault, "keyring", None)
@@ -528,7 +537,7 @@ def test_issue_134_parser_dispatch_parity_handoff_staged_and_datajack_roundtrip(
     assert parser_verbs == set(aim_cli.COMMAND_HANDLERS.keys())
     assert "delegate" in parser_verbs
 
-    aim_bin = os.path.join(REPO_ROOT, "aim")
+    aim_bin = AIM_BIN
 
     # Staged hermetic handoff-vnext e2e succeeds offline with rc=0
     staged_out = tmp_path / "handoff_out"

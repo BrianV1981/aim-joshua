@@ -1,24 +1,26 @@
 import subprocess
 import os
 
+AIM_BIN = os.path.abspath("aim.cmd" if os.name == "nt" else "./aim")
+
 def test_aim_help():
     # Ensure the wrapper script can run --help successfully
-    result = subprocess.run(["./aim", "--help"], capture_output=True, text=True)
+    result = subprocess.run([AIM_BIN, "--help"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "usage:" in result.stdout.lower() or "options:" in result.stdout.lower()
 
 def test_aim_doctor():
-    result = subprocess.run(["./aim", "doctor"], capture_output=True, text=True)
+    result = subprocess.run([AIM_BIN, "doctor"], capture_output=True, text=True)
     assert result.returncode == 0
     out = result.stdout.lower()
     assert "doctor" in out or "diagnostic" in out or "status" in out
 
 def test_aim_swarm_removed():
     # Deprecated swarm subcommand must not be exposed on the CLI router
-    help_res = subprocess.run(["./aim", "--help"], capture_output=True, text=True)
+    help_res = subprocess.run([AIM_BIN, "--help"], capture_output=True, text=True)
     assert help_res.returncode == 0
     assert "Manage co-agent swarms" not in help_res.stdout
-    swarm_res = subprocess.run(["./aim", "swarm"], capture_output=True, text=True)
+    swarm_res = subprocess.run([AIM_BIN, "swarm"], capture_output=True, text=True)
     assert swarm_res.returncode == 2
 
 def test_readme_ecosystem_block():
@@ -106,7 +108,7 @@ def test_cmd_clean_defined_and_dispatches():
 
 
 def test_cmd_bug_requires_commanders_intent():
-    res = subprocess.run(["./aim", "bug", "Missing flags test"], capture_output=True, text=True)
+    res = subprocess.run([AIM_BIN, "bug", "Missing flags test"], capture_output=True, text=True)
     assert res.returncode == 1
     assert "Commander's Intent Required" in (res.stdout + res.stderr)
 
@@ -189,7 +191,7 @@ def test_cmd_fix_creates_worktree_and_copies_config(tmp_path):
 
 
 def test_vault_subparser_missing_verb_exits_2():
-    res = subprocess.run(["./aim", "vault"], capture_output=True, text=True)
+    res = subprocess.run([AIM_BIN, "vault"], capture_output=True, text=True)
     assert res.returncode == 2
     assert "Usage: aim vault" in (res.stdout + res.stderr)
 
@@ -234,28 +236,62 @@ def test_installers_have_home_guard_and_clean_readme_onboarding(tmp_path):
 
     clean_proj = tmp_path / "posix-clean-app"
     clean_proj.mkdir()
-    res_clean = subprocess.run(
-        ["bash", os.path.abspath("joshua_os/install.sh")],
-        cwd=str(clean_proj),
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert res_clean.returncode == 0, res_clean.stderr
-    assert (clean_proj / "aim").is_file() and os.access(clean_proj / "aim", os.X_OK)
+    if os.name == "nt":
+        import shutil as _shutil
+        pwsh_exe = _shutil.which("pwsh") or _shutil.which("powershell")
+        res_clean = subprocess.run(
+            [pwsh_exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", os.path.abspath("joshua_os/install.ps1")],
+            cwd=str(clean_proj),
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        assert res_clean.returncode == 0, res_clean.stderr
+        assert (clean_proj / "aim.ps1").is_file() and (clean_proj / "aim.cmd").is_file()
+    else:
+        res_clean = subprocess.run(
+            ["bash", os.path.abspath("joshua_os/install.sh")],
+            cwd=str(clean_proj),
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        assert res_clean.returncode == 0, res_clean.stderr
+        assert (clean_proj / "aim").is_file() and os.access(clean_proj / "aim", os.X_OK)
     assert (clean_proj / "README.md").read_text(encoding="utf-8") == "# posix-clean-app\n"
 
     agent_proj = tmp_path / "posix-agent-node"
     agent_proj.mkdir()
-    res_agent = subprocess.run(
-        ["bash", os.path.abspath("joshua_os/install-agent.sh"), "offline-test-persona"],
-        cwd=str(agent_proj),
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert res_agent.returncode == 0, res_agent.stderr
-    assert (agent_proj / "aim").is_file() and os.access(agent_proj / "aim", os.X_OK)
+    if os.name == "nt":
+        import shutil as _shutil
+        pwsh_exe = _shutil.which("pwsh") or _shutil.which("powershell")
+        res_agent = subprocess.run(
+            [
+                pwsh_exe,
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                os.path.abspath("joshua_os/install-agent.ps1"),
+                "offline-test-persona",
+            ],
+            cwd=str(agent_proj),
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        assert res_agent.returncode == 0, res_agent.stderr
+        assert (agent_proj / "aim.ps1").is_file() and (agent_proj / "aim.cmd").is_file()
+    else:
+        res_agent = subprocess.run(
+            ["bash", os.path.abspath("joshua_os/install-agent.sh"), "offline-test-persona"],
+            cwd=str(agent_proj),
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        assert res_agent.returncode == 0, res_agent.stderr
+        assert (agent_proj / "aim").is_file() and os.access(agent_proj / "aim", os.X_OK)
     assert (agent_proj / "README.md").read_text(encoding="utf-8") == "# posix-agent-node\n"
     assert "J.O.S.H.U.A. (offline-test-persona)" in (agent_proj / "AGENTS.md").read_text(encoding="utf-8")
 
@@ -716,9 +752,10 @@ def test_aim_init_find_project_root_terminates_on_windows_drive_root():
     import aim_init
 
     orig_dirname = os.path.dirname
+    orig_nt_dirname = ntpath.dirname
     with patch("aim_init.os.path.abspath", side_effect=lambda p: p), \
          patch("aim_init.os.path.exists", return_value=False), \
-         patch("aim_init.os.path.dirname", side_effect=lambda p: ntpath.dirname(p) if "\\" in p else orig_dirname(p)):
+         patch("aim_init.os.path.dirname", side_effect=lambda p: orig_nt_dirname(p) if "\\" in p else orig_dirname(p)):
         res = aim_init.find_project_root("C:\\Users\\Dev\\proj")
         assert isinstance(res, str)
 
@@ -746,7 +783,7 @@ def test_agy_2_0_and_legacy_cli_path_resolution_and_blackbox_exit_codes(tmp_path
     env = os.environ.copy()
     env["HOME"] = str(fake_home)
     env["USERPROFILE"] = str(fake_home)
-    aim_bin = os.path.abspath("./aim")
+    aim_bin = AIM_BIN
 
     miss = subprocess.run(
         [aim_bin, "agy-blackbox", "--session-id", "missing-uuid-0000"],
@@ -847,7 +884,7 @@ def test_search_sessions_fts5_special_tokens_and_db_error_exit_code(tmp_path):
     conn.commit()
     conn.close()
 
-    aim_bin = os.path.abspath("./aim")
+    aim_bin = AIM_BIN
     for token in ("aim-joshua", "JOSH-029", "v1.0.0", "mcp_lancedb.py", "#116", "NOT aim-joshua", "aim-joshua AND v1.0.0"):
         res = subprocess.run(
             [aim_bin, "search-sessions", token],

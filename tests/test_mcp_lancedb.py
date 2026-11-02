@@ -194,7 +194,7 @@ def test_register_mcp_multi_harness_detection_and_self_healing(tmp_path):
     codex_toml = (fake_home / ".codex" / "config.toml").read_text(encoding="utf-8")
     assert '[projects."/demo"]' in codex_toml
     assert "[mcp_servers.search_lancedb]" in codex_toml
-    assert str(py_a) in codex_toml
+    assert str(py_a).replace("\\", "\\\\") in codex_toml
 
     grok_toml = (fake_home / ".grok" / "config.toml").read_text(encoding="utf-8")
     assert "[mcp_servers.search_lancedb]" in grok_toml

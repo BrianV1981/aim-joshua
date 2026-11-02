@@ -6,8 +6,11 @@ import uuid
 from pathlib import Path
 
 
+AIM_BIN = os.path.abspath("aim.cmd" if os.name == "nt" else "./aim")
+
+
 def _aim(*args):
-    return subprocess.run(["./aim", *args], capture_output=True, text=True)
+    return subprocess.run([AIM_BIN, *args], capture_output=True, text=True)
 
 
 def _json_from_stdout(stdout: str):
