@@ -377,7 +377,18 @@ def cmd_uninstall(args):
             os.rmdir(archive_dir)
 
     workspace_dir = os.path.join(BASE_DIR, "workspace")
-    if os.path.isdir(workspace_dir) and not os.path.islink(workspace_dir) and not os.listdir(workspace_dir):
-        os.rmdir(workspace_dir)
+    if os.path.isdir(workspace_dir) and not os.path.islink(workspace_dir):
+        for child_name in list(os.listdir(workspace_dir)):
+            child_path = os.path.join(workspace_dir, child_name)
+            if os.path.isdir(child_path) and not os.path.islink(child_path) and not os.listdir(child_path):
+                try:
+                    os.rmdir(child_path)
+                except OSError:
+                    pass
+        if not os.listdir(workspace_dir):
+            try:
+                os.rmdir(workspace_dir)
+            except OSError:
+                pass
 
     print("\n[SUCCESS] J.O.S.H.U.A. removed cleanly (host repository files preserved).")
