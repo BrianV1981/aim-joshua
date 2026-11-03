@@ -11,4 +11,4 @@
 - [Bwrap Forge Skill](pages/bwrap-forge-skill.md): Guide on the Tier 2 POSIX (`Linux`/`WSL`) isolated `bwrap` sandbox forge.
 - [Native OS Shift](pages/native-os-shift.md): Shift to the native worktree OS framework and `v1.1.0`+ cross-platform convergence (`agy-joshua` archival).
 - [CI/CD & Testing Architecture](pages/ci-testing.md): The `66/66` (`0` warnings) dual-OS (`ubuntu-latest` + `windows-latest`) Pytest suite including unmocked subprocess CLI E2E coverage, cross-platform/multi-harness guards, host-path hygiene, and Gitleaks CI gates.
-- [Living Audit Protocol](pages/audit-protocol.md): The A+ acceptance criteria and orchestrator FREEZE mechanics.
+- [Living Audit Protocol](pages/audit-protocol.md): The A+ acceptance bar (`aim-auditor` + EGM cold-reader swarm), unmocked subprocess CLI gates, consumer rollout holds, 1-hop loop closure, and FREEZE mechanics.
