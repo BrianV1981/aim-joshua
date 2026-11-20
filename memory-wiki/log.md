@@ -228,3 +228,7 @@
   - Documented `aim-auditor` + Google EGM (`egm@0.1.0`) cold-reader audits, the unmocked subprocess CLI test bar (`Pass 13 -> Pass 14`), consumer rollout hold gates, and 1-hop `aim-communicate` loop closure in `pages/audit-protocol.md`.
   - Purged stale `flashrank_cache` / global `lance_backend.LANCE_DB_PATH` claims in `pages/handoff-and-retrieval.md` and `pages/architecture.md` (reflecting explicit `db_path=` + `EntityIntersectionReranker`), added `--vessel-root` and `rc=1` `audit`/`recall` notes, and updated `pages/projects.md` to reflect `owner: ""` + `remote.origin.url` auto-detection (`#129`).
 
+## [2026-11-20] ingest | Verbatim `HANDOFF.md` Archival & Surgical Rolling-Window Compaction (`#136`)
+- Vaulted the complete pre-compaction `HANDOFF.md` (`21,692` bytes, `143` lines, `SHA-256: 8d5e209cc2bf7cc711597e557b113b963d559921c1f27c1751994aa995de7085`) verbatim in `BrianV1981/aim-joshua#136` and compacted `§0` from `35` historical rows (`11,295` chars) down to `8` rolling-window + era-index rows (`< 12 KB` total document size), preserving `100%` of all `10` `§5` Critical Traps & Warnings and explicit retired-module tombstones (`#74` reincarnation, `#89` swarm routes).
+- Codified the `< 12 KB` rolling-window `HANDOFF.md` hygiene rule in `pages/handoff-and-retrieval.md`.
+
