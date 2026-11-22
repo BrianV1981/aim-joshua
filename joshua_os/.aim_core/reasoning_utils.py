@@ -29,6 +29,55 @@ def load_config():
     except Exception:
         return {}
 
+GEMINI_REST_MODEL_ALIASES = {
+    "agy-flash-latest": "gemini-2.5-flash",
+    "agy-3-flash-preview": "gemini-2.5-flash",
+    "agy-2.5-flash": "gemini-2.5-flash",
+    "agy-2.5-flash-lite": "gemini-2.5-flash-lite",
+    "agy-3.1-flash-lite-preview": "gemini-2.5-flash-lite",
+    "agy-2.5-pro": "gemini-2.5-pro",
+    "agy-3.1-pro-preview": "gemini-2.5-pro",
+    "default": "gemini-2.5-flash",
+    "": "gemini-2.5-flash",
+}
+
+_ERROR_PREFIXES = (
+    "Error:",
+    "[ERROR:",
+    "Google API Error:",
+    "Antigravity CLI Error",
+    "Native CLI Exception:",
+    "OpenRouter Error",
+    "OpenRouter API Exception:",
+    "Anthropic Error",
+    "Anthropic API Exception:",
+    "Ollama Error",
+    "Codex CLI Error:",
+    "Codex Error:",
+    "OpenAI Error:",
+)
+
+
+def resolve_gemini_rest_model(model: str | None) -> str:
+    """Map Antigravity CLI aliases (`agy-*`) to valid Gemini Generative Language REST model IDs."""
+    cleaned = (model or "").strip()
+    if cleaned in GEMINI_REST_MODEL_ALIASES:
+        return GEMINI_REST_MODEL_ALIASES[cleaned]
+    if cleaned.startswith("agy-"):
+        return "gemini-" + cleaned[4:]
+    return cleaned
+
+
+def is_reasoning_error(response: str | None) -> bool:
+    """Return True if `generate_reasoning()` returned none/empty or a provider error sentinel."""
+    if response is None:
+        return True
+    text = str(response).strip()
+    if not text:
+        return True
+    return any(text.startswith(prefix) for prefix in _ERROR_PREFIXES)
+
+
 def generate_reasoning(prompt, system_instruction="You are a helpful assistant.", brain_type="default_reasoning", config=None, timeout=45):
     """
     Unified entry point for AI reasoning tasks.
@@ -37,31 +86,34 @@ def generate_reasoning(prompt, system_instruction="You are a helpful assistant."
     if config is None:
         config = load_config()
 
-    # 1. Resolve Model Configuration (Flattened)
-    model_config = config.get('models', {}).get('tiers', {}).get(brain_type)
-    if not model_config:
-        model_config = config.get('models', {}).get(brain_type) # Fallback to top-level if not in tiers
-    if not model_config:
-        # Emergency Fallback to default_reasoning if requested brain_type is missing
-        model_config = config.get('models', {}).get('tiers', {}).get('default_reasoning', {
-            "provider": "google", "model": "agy-3.1-flash-lite-preview", "endpoint": "", "auth_type": "API Key"
-        })
-    
-    provider = model_config.get('provider')
-    model = model_config.get('model')
-    
-    # FORCE LITE MODEL TO BYPASS QUOTA LIMITS FOR DAEMON TASKS
-    model = "agy-3.1-flash-lite-preview"
-    
-    endpoint = model_config.get('endpoint')
-    auth_type = model_config.get('auth_type', 'API Key')
+    # 1. Resolve Model Configuration (honor explicit tier or top-level model without hardcoded override)
+    models_root = config.get("models", {}) if isinstance(config, dict) else {}
+    tiers_root = models_root.get("tiers", {}) if isinstance(models_root.get("tiers"), dict) else {}
+    model_config = tiers_root.get(brain_type) or models_root.get(brain_type)
+    if not isinstance(model_config, dict) or not model_config:
+        model_config = (
+            tiers_root.get("default_reasoning")
+            or models_root.get("default_reasoning")
+            or {
+                "provider": "google",
+                "model": "gemini-2.5-flash",
+                "endpoint": "https://generativelanguage.googleapis.com",
+                "auth_type": "API Key",
+            }
+        )
+
+    raw_provider = (model_config.get("provider") or "").strip().lower()
+    provider = "local" if raw_provider in ("local", "ollama", "local (ollama)") else raw_provider
+    model = (model_config.get("model") or "").strip()
+    endpoint = model_config.get("endpoint")
+    auth_type = model_config.get("auth_type", "API Key")
 
     # 2. Provider-Specific Execution
     if provider == "google":
         return execute_google(prompt, system_instruction, model, auth_type, timeout, brain_type=brain_type)
-    elif provider == "local" or provider == "ollama":
-        num_ctx = config.get('settings', {}).get('ollama_num_ctx', 32768)
-        return execute_ollama(prompt, system_instruction, model, endpoint, num_ctx)
+    elif provider == "local":
+        num_ctx = config.get("settings", {}).get("ollama_num_ctx", 32768)
+        return execute_ollama(prompt, system_instruction, model or "gemma4:e4b", endpoint, num_ctx)
     elif provider == "codex-cli":
         return execute_codex(prompt, system_instruction, model)
     elif provider == "openai-compat":
@@ -137,8 +189,30 @@ def execute_google(prompt, system_instruction, model, auth_type="API Key", timeo
             cmd.extend(["-m", model])
 
         try:
-            import re, json
-            res = subprocess.run(cmd, input=full_prompt, capture_output=True, text=True, timeout=effective_timeout, env=env, cwd=os.path.join(AIM_ROOT, "memory-wiki"))
+            import json
+
+            safe_cwd = next(
+                (
+                    p
+                    for p in (
+                        os.path.join(PROJECT_ROOT, "memory-wiki"),
+                        PROJECT_ROOT,
+                        AIM_ROOT,
+                        os.getcwd(),
+                    )
+                    if p and os.path.isdir(p)
+                ),
+                None,
+            )
+            res = subprocess.run(
+                cmd,
+                input=full_prompt,
+                capture_output=True,
+                text=True,
+                timeout=effective_timeout,
+                env=env,
+                cwd=safe_cwd,
+            )
             
             # PHASE 32: Capacity Lockout Interceptor
             if "MODEL_CAPACITY_EXHAUSTED" in res.stderr or "MODEL_CAPACITY_EXHAUSTED" in res.stdout:
@@ -185,8 +259,9 @@ def execute_google(prompt, system_instruction, model, auth_type="API Key", timeo
     # Route 2: Standard REST API (For pure API Key users)
     api_key = keyring.get_password("aim-system", "google-api-key")
     if not api_key: return f"Error: No Antigravity API Key found in vault. Run {os.path.basename(AIM_ROOT)} tui to configure."
-    
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+
+    rest_model = resolve_gemini_rest_model(model)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{rest_model}:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     
     payload = {
@@ -316,8 +391,17 @@ def execute_codex(prompt, system_instruction, model):
 
 def execute_openai(prompt, system_instruction, model, endpoint):
     """Executes reasoning via OpenAI-Compatible endpoint."""
-    api_key = keyring.get_password("aim-system", "reasoning-api-key")
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    if not endpoint or not str(endpoint).strip():
+        return "Error: OpenAI-Compatible endpoint URL is not configured."
+    api_key = (
+        keyring.get_password("aim-system", "openai-api-key")
+        or keyring.get_password("aim-system", "reasoning-api-key")
+        or ""
+    )
+    url = endpoint if "/chat/completions" in endpoint else f"{endpoint.rstrip('/')}/v1/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     payload = {
         "model": model,
         "messages": [
@@ -326,7 +410,7 @@ def execute_openai(prompt, system_instruction, model, endpoint):
         ]
     }
     try:
-        resp = requests.post(endpoint, json=payload, headers=headers, timeout=60)
+        resp = requests.post(url, json=payload, headers=headers, timeout=60)
         resp.raise_for_status()
         return resp.json()['choices'][0]['message']['content']
     except Exception as e: return f"OpenAI Error: {e}"

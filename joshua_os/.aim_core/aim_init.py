@@ -369,6 +369,18 @@ def init_workspace(args=None):
     register_hooks(is_light_mode)
 
     # Base settings and ignores (no empty 0-byte CHANGELOG/CONTRIBUTING/VERSION stubs)
+    engine_ver = "1.1.4"
+    for ver_cand in (os.path.join(OS_DIR, "VERSION"), os.path.join(BASE_DIR, "VERSION")):
+        if os.path.isfile(ver_cand):
+            try:
+                with open(ver_cand, "r", encoding="utf-8") as vf:
+                    raw_ver = vf.read().strip().lstrip("v")
+                    if raw_ver:
+                        engine_ver = raw_ver
+                        break
+            except OSError:
+                pass
+
     files = {
         "README.md": f"# {os.path.basename(BASE_DIR)}\n",
         ".geminiignore": """workspace/
@@ -389,7 +401,7 @@ engrams/
             "agent_identity": {
                 "name": "J.O.S.H.U.A.",
                 "role": "Universal Operating Agent and Systems Orchestrator.",
-                "version": "1.1.3"
+                "version": engine_ver
             },
             "paths": {
                 "project_root": BASE_DIR,

@@ -18,14 +18,21 @@ if src_dir not in sys.path:
 def bake_cartridge(target_dir, output_file, author="Unknown", version="1.0.0", description="No description provided."):
     print(f"\n--- A.I.M. DATAJACK FOUNDRY (Native Parquet ROM) ---")
 
+    from forensic_utils import _resolve_active_embedding_settings, chunk_text, get_embedding
+    import urllib.parse
     import urllib.request
-    try:
-        urllib.request.urlopen("http://127.0.0.1:11434/", timeout=2)
-    except Exception:
-        print("[ERROR] Ollama is not running or unreachable at http://127.0.0.1:11434/")
-        print("        You must start Ollama before baking a cartridge to generate embeddings.")
-        print("        Run `ollama serve` in a separate terminal and try again.")
-        sys.exit(1)
+
+    provider_type, _, provider_endpoint = _resolve_active_embedding_settings()
+    if provider_type == "local":
+        parsed_ep = urllib.parse.urlparse(provider_endpoint or "http://127.0.0.1:11434/api/embeddings")
+        probe_url = f"{parsed_ep.scheme or 'http'}://{parsed_ep.netloc or '127.0.0.1:11434'}/"
+        try:
+            urllib.request.urlopen(probe_url, timeout=2)
+        except Exception:
+            print(f"[ERROR] Ollama is not running or unreachable at {probe_url}")
+            print("        You must start Ollama before baking a cartridge with local embeddings.")
+            print("        Run `ollama serve` in a separate terminal and try again.")
+            sys.exit(1)
 
     if not os.path.isdir(target_dir):
         print(f"[ERROR] Target directory not found: {target_dir}")
@@ -38,32 +45,33 @@ def bake_cartridge(target_dir, output_file, author="Unknown", version="1.0.0", d
 
     output_path = os.path.abspath(output_file)
 
-    from forensic_utils import chunk_text, get_embedding
     import pyarrow as pa
     import pyarrow.parquet as pq
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     print(f"[*] Ingesting raw materials from: {target_dir}")
     fragments_added = 0
     records = []
-    
-    for root, _, files in os.walk(target_dir):
-        for file in files:
+    target_abs = os.path.abspath(target_dir)
+
+    for root, _, files in sorted(os.walk(target_dir)):
+        for file in sorted(files):
             if file.endswith(('.md', '.markdown', '.txt', '.py', '.rs', '.js', '.ts', '.rst')):
                 file_path = os.path.join(root, file)
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         text = f.read()
-                except Exception as e:
+                except Exception:
                     continue
-                
-                if not text.strip(): continue
-                
+
+                if not text.strip():
+                    continue
+
                 chunks = chunk_text(text)
-                filename = os.path.basename(file_path)
-                
-                session_id = f"factory-{filename}"
-                
+                rel_path = os.path.relpath(os.path.abspath(file_path), target_abs).replace("\\", "/")
+                session_id = f"factory-{rel_path}"
+                now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
                 for chunk in chunks:
                     vec = get_embedding(chunk)
                     if vec and len(vec) == 768:
@@ -72,8 +80,8 @@ def bake_cartridge(target_dir, output_file, author="Unknown", version="1.0.0", d
                             "session_id": session_id,
                             "type": "factory_export",
                             "content": chunk,
-                            "timestamp": datetime.utcnow().isoformat() + "Z",
-                            "metadata": json.dumps({"author": author, "version": version, "description": description}),
+                            "timestamp": now_iso,
+                            "metadata": json.dumps({"author": author, "version": version, "description": description, "source": rel_path}),
                             "parent_id": None,
                             "source_db": os.path.basename(output_path),
                             "vector": vec

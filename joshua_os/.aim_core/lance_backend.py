@@ -106,9 +106,14 @@ def generate_tantivy_query(query):
         "would", "you", "your", "yours", "yourself", "yourselves",
     }
 
-    tokens = re.findall(r"\b[A-Za-z]+\b|\(|\)", query)
+    tokens = re.findall(r"[A-Za-z0-9]+|\(|\)", query)
+    word_tokens = [
+        t for t in tokens if t not in ("(", ")") and t.upper() not in ("AND", "OR")
+    ]
+    multi_word = len(word_tokens) > 1
     processed = []
     proper_nouns = []
+    seen_word_idx = 0
 
     for t in tokens:
         if t in ("(", ")"):
@@ -117,12 +122,19 @@ def generate_tantivy_query(query):
         if t.upper() in ("AND", "OR"):
             processed.append(t.upper())
             continue
+        idx = seen_word_idx
+        seen_word_idx += 1
         if t.lower() in stopwords or len(t) <= 1:
             continue
 
-        if t[0].isupper():
+        # Detect proper nouns / technical identifiers for 1.5x EntityIntersectionReranker boost
+        # without forcing mandatory '+' inclusion (which drops valid BM25 matches on sentence-initial verbs).
+        has_internal_upper_or_digit = any(ch.isupper() or ch.isdigit() for ch in t[1:])
+        if t[0].isupper() and (not multi_word or idx > 0 or has_internal_upper_or_digit):
             proper_nouns.append(t)
-            processed.append("+" + t.lower() + "*")  # STRICT INCLUSION
+
+        if t.isdigit():
+            processed.append(t)
         else:
             processed.append(t.lower() + "*")
 

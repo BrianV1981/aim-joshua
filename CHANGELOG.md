@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.1.4] - 2026-11-21
+- Fix: Honor configured reasoning models, enforce 768-dim provider embeddings & Tantivy alphanumeric BM25, and self-heal moved venv shebangs (#137, #138, #139)
+
+
 ## [v1.1.3] - 2026-11-02
 - Fix: Pass `VectorBackend(path=lance_dir)` in `heartbeat.py` (`./aim health` `rc=0`), return `True` from `VectorBackend.compact()` and wire `--immediate` / `[days]` on `./aim clean` (`rc=0`), propagate `rc=1` on missing/corrupt `history.db` in `./aim audit` and `./aim recall`, and replace remaining `os.system('clear')` calls in `aim_config.py` with `_clear_screen()` (#134)
 - Fix: Create an initial baseline scaffold commit on newborn `main` in `bootstrap_install.py` (`clean`/`agent` modes), guard `cmd_fix` against 0-commit unborn `HEAD` repos (`rc=1`), pass `-uno` in `cmd_promote` Safety Gate 2 so untracked root scaffold files do not block `promote`, remove 0-byte `CHANGELOG.md`/`CONTRIBUTING.md`/`VERSION` stubs from `aim_init.py`, and prune empty `workspace/` directories during `./aim uninstall` (#135)

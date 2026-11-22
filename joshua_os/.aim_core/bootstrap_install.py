@@ -62,6 +62,63 @@ def resolve_venv_python_path(os_dir: str) -> str:
     return next((c for c in candidates if os.path.isfile(c)), sys.executable)
 
 
+def repair_venv_shebangs(os_dir: str) -> int:
+    """
+    Repair stale POSIX console-script `#!.../python*` shebangs inside `<os_dir>/venv/bin`
+    when a workspace or virtual environment directory has been moved or cloned.
+    Returns the number of script files rewritten.
+    """
+    if os.name == "nt":
+        return 0
+    os_dir_abs = os.path.abspath(os_dir)
+    bin_dir = Path(os_dir_abs) / "venv" / "bin"
+    venv_py = resolve_venv_python_path(os_dir_abs)
+    if not bin_dir.is_dir() or not os.path.isfile(venv_py):
+        return 0
+
+    target_py = os.path.abspath(venv_py)
+    new_shebang = f"#!{target_py}\n".encode("utf-8")
+    repaired = 0
+
+    for entry in sorted(bin_dir.iterdir()):
+        if entry.is_symlink() or not entry.is_file():
+            continue
+        try:
+            raw = entry.read_bytes()
+        except OSError:
+            continue
+        if not raw.startswith(b"#!") or b"\x00" in raw:
+            continue
+
+        nl_idx = raw.find(b"\n")
+        first_line = raw[:nl_idx] if nl_idx != -1 else raw
+        rest = raw[nl_idx + 1 :] if nl_idx != -1 else b""
+        shebang_body = first_line[2:].decode("utf-8", errors="ignore").strip()
+        if not shebang_body or shebang_body.startswith("/usr/bin/env"):
+            continue
+
+        # Handle both simple `#!/path/to/python3` and `#!"/path with spaces/python3"`
+        if shebang_body.startswith('"') and '"' in shebang_body[1:]:
+            interp = shebang_body[1 : shebang_body.index('"', 1)]
+        else:
+            interp = shebang_body.split()[0]
+
+        base = os.path.basename(interp).lower()
+        if not base.startswith("python"):
+            continue
+        if os.path.isfile(interp) and os.path.abspath(interp) == target_py:
+            continue
+
+        mode = entry.stat().st_mode & 0o777
+        tmp_entry = entry.with_name(entry.name + ".tmp")
+        tmp_entry.write_bytes(new_shebang + rest)
+        os.chmod(tmp_entry, mode or 0o755)
+        os.replace(tmp_entry, entry)
+        repaired += 1
+
+    return repaired
+
+
 def build_engine_venv(os_dir: str, python_exe: str | None = None) -> str:
     """Create `joshua_os/venv` and install `requirements.txt` natively across Windows/macOS/Linux."""
     py = python_exe or sys.executable
@@ -83,12 +140,15 @@ def build_engine_venv(os_dir: str, python_exe: str | None = None) -> str:
     if not os.path.isdir(venv_dir):
         print("    [*] Creating Python Virtual Environment...")
         subprocess.run([py, "-m", "venv", venv_dir], check=True)
+    else:
+        repair_venv_shebangs(os_dir_abs)
 
     venv_py = resolve_venv_python_path(os_dir_abs)
     print("    [*] Installing Python dependencies...")
     subprocess.run([venv_py, "-m", "pip", "install", "-q", "--upgrade", "pip"], check=True)
     if os.path.isfile(req_file):
         subprocess.run([venv_py, "-m", "pip", "install", "-q", "-r", req_file], check=True)
+    repair_venv_shebangs(os_dir_abs)
     return venv_py
 
 

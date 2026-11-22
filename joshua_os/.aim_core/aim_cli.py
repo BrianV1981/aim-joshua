@@ -301,12 +301,31 @@ def cmd_fix(args):
         sys.exit(1)
 
 
+def _list_active_worktree_branches(repo_dir: str) -> set[str]:
+    """Return branch names currently checked out across any git worktree of `repo_dir`."""
+    active: set[str] = set()
+    res = subprocess.run(
+        ["git", "worktree", "list", "--porcelain"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if res.returncode != 0:
+        return active
+    for line in (res.stdout or "").splitlines():
+        if line.startswith("branch refs/heads/"):
+            active.add(line[len("branch refs/heads/") :].strip())
+    return active
+
+
 def cmd_prune_remote(args):
-    """Prunes remote tracking branches like archive-fix/* and fix/issue-* that have no open PRs."""
+    """Prunes remote tracking (and optional local) archive-* and fix/issue-* branches that have no open PRs."""
     print("--- A.I.M. REMOTE BRANCH PRUNE ---")
+    include_local = bool(getattr(args, "include_local", False))
     try:
         result = subprocess.run(["git", "branch", "-r"], cwd=BASE_DIR, capture_output=True, text=True, check=True)
-        branches = [b.strip() for b in result.stdout.split("\n") if b.strip()]
+        branches = [b.strip() for b in result.stdout.split("\n") if b.strip() and "->" not in b]
 
         open_prs = set()
         pr_result = subprocess.run(
@@ -331,45 +350,84 @@ def cmd_prune_remote(args):
         to_delete = []
         skipped = []
         for b in branches:
-            if b.startswith("origin/archive-fix/") or b.startswith("origin/fix/issue-"):
+            if b.startswith("origin/archive-") or b.startswith("origin/fix/issue-"):
                 branch_name = b.replace("origin/", "", 1)
                 if branch_name in open_prs:
                     skipped.append(branch_name)
                 else:
                     to_delete.append(branch_name)
 
+        local_to_delete = []
+        if include_local:
+            active_wt_branches = _list_active_worktree_branches(BASE_DIR)
+            loc_res = subprocess.run(
+                ["git", "for-each-ref", "--format=%(refname:short)", "refs/heads/"],
+                cwd=BASE_DIR,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            for lb in (ln.strip() for ln in loc_res.stdout.splitlines() if ln.strip()):
+                if lb in ("main", "master") or lb in active_wt_branches or lb in open_prs:
+                    continue
+                if lb.startswith("archive-") or lb.startswith("fix/issue-"):
+                    local_to_delete.append(lb)
+
         if skipped:
             print(f"[INFO] Skipping {len(skipped)} branches that have open PRs:")
             for b in skipped:
                 print(f"  - [PROTECTED] {b}")
 
-        if not to_delete:
+        if not to_delete and not local_to_delete:
             print("[INFO] No stale remote branches found to delete.")
             return
 
-        print(f"\n[INFO] Found {len(to_delete)} stale remote branches:")
-        for b in to_delete:
-            print(f"  - {b}")
+        if to_delete:
+            print(f"\n[INFO] Found {len(to_delete)} stale remote branches:")
+            for b in to_delete:
+                print(f"  - {b}")
+
+        if local_to_delete:
+            print(f"\n[INFO] Found {len(local_to_delete)} stale local branches:")
+            for lb in local_to_delete:
+                print(f"  - [LOCAL] {lb}")
 
         if not getattr(args, "confirm", False):
-            print("\n[DRY RUN] Run with --confirm to delete these branches from origin.")
+            print("\n[DRY RUN] Run with --confirm to delete these branches.")
             return
 
-        print("\n[ACTION] Deleting branches from origin...")
         failed = 0
-        for branch in to_delete:
-            try:
-                subprocess.run(
-                    ["git", "push", "origin", "--delete", branch],
-                    cwd=BASE_DIR,
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                print(f"  [DELETED] {branch}")
-            except subprocess.CalledProcessError as e:
-                failed += 1
-                print(f"  [ERROR] Failed to delete {branch}: {e.stderr.strip()}", file=sys.stderr)
+        if to_delete:
+            print("\n[ACTION] Deleting branches from origin...")
+            for branch in to_delete:
+                try:
+                    subprocess.run(
+                        ["git", "push", "origin", "--delete", branch],
+                        cwd=BASE_DIR,
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
+                    print(f"  [DELETED] {branch}")
+                except subprocess.CalledProcessError as e:
+                    failed += 1
+                    print(f"  [ERROR] Failed to delete {branch}: {e.stderr.strip()}", file=sys.stderr)
+
+        if local_to_delete:
+            print("\n[ACTION] Deleting stale local branches...")
+            for lb in local_to_delete:
+                try:
+                    subprocess.run(
+                        ["git", "branch", "-D", lb],
+                        cwd=BASE_DIR,
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
+                    print(f"  [DELETED LOCAL] {lb}")
+                except subprocess.CalledProcessError as e:
+                    failed += 1
+                    print(f"  [ERROR] Failed to delete local branch {lb}: {e.stderr.strip()}", file=sys.stderr)
 
         if failed:
             sys.exit(1)
@@ -1110,9 +1168,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("health", help="Check LanceDB, session history DB, and Memory Wiki health")
 
     prune_remote_parser = subparsers.add_parser(
-        "prune-remote", help="Garbage collect stale remote branches (fix/issue-* and archive-fix/*)"
+        "prune-remote", help="Garbage collect stale remote/local branches (fix/issue-* and archive-*)"
     )
-    prune_remote_parser.add_argument("--confirm", action="store_true", help="Delete matching branches on origin")
+    prune_remote_parser.add_argument("--confirm", action="store_true", help="Delete matching branches")
+    prune_remote_parser.add_argument(
+        "--include-local",
+        action="store_true",
+        help="Also prune stale local archive-* and fix/issue-* branches not checked out in any worktree",
+    )
 
     purge_parser = subparsers.add_parser("purge", help="Reset J.O.S.H.U.A. memory/archive state inside joshua_os/")
     purge_parser.add_argument("--yes", "-y", action="store_true", help="Confirm non-interactively")

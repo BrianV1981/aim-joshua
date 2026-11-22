@@ -7,7 +7,7 @@ if _CORE_DIR not in sys.path:
 
 from blackbox_vault import connect_history_db, sync_vault_to_history
 from config_utils import OS_ROOT, PROJECT_ROOT
-from reasoning_utils import generate_reasoning
+from reasoning_utils import generate_reasoning, is_reasoning_error
 
 
 def run_audit(n_sessions=5):
@@ -67,6 +67,9 @@ def run_audit(n_sessions=5):
     )
 
     report_content = generate_reasoning(prompt, system_instruction=system_instruction)
+    if is_reasoning_error(report_content):
+        print(f"Error generating strategic synthesis: {report_content}", file=sys.stderr)
+        return False
 
     report_path = os.path.join(OS_ROOT, "WEEKLY_SITREP.md")
     with open(report_path, "w", encoding="utf-8") as f:
