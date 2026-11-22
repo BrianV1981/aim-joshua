@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-20T02:43:30-05:00
-> **Updated by:** Antigravity (Session ID: ffa01d2f-b8f0-4264-8973-7f9c1df9a2b9)
-> **Priority Mission:** STANDBY — `v1.1.3` SHIPPED, PASS 14 `A+` CERTIFIED, `21/21` CONSUMERS IN SYNC & `HANDOFF.md` COMPACTED (`0` Open Issues, `66/66` Pytest w/ `0` Warnings, Session Sealed)
+> **Updated:** 2026-11-22T01:05:30-05:00
+> **Updated by:** Antigravity (Session ID: afc18927-0fe6-4683-a9d5-99821b40dc13)
+> **Priority Mission:** STANDBY — `v1.1.4` SHIPPED & TAGGED, `71/71` DUAL-OS PYTEST GREEN (`0` Warnings), `0` Open Issues, Session Sealed
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -10,6 +10,7 @@
 ## 0. COMPLETED WORK (DO NOT REVISIT)
 | Session | Work | Status |
 |---------|------|--------|
+| afc18927 | #137, #138, #139 (`v1.1.4`, `441a840e`, GHA `44977104811` Ubuntu + Windows & `44977104321` Gitleaks `success`, GitHub Release `v1.1.4` published): Removed hardcoded `agy-3.1-flash-lite-preview` override in `reasoning_utils.py`, added `agy-*` -> `gemini-*` REST model mapping + `"openai-api-key"` alignment + `rc=1` synthesis error exits (`audit`/`recall`), wired `output_dimensionality=768` / `dimensions=768` in `forensic_utils.py` + UTC/relpath `aim_bake.py` + alphanumeric/sentence-case Tantivy BM25 in `lance_backend.py`, added `repair_venv_shebangs()` (`32` host venv scripts repaired) + `archive-*` / `--include-local` `prune-remote` + dynamic `VERSION` in `aim_init.py` (`71/71` dual-OS pytest, `0` warnings), published Nov 2026 ecosystem audit to `aim-knowledge` (`e6abdb7`), and sealed session `afc18927` | ✅ SHIPPED |
 | ffa01d2f | #136 (`badcb829`, GHA `44696621963` `success`): Vaulted verbatim pre-compaction `HANDOFF.md` (`21,692` bytes, `SHA-256: 8d5e209c...`) in Issue `#136`, executed surgical rolling-window compaction (`21.7 KB -> 14.1 KB`, `143 -> 116` lines, `10/10` `§5` traps preserved), aligned `aim-skill-library` (`aim-communicate` `v2.0`, `#19`/`#24`) + `aim-mailbox` (`v0.1.1`) + `aim-ecosystem`, and sealed session `ffa01d2f` to Blackbox Vault | ✅ RESOLVED |
 | c0ebd30d | Pass 14 `A+` Certification & `21/21` `v1.1.3` Fleet Rollout: Upgraded all `21` active downstream consumer workspaces (`10` Co-Agent desks + `11` product/tooling workspaces) from `v0.8.2` to `v1.1.3` via two-pass `./aim update --source ~/aim-joshua --skip-deps` + reader-safe `./aim index`, certified `IN_SYNC` by `aim-auditor` (`5,549` clean LanceDB fragments, `14` live MCP servers), consolidated `memory-wiki/` (`90356519`), and sealed session `c0ebd30d` | ✅ SHIPPED |
 | c0ebd30d | #132, #134, #135 (`v1.1.3`, `55982475`): Fixed `VectorBackend(path=lance_dir)` in `heartbeat.py` (`./aim health` `rc=0`), `VectorBackend.compact()` + `--immediate`/`[days]` (`./aim clean` `rc=0`), `rc=1` on missing/corrupt `history.db` (`audit`/`recall`), Day-0 baseline commit in `bootstrap_install.py`, unborn-`HEAD` guard in `cmd_fix`, `-uno` root-dirty gate in `cmd_promote`, `(goto) 2>nul` batch unwinding in `aim.cmd`, `--vessel-root` across all 4 `*-blackbox` commands, and unmocked subprocess CLI E2E suite (`66/66` dual-OS pytest, `0` warnings) | ✅ SHIPPED |
@@ -51,8 +52,8 @@ The backlog is currently clear. You are awaiting explicit operator directives.
 - **Two-Tier Retrieval Protocol:** The retrieval architecture has fundamentally shifted. If you are operating in a modern CLI/IDE harness (like AGY), you will natively possess the `search_lancedb` internal tool. This MCP server dynamically locates the vector database using Local-First, Umbrella Subfolder Fallback, or Desktop `_os_root` Fallback (`#118`), passing explicit `db_path=` into `retriever.py` (`get_active_aim_root(db_path=...)`) without mutating global module state (`#130`) so supplemental `archive/cartridges` resolve inside the target project. If you are operating in a CLI that lacks MCP, gracefully degrade to `./aim search` (POSIX) or `.\aim.ps1 search` / `.\aim.cmd search` (Windows) — never bare `python3` on Windows (`rc=9009` Microsoft Store stub). Do not assume tools exist if they are not in your prompt.
 - **Cross-Platform Installers, Launchers & Multi-Harness MCP (Linux/macOS/WSL & Windows 10/11):** Onboarding scripts (`install*.sh` and `install*.ps1` delegating to `bootstrap_install.py`), root entrypoints `./aim` (Bash), `aim.ps1` (PowerShell), and `aim.cmd` (CMD), `resolve_venv_python()`, `git_push_changes()`, and `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) allow Tier 1 J.O.S.H.U.A. features to run natively across Linux, macOS, WSL, and Windows 10/11 without requiring Bash, while keeping Tier 2 (`tmux` and `bwrap`) cleanly POSIX-scoped.
 - **GitOps Enforcement:** Never code on `main`. Always `aim fix <id>` to branch into a worktree sandbox.
-- **Vector Ingestion (Index):** Ingestion (`bootstrap_brain.py` + `VectorBackend.upsert_fragments()`) is idempotent across re-runs using collision-free repo-relative `session_id` keys, single-pass `FTS(with_position=True)` rebuilds, and `table.optimize` compaction. Custom directories can be ingested via `aim index --dir <path>`.
-- **Testing Framework (`66/66` Dual-OS Pytest):** Core Python modules (`mcp_lancedb.py`, `bootstrap_brain.py`) and all advertised CLI/GitOps/Vault entrypoints (`tests/test_v1_1_2_remediation.py`, `tests/test_v1_1_3_remediation.py`) enforce both unit tests and real unmocked subprocess CLI E2E coverage across `ubuntu-latest` and `windows-latest` under `-W error::DeprecationWarning`.
+- **Vector Ingestion & 768-Dim Provider Parity (Index):** Ingestion (`bootstrap_brain.py` + `VectorBackend.upsert_fragments()` + `forensic_utils.get_embedding()`) is idempotent across re-runs using collision-free repo-relative `session_id` keys, `768`-dim output config across Ollama/Google/OpenAI, alphanumeric Tantivy `FTS(with_position=True)` queries, and `table.optimize` compaction. Custom directories can be ingested via `aim index --dir <path>`.
+- **Testing Framework (`71/71` Dual-OS Pytest):** Core Python modules (`mcp_lancedb.py`, `bootstrap_brain.py`, `reasoning_utils.py`) and all advertised CLI/GitOps/Vault entrypoints (`tests/test_v1_1_2_remediation.py`, `tests/test_v1_1_3_remediation.py`, `tests/test_v1_1_4_remediation.py`) enforce both unit tests and real unmocked subprocess CLI E2E coverage across `ubuntu-latest` and `windows-latest` under `-W error::DeprecationWarning`.
 - **DHH Agentic Philosophy:** The OS now runs on outcome-oriented directives. The Operator supplies the "what/why" (the fuzzy problem), and agents determine the "how" (architecture, routing). The agent acts as an automated gatekeeper during `aim promote`, ensuring TDD and architectural rules are strictly followed before hitting main.
 - **Plain-Text Ascendancy:** J.O.S.H.U.A. relies on the Unix Philosophy. All configs, wikis, and tasks must be CLI-accessible flat files (Markdown, JSON) avoiding opaque GUIs.
 
@@ -65,7 +66,7 @@ Follow strict GitOps workflow for any future tasks:
 3. `./aim fix <id>`
 4. Work in the `workspace/issue-<id>` worktree.
 5. `./aim push "Fix: ..."` (Ensure `git add` is used for untracked files).
-6. `../../aim promote` (from inside clean `workspace/issue-<id>`)
+6. `../../aim promote` (from inside clean `workspace/issue-<id>`) followed by `./aim prune-remote --confirm --include-local` after CI is green.
 7. `./aim projects done <id>`
 
 ---
@@ -81,7 +82,7 @@ Follow strict GitOps workflow for any future tasks:
 - **Onboarding `AGENTS.md` Protection (`#103`–`#104`):** `aim_init.provision_agents_md()` (`joshua_os/.aim_core/aim_init.py`) and `joshua_os/.aim_core/templates/default_AGENTS.md` must stay in lockstep with the root `AGENTS.md` (`test_aim_init_never_truncates_agents_md_to_stub` in `tests/test_cli.py` enforces exact equality). Never allow any onboarding or init script to overwrite `AGENTS.md` with a stub.
 - **Legacy `aim-agy_os/` Migration Sequence:** When migrating legacy `aim-agy_os/` repos to `joshua_os/`, copy the updated `joshua_os/.aim_core/config_utils.py` *before* running `./aim update` so `find_project_root()` does not walk up to `~/aim-agy_os`.
 - **Strict OS Kernel Scope & Single `aim-ecosystem` Pointer:** Keep `aim-joshua/memory-wiki/` and `HANDOFF.md` strictly scoped to the J.O.S.H.U.A. OS kernel — never ingest sibling or client repository domain lore here (each sibling repo maintains its own `memory-wiki/`). In `README.md` and release notes, point external readers to the single standardized `aim-ecosystem` hub rather than hardcoding evolving sibling repository lists.
-- **Live MCP Reader-Safe Indexing & Unmocked CLI Gate:** Never run `./aim clean --immediate` on live consumer workspaces while sibling agent sessions hold open `mcp_lancedb.py` stdio readers (use `./aim index`, which retains 5 minutes of manifests safely). All new CLI entrypoints must include real unmocked subprocess Pytest tests (mocking `subprocess.run` previously masked `health`/`clean` defects in Pass 13). All `21` active consumer workspaces are now converged on `v1.1.3` (so future `v1.1.3 -> v1.1.4+` consumer upgrades only require a single `./aim update` pass).
+- **Live MCP Reader-Safe Indexing & Unmocked CLI Gate:** Never run `./aim clean --immediate` on live consumer workspaces while sibling agent sessions hold open `mcp_lancedb.py` stdio readers (use `./aim index`, which retains 5 minutes of manifests safely). All new CLI entrypoints must include real unmocked subprocess Pytest tests (mocking `subprocess.run` previously masked `health`/`clean` defects in Pass 13). All `21` active Linux consumer workspaces are on `v1.1.3` (ready for single-pass `./aim update --source ~/aim-joshua --skip-deps` to `v1.1.4` whenever requested), and `build_engine_venv()` (`repair_venv_shebangs()`) automatically heals stale POSIX `venv/bin` shebangs after directory moves.
 
 ---
 
@@ -91,14 +92,14 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/memory-wiki/`
 - `~/aim-joshua/joshua_os/.aim_core/bootstrap_install.py` & `register_mcp.py`
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
-- `~/aim-joshua/joshua_os/.aim_core/retriever.py`
-- `~/aim-joshua/tests/` (`66/66` Pytest Coverage on Linux + Windows, `0` Warnings)
+- `~/aim-joshua/joshua_os/.aim_core/retriever.py` & `reasoning_utils.py`
+- `~/aim-joshua/tests/` (`71/71` Pytest Coverage on Linux + Windows, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` (CLI Router)
 
 ---
 
 ## 7. THE FULL PICTURE / WHAT COMES AFTER
-All `21` active consumer workspaces are converged on `v1.1.3`, and cross-OS inter-agent messaging in `aim-skill-library` (`aim-communicate` `v2.0`) is aligned with `aim-mailbox`. Primary ongoing directive is maintaining codebase parity, dual-OS CI stability, and strict OS-kernel hygiene.
+Upstream `aim-joshua` is clean and tagged at `v1.1.4` (`71/71` dual-OS pytest), downstream Linux consumers (`21/21` on `v1.1.3`) can upgrade via a single `./aim update` pass whenever desired, and cross-OS inter-agent messaging in `aim-skill-library` (`aim-communicate` `v2.0`) is aligned with `aim-mailbox`. Primary ongoing directive is maintaining codebase parity, dual-OS CI stability, and strict OS-kernel hygiene.
 
 ---
 
