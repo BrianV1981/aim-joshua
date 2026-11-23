@@ -136,16 +136,17 @@ def test_issue_140_unmocked_cli_projects_set_adds_target_repo_without_mutating_s
         "        }\n"
         "    }]}))\n"
         "elif args[:2] == ['project', 'item-add']:\n"
+        "    sys.stdout.reconfigure(encoding='utf-8')\n"
         "    print(json.dumps({\n"
         "        'id': 'PVTI_browser_14',\n"
         "        'content': {\n"
         "            'type': 'Issue',\n"
         "            'number': 14,\n"
-        "            'title': 'Browser Headless Parity',\n"
+        "            'title': '✋ Browser Headless Parity',\n"
         "            'repository': 'AcmeOrg/aim-browser',\n"
         "            'url': 'https://github.com/AcmeOrg/aim-browser/issues/14'\n"
         "        }\n"
-        "    }))\n"
+        "    }, ensure_ascii=False))\n"
         "elif args[:2] == ['project', 'item-edit']:\n"
         "    print('ok')\n"
         "else:\n"
@@ -165,6 +166,8 @@ def test_issue_140_unmocked_cli_projects_set_adds_target_repo_without_mutating_s
     env = os.environ.copy()
     env["FAKE_GH_LOG"] = str(calls_log)
     env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
+    # Simulate Windows cp1252 pipe encoding even on POSIX to prove _ensure_utf8_stdio() prevents UnicodeEncodeError
+    env["PYTHONIOENCODING"] = "cp1252"
 
     res = subprocess.run(
         [
@@ -184,6 +187,8 @@ def test_issue_140_unmocked_cli_projects_set_adds_target_repo_without_mutating_s
         env=env,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     assert res.returncode == 0, res.stdout + res.stderr
     assert "AcmeOrg/aim-browser#14" in res.stdout

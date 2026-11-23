@@ -45,6 +45,18 @@ STATUS_ALIASES = {
 }
 
 
+def _ensure_utf8_stdio() -> None:
+    """Ensure stdout/stderr never crash on Windows cp1252 pipes when printing arrows/emojis."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        reconf = getattr(stream, "reconfigure", None)
+        if callable(reconf):
+            try:
+                reconf(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
 def _eprint(*a: Any) -> None:
     print(*a, file=sys.stderr)
 
@@ -53,7 +65,14 @@ def _run_gh(args: list[str], *, check: bool = True) -> subprocess.CompletedProce
     gh_bin = shutil.which("gh") or "gh"
     cmd = [gh_bin] + args
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, check=check)
+        return subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=check,
+        )
     except FileNotFoundError:
         _eprint("[ERROR] GitHub CLI ('gh') is not installed.")
         sys.exit(1)
@@ -109,6 +128,8 @@ def _detect_owner_from_git_remote() -> Optional[str]:
         ["git", "config", "--get", "remote.origin.url"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
     url = (proc.stdout or "").strip()
@@ -123,6 +144,8 @@ def _detect_repo_from_git_remote() -> Optional[str]:
         ["git", "config", "--get", "remote.origin.url"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
     url = (proc.stdout or "").strip()
@@ -183,6 +206,8 @@ def _detect_repo() -> Optional[str]:
         ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if proc.returncode == 0 and proc.stdout.strip():
         return proc.stdout.strip()
@@ -679,6 +704,7 @@ def cmd_doctor(cfg: dict) -> None:
 def main(argv: Optional[list[str]] = None) -> None:
     import argparse
 
+    _ensure_utf8_stdio()
     argv = argv if argv is not None else sys.argv[1:]
     parser = argparse.ArgumentParser(
         prog="aim projects",
