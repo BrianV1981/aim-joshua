@@ -112,7 +112,21 @@ def _detect_owner_from_git_remote() -> Optional[str]:
     url = (proc.stdout or "").strip()
     if not url:
         return None
-    m = re.search(r"github\.com[:/]([^/]+)/[^/]+?(?:\.git)?$", url)
+    m = re.search(r"github\.com[:/]([^/]+)/[^/]+?(?:\.git)?/?$", url)
+    return m.group(1) if m else None
+
+
+def _detect_repo_from_git_remote() -> Optional[str]:
+    proc = subprocess.run(
+        ["git", "config", "--get", "remote.origin.url"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    url = (proc.stdout or "").strip()
+    if not url:
+        return None
+    m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", url)
     return m.group(1) if m else None
 
 
@@ -160,6 +174,9 @@ def resolve_project_config(
 
 
 def _detect_repo() -> Optional[str]:
+    remote_repo = _detect_repo_from_git_remote()
+    if remote_repo:
+        return remote_repo
     proc = subprocess.run(
         ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"],
         capture_output=True,
@@ -306,6 +323,17 @@ def list_items(owner: str, number: int, limit: int = 100, query: Optional[str] =
     return []
 
 
+def _repos_match(expected_repo: str, item_repo: str) -> bool:
+    """Compare full 'owner/name' or bare 'name' repo identifiers without substring collisions."""
+    exp = (expected_repo or "").strip().strip("/").lower()
+    act = (item_repo or "").strip().strip("/").lower()
+    if not exp or not act:
+        return False
+    if "/" in exp and "/" in act:
+        return exp == act
+    return exp.split("/")[-1] == act.split("/")[-1]
+
+
 def normalize_item(item: dict) -> dict:
     """Flatten gh project item JSON into agent-friendly fields."""
     content = item.get("content") if isinstance(item.get("content"), dict) else {}
@@ -316,11 +344,20 @@ def normalize_item(item: dict) -> dict:
         or "(no title)"
     )
     number = content.get("number") or item.get("number")
+    url = content.get("url") or item.get("url")
     repo = None
     if isinstance(content.get("repository"), dict):
         repo = content["repository"].get("nameWithOwner") or content["repository"].get("name")
     elif content.get("repository"):
         repo = str(content.get("repository"))
+    elif isinstance(item.get("repository"), dict):
+        repo = item["repository"].get("nameWithOwner") or item["repository"].get("name")
+    elif item.get("repository"):
+        repo = str(item.get("repository"))
+    if not repo and isinstance(url, str):
+        m = re.search(r"github\.com/([^/]+/[^/]+)/(?:issues|pull)/\d+", url)
+        if m:
+            repo = m.group(1)
     status = None
     # Prefer explicit status fields from various gh shapes
     for key in ("status", "Status"):
@@ -343,28 +380,35 @@ def normalize_item(item: dict) -> dict:
         "repository": repo,
         "status": status or "—",
         "type": content.get("type") or item.get("type") or "Issue",
-        "url": content.get("url") or item.get("url"),
+        "url": url,
         "raw": item,
     }
 
 
 def find_item_by_issue(items: list, issue_number: int, repo: Optional[str] = None) -> Optional[dict]:
+    unattributed_match: Optional[dict] = None
     for it in items:
-        n = normalize_item(it) if "raw" not in it else it
-        # list_items returns raw; normalize always
-        n = normalize_item(it)
+        if not isinstance(it, dict):
+            continue
+        n = it if ("raw" in it and "repository" in it) else normalize_item(it)
         if n.get("number") is None:
             continue
-        if int(n["number"]) != int(issue_number):
+        try:
+            num = int(n["number"])
+        except (TypeError, ValueError):
             continue
-        if repo and n.get("repository"):
-            # allow short repo name or full nameWithOwner
-            r = n["repository"]
-            if repo.lower() not in r.lower() and r.lower() not in repo.lower():
-                # still accept if number unique
-                pass
-        return n
-    return None
+        if num != int(issue_number):
+            continue
+        if not repo:
+            return n
+        item_repo = n.get("repository")
+        if item_repo:
+            if _repos_match(repo, str(item_repo)):
+                return n
+            continue
+        if unattributed_match is None:
+            unattributed_match = n
+    return unattributed_match
 
 
 def set_issue_status(
@@ -386,7 +430,7 @@ def set_issue_status(
         sys.exit(1)
     option = resolve_status_option(field, status_wanted)
 
-    items = list_items(owner, number, limit=200)
+    items = list_items(owner, number, limit=500)
     match = find_item_by_issue(items, issue_number, cfg.get("repo"))
     if not match or not match.get("id"):
         # Try adding the issue to the project first
@@ -712,7 +756,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         set_issue_status(cfg, args.issue, args.status)
     elif args.action == "view":
         number = require_project_number(cfg)
-        items = list_items(cfg["owner"], number, limit=200)
+        items = list_items(cfg["owner"], number, limit=500)
         match = find_item_by_issue(items, args.issue, cfg.get("repo"))
         if not match:
             print(f"[!] #{args.issue} not found on project {number}")
