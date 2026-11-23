@@ -17,4 +17,9 @@ The active GitHub CLI account (`gh auth status`) MUST have the specific project 
 gh auth refresh -h github.com -s project,read:project
 ```
 
-Configuration defaults to `owner: ""` (auto-detected dynamically from `git config --get remote.origin.url` in `aim_projects.py`, `#129`), `number: 7`, and `status_field: "Status"` in `config_utils.py` (`settings.github_projects`), and can be overridden via environment variables (`AIM_PROJECTS_OWNER`, `AIM_PROJECTS_NUMBER`, and optionally `AIM_PROJECTS_REPO`) or inside `CONFIG.json`.
+Configuration defaults to `owner: ""` (auto-detected dynamically from `git config --get remote.origin.url` in `aim_projects.py`, `#129`), `repo` auto-detected locally from `remote.origin.url` before falling back to `gh repo view` (`#140`), `number: 7`, and `status_field: "Status"` in `config_utils.py` (`settings.github_projects`), and can be overridden via environment variables (`AIM_PROJECTS_OWNER`, `AIM_PROJECTS_NUMBER`, and optionally `AIM_PROJECTS_REPO`) or inside `CONFIG.json`.
+
+## Multi-Repository Board Safety & Windows UTF-8 Hardening (`#140`)
+When multiple repositories share one GitHub Projects v2 board (e.g., Project `#7`):
+- **Exact Repo Isolation (`_repos_match` & `find_item_by_issue`):** `aim_projects.py` compares full `owner/name` or exact repo-slug segments (`continue` on mismatch, rejecting prefix collisions like `aim-site` vs. `aim-site-content` and extracting `owner/repo` fallback from `content.url`) with `limit=500` board scans so `aim projects set <N>` never mutates a sibling repository's issue `#<N>`.
+- **Windows `PATHEXT` & `cp1252` Safety (`_run_gh` & `_ensure_utf8_stdio`):** Resolves `gh` via `shutil.which("gh")` (honoring `.cmd`/`.bat` shims on Windows `PATH`) and reconfigures `stdout`/`stderr` + subprocess streams to `utf-8` (`errors="replace"`) so Unicode status arrows (`→`) and emoji issue titles never raise `UnicodeEncodeError` on piped Windows `cp1252` streams.

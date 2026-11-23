@@ -239,3 +239,13 @@
   - **768-Dim Provider Embeddings, Timezone-Safe `aim_bake`, & Alphanumeric Tantivy BM25 (`#138`):** Updated `forensic_utils.get_embedding()` to request `output_dimensionality=768` (with L2 normalization) on Google Gemini embeddings and `dimensions=768` on OpenAI `text-embedding-3-*` models while rejecting mismatched vector dimensions cleanly on `stderr`; updated `aim_bake.py` to use `datetime.now(timezone.utc)`, repo-relative `factory-<rel_path>` keys, and provider-conditional Ollama probing; and updated `lance_backend.generate_tantivy_query()` to preserve alphanumeric tokens (`FTS5`, `#135`, `v1.1.4`) without forcing mandatory `+` prefixes on sentence-initial capitalized verbs (`"Explain worktree"`).
   - **Relocated Venv Shebang Self-Healing & Local/Prefix Archive Pruning (`#139`):** Added `repair_venv_shebangs()` to `bootstrap_install.py` (invoked automatically in `build_engine_venv()` and used to repair `32` stale console scripts in host `joshua_os/venv/bin`) plus read-only shebang diagnostics in `aim_doctor.py`, made `aim_init.py` read `VERSION` dynamically, and broadened `cmd_prune_remote` to cover all `archive-*` prefixes and `--include-local` cleanup.
 - Updated `index.md`, `pages/architecture.md`, `pages/operations.md`, and `pages/ci-testing.md`.
+
+
+---
+
+## [2026-11-23] ingest | Multi-Repo Kanban Collision Guards & Windows `cp1252` UTF-8 Hardening (`#140`)
+- Resolved Issue `#140` (`b05512dc` / `e2633067`, GHA `45117722225` `ubuntu-latest` + `windows-latest` `success`, `74/74` Pytest passing with `0` warnings):
+  - **Multi-Repo Board Isolation (`joshua_os/.aim_core/aim_projects.py`):** Replaced `pass` on mismatched `repository` in `find_item_by_issue()` with strict `_repos_match()` segment equality (`continue` on mismatch, blocking cross-repo `#<N>` mutations and prefix collisions like `aim-site` vs. `aim-site-content`), avoided double-normalizing already-normalized items, extracted `owner/repo` fallback from `content.url` in `normalize_item()` and `remote.origin.url` in `_detect_repo()`, and raised board lookup scan limit to `500`.
+  - **Windows `PATHEXT` & `cp1252` UTF-8 Safety:** Updated `_run_gh()` / `view` to resolve `gh` via `shutil.which("gh")` (supporting `.cmd` shims on Windows `PATH`) and added `_ensure_utf8_stdio()` + `encoding="utf-8", errors="replace"` subprocess decoding so `→` status arrows and emoji issue titles never raise `UnicodeEncodeError` on piped Windows `cp1252` streams.
+  - **Unmocked Subprocess CLI E2E Suite (`tests/test_issue_140_projects_multirepo.py`):** Added unit + real `./aim` / `aim.cmd` subprocess E2E regression tests (`PYTHONIOENCODING=cp1252`) expanding dual-OS coverage from `71` to `74` tests.
+- Updated `index.md`, `pages/projects.md`, and `pages/ci-testing.md`.
