@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from typing import Any, Optional
@@ -49,7 +50,8 @@ def _eprint(*a: Any) -> None:
 
 
 def _run_gh(args: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
-    cmd = ["gh"] + args
+    gh_bin = shutil.which("gh") or "gh"
+    cmd = [gh_bin] + args
     try:
         return subprocess.run(cmd, capture_output=True, text=True, check=check)
     except FileNotFoundError:
@@ -765,7 +767,8 @@ def main(argv: Optional[list[str]] = None) -> None:
         repo = cfg.get("repo")
         if repo:
             print("\n--- gh issue view ---")
-            subprocess.run(["gh", "issue", "view", str(args.issue), "-R", repo], check=False)
+            gh_bin = shutil.which("gh") or "gh"
+            subprocess.run([gh_bin, "issue", "view", str(args.issue), "-R", repo], check=False)
     else:
         parser.print_help()
         sys.exit(1)
