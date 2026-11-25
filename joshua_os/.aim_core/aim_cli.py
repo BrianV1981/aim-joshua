@@ -126,6 +126,55 @@ def cmd_index(args):
 def cmd_doctor(args):
     """Dispatches to aim_doctor.py to validate environment dependencies."""
     run_script(os.path.join(AIM_CORE_DIR, "aim_doctor.py"), [])
+    try:
+        import aim_engine
+
+        engine = aim_engine.status()
+        tag = "[OK]" if engine["installed"] else "[WARN]"
+        print(f"{tag} Shared MCP Engine: {engine['version']} ({engine['root']})")
+        if not engine["installed"]:
+            print("       Run './aim engine sync' to install one shared MCP engine for all projects.")
+    except Exception:
+        pass
+
+
+def cmd_engine(args):
+    """Manage the single shared versioned MCP engine (~/.aim/engine)."""
+    import aim_engine
+
+    action = getattr(args, "engine_command", None) or "status"
+    engine_root = getattr(args, "engine_root", None)
+
+    if action == "status":
+        info = aim_engine.status(engine_root)
+        print("--- SHARED MCP ENGINE ---")
+        print(f"Root:    {info['root']}")
+        print(f"Version: {info['version']}")
+        print(f"Venv:    {info['venv'] or '[missing]'}")
+        print(f"Script:  {info['script']}")
+        print(f"Status:  {'OK' if info['installed'] else 'NOT INSTALLED'}")
+        if not info["installed"]:
+            print("Fix: ./aim engine sync")
+        return
+
+    info = aim_engine.install_engine(
+        OS_DIR,
+        root=engine_root,
+        force=getattr(args, "force", False),
+        build=not getattr(args, "skip_deps", False),
+    )
+    if not aim_engine.is_installed(info["root"]):
+        print(
+            f"[WARN] Engine code synced to {info['root']} but the venv is missing. "
+            "Re-run without --skip-deps.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    import register_mcp
+
+    touched = register_mcp.register_all_harnesses(engine_root=info["root"], force=True)
+    print(f"[SUCCESS] Shared MCP engine {info['version']} at {info['root']}")
+    print(f"[*] Re-registered search_lancedb for: {', '.join(touched) or '(no harnesses detected)'}")
 
 
 def cmd_health(args):
@@ -1103,6 +1152,25 @@ def cmd_update(args):
 
         build_engine_venv(OS_DIR)
 
+    print("[*] Syncing shared MCP engine...")
+    try:
+        import aim_engine
+        import register_mcp
+
+        engine_info = aim_engine.install_engine(OS_DIR, build=not skip_deps)
+        if aim_engine.is_installed(engine_info["root"]):
+            register_mcp.register_all_harnesses(engine_root=engine_info["root"], force=True)
+            print(f"    [SUCCESS] Shared MCP engine {engine_info['version']} -> {engine_info['root']}")
+        else:
+            print(
+                f"    [WARN] Shared engine code {engine_info['version']} synced without a venv "
+                "(run './aim engine sync' without --skip-deps).",
+                file=sys.stderr,
+            )
+    except Exception as e:
+        print(f"[WARN] Shared MCP engine sync failed: {e}", file=sys.stderr)
+        print("[WARN] Run './aim engine sync' to retry.", file=sys.stderr)
+
     if temp_dir and os.path.exists(temp_dir):
         shutil.rmtree(temp_dir, ignore_errors=True)
     print("\n[SUCCESS] Sovereign Engine Update Complete. You are running the latest A.I.M. OS.")
@@ -1166,6 +1234,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("doctor", help="Validate Python runtime and core package dependencies")
     subparsers.add_parser("health", help="Check LanceDB, session history DB, and Memory Wiki health")
+
+    engine_parser = subparsers.add_parser(
+        "engine", help="Manage the one shared versioned MCP engine (~/.aim/engine)"
+    )
+    engine_parser.add_argument("--engine-root", default=None, help="Override the shared engine root")
+    engine_sub = engine_parser.add_subparsers(dest="engine_command")
+    engine_sub.add_parser("status", help="Show shared engine path, version, and health")
+    for _engine_action in ("sync", "install", "update"):
+        _engine_action_parser = engine_sub.add_parser(
+            _engine_action, help=f"{_engine_action.capitalize()} the shared MCP engine from this install"
+        )
+        _engine_action_parser.add_argument("--skip-deps", action="store_true", help="Copy code without rebuilding the venv")
+        _engine_action_parser.add_argument("--force", action="store_true", help="Allow downgrades and force a venv rebuild")
 
     prune_remote_parser = subparsers.add_parser(
         "prune-remote", help="Garbage collect stale remote/local branches (fix/issue-* and archive-*)"
@@ -1414,6 +1495,7 @@ COMMAND_HANDLERS = {
     "sessions": cmd_sessions,
     "search-sessions": cmd_search_sessions,
     "doctor": cmd_doctor,
+    "engine": cmd_engine,
     "health": cmd_health,
     "bug": cmd_bug,
     "bug-operator": cmd_bug_operator,

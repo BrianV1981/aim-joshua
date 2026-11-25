@@ -19,7 +19,7 @@ J.O.S.H.U.A. runs natively on **Linux**, **WSL (Ubuntu)**, **macOS**, and **Wind
 | **Option C (Contributor)** | `joshua_os/install-core.sh` | `joshua_os/install-core.ps1` | Developing the J.O.S.H.U.A. OS engine itself | Upstream `aim-joshua/AGENTS.md` | Preserved (`tests/`, `memory-wiki/`, `.git`) |
 
 ### Option A: Clean Project Installation (Default — New or Existing Projects)
-Installs the `joshua_os/` engine, local `./aim` / `aim.ps1` / `aim.cmd` launchers, project-specific `memory_lance/` database, multi-harness `search_lancedb` MCP server (auto-registered for Antigravity, Grok, Codex, OpenCode, and existing Cursor/Claude configs), and default `AGENTS.md` / `TOOLS.md` blueprints into your project directory without `aim-joshua` contributor history.
+Installs the `joshua_os/` engine, local `./aim` / `aim.ps1` / `aim.cmd` launchers, project-specific `memory_lance/` database, multi-harness `search_lancedb` MCP server (auto-registered for Antigravity, Grok, Codex, OpenCode, and existing Cursor/Claude configs against the shared engine at `~/.aim/engine`), and default `AGENTS.md` / `TOOLS.md` blueprints into your project directory without `aim-joshua` contributor history.
 
 **Linux / macOS / WSL (Bash / Zsh):**
 ```bash
@@ -94,6 +94,16 @@ Once installed in your project directory:
    ```bash
    ./aim update         # Windows PowerShell: .\aim.ps1 update (supports --ref <tag> or --source <dir>)
    ```
+
+### Shared MCP Engine (One Engine, Per-Project Memory)
+`search_lancedb` runs from **one** versioned engine at `~/.aim/engine` (override with `AIM_ENGINE_ROOT`), so there is a single copy to update instead of one per project. The database, however, is always per project: the server resolves `<workspace>/joshua_os/memory_lance` from the active workspace and **fails closed** when the project has no index — it never borrows another project's memory.
+
+```bash
+./aim engine status   # path, version, venv health
+./aim engine sync     # install/refresh the shared engine and re-register harnesses
+```
+
+`./aim update` refreshes the shared engine automatically. For a deliberate, read-only cross-project lookup in an umbrella directory, set `AIM_UMBRELLA_SCAN=1`; for a one-off explicit database, set `AIM_MEMORY_DB=/abs/path/to/joshua_os/memory_lance`.
 
 ### Universal Skill Injection (Required Once Per Supported Host CLI)
 Because J.O.S.H.U.A. is CLI-agnostic, skills are decoupled from the OS engine. Clone [`aim-skill-library`](https://github.com/BrianV1981/aim-skill-library) once and install the skill pack for **`agy`**, **`grok`**, **`opencode`**, or **`codex`** (Claude Code and Cursor use `AGENTS.md` + auto-registered `search_lancedb` MCP + `./aim` CLI directly):

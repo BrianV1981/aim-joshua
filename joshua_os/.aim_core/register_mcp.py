@@ -16,6 +16,7 @@ import os
 import re
 import shutil
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -28,8 +29,23 @@ except ImportError:  # pragma: no cover
 SERVER_NAME = "search_lancedb"
 
 
-def resolve_mcp_target(project_root: str | None = None) -> tuple[str, str]:
-    """Return `(venv_python_path, mcp_lancedb_script_path)` for `project_root`."""
+def resolve_mcp_target(project_root: str | None = None, engine_root: str | None = None) -> tuple[str, str]:
+    """Return `(venv_python_path, mcp_lancedb_script_path)`.
+
+    With `engine_root`, resolve the shared versioned engine (Issue #141).
+    Without it, fall back to the legacy per-project `joshua_os/` copy.
+    """
+    if engine_root:
+        import aim_engine
+
+        venv_py = aim_engine.venv_python_path(engine_root)
+        mcp_script = aim_engine.mcp_script_path(engine_root)
+        if not venv_py or not os.path.isfile(mcp_script):
+            raise RuntimeError(
+                f"Shared MCP engine at '{engine_root}' is not installed. Run `./aim engine sync` first."
+            )
+        return os.path.abspath(venv_py), os.path.abspath(mcp_script)
+
     if project_root:
         proj = os.path.abspath(project_root)
     else:
@@ -236,6 +252,29 @@ def detect_harnesses(home: Path, detect_path_binaries: bool = True) -> list[str]
     return found
 
 
+def _write_registration_marker(
+    engine_root: str, venv_py: str, mcp_script: str, harnesses: list[str]
+) -> None:
+    """Record which engine version/paths were registered for observability."""
+    import aim_engine
+
+    payload = {
+        "version": aim_engine.installed_version(engine_root) or "unknown",
+        "engine_root": engine_root,
+        "venv_python": venv_py,
+        "mcp_script": mcp_script,
+        "harnesses": harnesses,
+        "registered_at": datetime.now(timezone.utc).isoformat(),
+    }
+    marker = os.path.join(engine_root, "registration.json")
+    os.makedirs(engine_root, exist_ok=True)
+    tmp = marker + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2)
+        fh.write("\n")
+    os.replace(tmp, marker)
+
+
 def register_all_harnesses(
     project_root: str | None = None,
     home_dir: str | None = None,
@@ -243,10 +282,11 @@ def register_all_harnesses(
     force: bool = False,
     harnesses: Iterable[str] | None = None,
     detect_path_binaries: bool = True,
+    engine_root: str | None = None,
 ) -> list[str]:
     """Register `search_lancedb` across `harnesses` (or auto-detected harnesses). Returns touched harness IDs."""
     home = Path(home_dir).expanduser() if home_dir else Path.home()
-    venv_py, mcp_script = resolve_mcp_target(project_root)
+    venv_py, mcp_script = resolve_mcp_target(project_root, engine_root=engine_root)
 
     target_list = list(harnesses) if harnesses is not None else detect_harnesses(home, detect_path_binaries=detect_path_binaries)
     registered: list[str] = []
@@ -278,12 +318,25 @@ def register_all_harnesses(
             _upsert_standard_mcp_json(cfg_path, venv_py, mcp_script, force=force)
             registered.append("claude")
 
+    if engine_root and registered:
+        _write_registration_marker(engine_root, venv_py, mcp_script, registered)
+
     return registered
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Register J.O.S.H.U.A. search_lancedb MCP server across harnesses.")
-    parser.add_argument("--project-root", default=None, help="Target project root containing joshua_os/")
+    parser.add_argument("--project-root", default=None, help="Target project root containing joshua_os/ (legacy mode)")
+    parser.add_argument(
+        "--engine-root",
+        default=None,
+        help="Register a shared versioned engine (defaults to ~/.aim/engine when installed)",
+    )
+    parser.add_argument(
+        "--no-engine",
+        action="store_true",
+        help="Force legacy per-project registration even when a shared engine is installed",
+    )
     parser.add_argument("--home", default=None, help="Override HOME directory (for testing)")
     parser.add_argument("--force", action="store_true", help="Overwrite existing healthy MCP registrations")
     parser.add_argument(
@@ -292,6 +345,17 @@ def main(argv: list[str] | None = None) -> int:
         help="Comma-separated list (agy,grok,codex,opencode,cursor,claude) or 'auto' / 'all'",
     )
     args = parser.parse_args(argv)
+
+    engine_root = args.engine_root
+    if engine_root is None and not args.no_engine:
+        try:
+            import aim_engine
+
+            candidate = aim_engine.engine_root()
+            if aim_engine.is_installed(candidate):
+                engine_root = candidate
+        except Exception:
+            engine_root = None
 
     if args.harnesses == "auto":
         selected = None
@@ -305,8 +369,10 @@ def main(argv: list[str] | None = None) -> int:
         home_dir=args.home,
         force=args.force,
         harnesses=selected,
+        engine_root=engine_root,
     )
-    print(f"    [*] Registered search_lancedb MCP server for harnesses: {', '.join(touched)}")
+    target = f"shared engine ({engine_root})" if engine_root else "project engine"
+    print(f"    [*] Registered search_lancedb MCP server for {target}: {', '.join(touched)}")
     return 0
 
 

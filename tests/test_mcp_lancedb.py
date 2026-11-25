@@ -11,53 +11,94 @@ if AIM_CORE_DIR not in sys.path:
 
 from mcp_lancedb import search_lancedb
 
-@patch("mcp_lancedb.os.getcwd")
 @patch("retriever.perform_search")
-def test_search_lancedb_no_results(mock_perform_search, mock_getcwd):
-    mock_getcwd.return_value = "/fake/workspace"
+def test_search_lancedb_no_results(mock_perform_search, tmp_path):
+    (tmp_path / "joshua_os" / "memory_lance").mkdir(parents=True)
     mock_perform_search.return_value = []
-    
-    result = search_lancedb("test query")
-    
+
+    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)):
+        result = search_lancedb("test query")
+
     assert "No fragments found" in result
     assert mock_perform_search.call_count == 1
     assert mock_perform_search.call_args[0] == ("test query",)
     assert mock_perform_search.call_args[1]["top_k"] == 10
     assert isinstance(mock_perform_search.call_args[1].get("db_path"), str)
 
-@patch("mcp_lancedb.os.getcwd")
 @patch("retriever.perform_search")
-def test_search_lancedb_with_results(mock_perform_search, mock_getcwd):
-    mock_getcwd.return_value = "/fake/workspace"
+def test_search_lancedb_with_results(mock_perform_search, tmp_path):
+    (tmp_path / "joshua_os" / "memory_lance").mkdir(parents=True)
     mock_perform_search.return_value = [
         {"filename": "test.md", "content": "This is a test fragment.", "score": 0.95}
     ]
-    
-    result = search_lancedb("test query")
-    
+
+    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)):
+        result = search_lancedb("test query")
+
     assert "--- LanceDB Search Results for: 'test query' ---" in result
+    assert f"DB: {tmp_path / 'joshua_os' / 'memory_lance'}" in result
     assert "Source: test.md" in result
     assert "This is a test fragment." in result
 
-@patch("mcp_lancedb.os.getcwd")
 @patch("retriever.perform_search")
-def test_search_lancedb_with_context(mock_perform_search, mock_getcwd):
+def test_search_lancedb_with_context(mock_perform_search, tmp_path):
     import lance_backend
     orig_lance_path = lance_backend.LANCE_DB_PATH
+
+    workspace = tmp_path / "workspace"
+    (workspace / "joshua_os" / "memory_lance").mkdir(parents=True)
 
     # Mock context
     ctx = MagicMock()
     ctx.request_context.session.client_params.model_extra = {
-        "workspaceFolders": [{"uri": "file:///my/custom/workspace"}]
+        "workspaceFolders": [{"uri": f"file://{workspace}"}]
     }
     mock_perform_search.return_value = []
-    
+
     search_lancedb("test query", ctx=ctx)
-    
+
     # Explicit db_path passed without mutating global lance_backend.LANCE_DB_PATH (Issue #130)
-    expected_db = os.path.join("/my/custom/workspace", "joshua_os", "memory_lance")
+    expected_db = os.path.join(str(workspace), "joshua_os", "memory_lance")
     mock_perform_search.assert_called_once_with("test query", top_k=10, db_path=expected_db)
     assert lance_backend.LANCE_DB_PATH == orig_lance_path
+
+
+def test_search_lancedb_fails_closed_without_project_db(tmp_path):
+    """No local DB must never fall back to another project's engine database (#141)."""
+    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)):
+        out = search_lancedb("missing db")
+    assert "[NO PROJECT MEMORY DB]" in out
+    assert "never borrows another project's database" in out
+    assert "AIM_MEMORY_DB" in out
+
+
+def test_search_lancedb_fails_closed_at_home():
+    with patch("mcp_lancedb.os.getcwd", return_value=os.path.expanduser("~")):
+        out = search_lancedb("home cwd")
+    assert "[NO PROJECT MEMORY DB]" in out
+    assert "$HOME or a filesystem root" in out
+
+
+@patch("retriever.perform_search")
+def test_search_lancedb_explicit_memory_db_override(mock_perform_search, tmp_path):
+    explicit_db = tmp_path / "shared-cartridge-db"
+    explicit_db.mkdir()
+    mock_perform_search.return_value = [{"filename": "x.md", "content": "hit", "score": 1.0}]
+    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)), patch.dict(
+        os.environ, {"AIM_MEMORY_DB": str(explicit_db)}
+    ):
+        out = search_lancedb("override")
+    assert f"DB: {explicit_db}" in out
+    assert mock_perform_search.call_args[1]["db_path"] == str(explicit_db)
+
+
+def test_search_lancedb_umbrella_scan_is_opt_in(tmp_path):
+    (tmp_path / "agent-a" / "joshua_os" / "memory_lance").mkdir(parents=True)
+    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)), patch.dict(
+        os.environ, {"AIM_UMBRELLA_SCAN": ""}
+    ):
+        out = search_lancedb("umbrella off")
+    assert "[NO PROJECT MEMORY DB]" in out
 
 
 @patch("retriever.perform_search")
@@ -80,7 +121,7 @@ def test_search_lancedb_strict_local_isolation_over_subfolders(mock_perform_sear
 
 @patch("retriever.perform_search")
 def test_search_lancedb_umbrella_subfolder_fallback(mock_perform_search, tmp_path):
-    """When workspace is a parent folder with no root DB, immediate */joshua_os/memory_lance DBs are queried and ranked."""
+    """Explicit AIM_UMBRELLA_SCAN=1 queries immediate */joshua_os/memory_lance DBs read-only and ranks them."""
     (tmp_path / "agent-a" / "joshua_os" / "memory_lance").mkdir(parents=True)
     (tmp_path / "agent-b" / "joshua_os" / "memory_lance").mkdir(parents=True)
 
@@ -91,7 +132,9 @@ def test_search_lancedb_umbrella_subfolder_fallback(mock_perform_search, tmp_pat
 
     mock_perform_search.side_effect = side_effect
 
-    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)):
+    with patch("mcp_lancedb.os.getcwd", return_value=str(tmp_path)), patch.dict(
+        os.environ, {"AIM_UMBRELLA_SCAN": "1"}
+    ):
         out = search_lancedb("umbrella query", top_k=5)
 
     assert mock_perform_search.call_count == 2
@@ -221,21 +264,21 @@ def test_register_mcp_multi_harness_detection_and_self_healing(tmp_path):
 
 
 @patch("retriever.perform_search")
-def test_search_lancedb_desktop_fallback_to_os_root_when_no_workspace_folders(mock_perform_search, tmp_path):
-    """Issue #118 (JOSH-W02): Antigravity 2.0 Desktop omits workspaceFolders and sets cwd to app binary dir or $HOME."""
+def test_search_lancedb_desktop_launch_fails_closed_instead_of_borrowing_engine_db(mock_perform_search, tmp_path):
+    """Issue #141 supersedes #118: a Desktop launch without workspaceFolders must fail closed, never use the engine's own DB."""
     import mcp_lancedb
     import lance_backend
 
     app_bin_dir = tmp_path / "AppData" / "Local" / "Programs" / "Antigravity"
     app_bin_dir.mkdir(parents=True)
 
+    # Even if the registered engine happens to own a DB, it must not be borrowed.
     fake_os_root = tmp_path / "registered-project" / "joshua_os"
-    installed_db = fake_os_root / "memory_lance"
-    installed_db.mkdir(parents=True)
+    (fake_os_root / "memory_lance").mkdir(parents=True)
 
     ctx = MagicMock()
     ctx.request_context.session.client_params.model_extra = {}
-    mock_perform_search.return_value = [{"filename": "AGENTS.md", "content": "Desktop fallback hit", "score": 0.97}]
+    mock_perform_search.return_value = [{"filename": "AGENTS.md", "content": "should not be used", "score": 0.97}]
 
     orig_lance_path = lance_backend.LANCE_DB_PATH
     try:
@@ -243,9 +286,9 @@ def test_search_lancedb_desktop_fallback_to_os_root_when_no_workspace_folders(mo
              patch("mcp_lancedb.os.getcwd", return_value=str(app_bin_dir)), \
              patch.dict(os.environ, {"AIM_WORKSPACE_ROOT": ""}, clear=False):
             out = search_lancedb("desktop query", top_k=3, ctx=ctx)
-            assert mock_perform_search.call_args[1]["db_path"] == str(installed_db)
+            assert "[NO PROJECT MEMORY DB]" in out
+            assert mock_perform_search.call_count == 0
             assert lance_backend.LANCE_DB_PATH == orig_lance_path
-            assert "Desktop fallback hit" in out
 
         # Also verify $HOME cwd without workspaceFolders does NOT umbrella-scan unrelated $HOME/* projects
         fake_home = tmp_path / "fake_home"
@@ -255,8 +298,7 @@ def test_search_lancedb_desktop_fallback_to_os_root_when_no_workspace_folders(mo
              patch("mcp_lancedb.os.path.expanduser", side_effect=lambda p: str(fake_home) if p == "~" else p), \
              patch.dict(os.environ, {"AIM_WORKSPACE_ROOT": ""}, clear=False):
             out_home = search_lancedb("desktop home query", top_k=3, ctx=ctx)
-            assert mock_perform_search.call_args[1]["db_path"] == str(installed_db)
-            assert lance_backend.LANCE_DB_PATH == orig_lance_path
+            assert "[NO PROJECT MEMORY DB]" in out_home
             assert "[unrelated-proj]" not in out_home
     finally:
         lance_backend.LANCE_DB_PATH = orig_lance_path

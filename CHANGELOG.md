@@ -1,3 +1,6 @@
+## [Unreleased]
+- Feature: One shared, versioned MCP engine at `~/.aim/engine` with strict per-project DB resolution and fail-closed behavior; adds `./aim engine status|sync`, installer/`./aim update` wiring, and `AIM_MEMORY_DB` / `AIM_UMBRELLA_SCAN` escape hatches (#141)
+
 # Changelog
 
 ## [v1.1.4] - 2026-11-21

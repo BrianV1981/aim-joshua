@@ -458,10 +458,35 @@ def install_project(
             sys.path.insert(0, core_mod_dir)
         import register_mcp
 
+        engine_root = None
+        try:
+            import aim_engine
+
+            # Keep the shared engine under the effective HOME (hermetic installs/tests included).
+            engine_info = aim_engine.install_engine(
+                str(dst_os),
+                root=aim_engine.engine_root(home_dir=str(home)),
+                build=not skip_deps,
+            )
+            if aim_engine.is_installed(engine_info["root"]):
+                engine_root = engine_info["root"]
+                print(f"    [*] Shared MCP engine ready: {engine_info['version']} ({engine_root})")
+            else:
+                print(
+                    "    [WARN] Shared engine code synced without a venv (--skip-deps); "
+                    "run './aim engine sync' to finish.",
+                    file=sys.stderr,
+                )
+        except Exception as exc:
+            print(f"    [WARN] Shared MCP engine install failed: {exc}", file=sys.stderr)
+            print("    [WARN] Falling back to this project's engine for MCP registration.", file=sys.stderr)
+            print("    [WARN] Run './aim engine sync' after installation to migrate.", file=sys.stderr)
+
         register_mcp.register_all_harnesses(
             project_root=str(target),
             home_dir=str(home) if home_dir else None,
             detect_path_binaries=(home_dir is None),
+            engine_root=engine_root,
         )
 
         # Register AGY trusted workspace (and POSIX trust helper persistence) when running against real HOME

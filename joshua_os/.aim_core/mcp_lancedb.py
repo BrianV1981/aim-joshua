@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+"""LanceDB MCP server with strict per-project isolation (Issue #141).
+
+The server *code* may live in one shared, versioned engine
+(``~/.aim/engine``), but the *database* is always resolved from the active
+workspace and the call fails closed when that project has no index. It never
+borrows another project's memory.
+"""
 import traceback
 import subprocess
 import sys
 import os
-import json
 import re
 import urllib.parse
 
@@ -60,13 +66,14 @@ def _is_home_or_fs_root(path_str: str) -> bool:
     return os.path.dirname(abs_raw) == abs_raw
 
 
-@mcp.tool()
-def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
-    """Search the LanceDB vector database for architectural context, code snippets, and mandates."""
-    workspace_path = None
-    from_ctx = False
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
 
-    # Extract workspace URI dynamically from the initialize payload as per mandate
+
+def _resolve_workspace(ctx: Context = None) -> str:
+    """Resolve the active project workspace from the MCP payload, env, or cwd."""
+    workspace_path = None
+
     if ctx and hasattr(ctx, "request_context"):
         session = getattr(ctx.request_context, "session", None)
         client_params = getattr(session, "client_params", None) if session else None
@@ -79,54 +86,90 @@ def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
                     uri = first.get("uri", "") if isinstance(first, dict) else getattr(first, "uri", "")
                     if uri:
                         workspace_path = _uri_to_local_path(uri)
-                        from_ctx = True
                 if not workspace_path and extra.get("rootUri"):
                     workspace_path = _uri_to_local_path(str(extra["rootUri"]))
-                    from_ctx = True
 
     if not workspace_path:
         env_ws = os.environ.get("AIM_WORKSPACE_ROOT", "").strip()
         if env_ws:
             workspace_path = _uri_to_local_path(env_ws)
-            from_ctx = True
         else:
             workspace_path = os.getcwd()
 
-    db_path = os.path.join(workspace_path, "joshua_os", "memory_lance")
+    return workspace_path
 
-    # Dynamically locate .aim_core (prefer workspace, fall back to script directory for umbrella/Desktop launches)
-    core_path = os.path.join(workspace_path, "joshua_os", ".aim_core")
-    if not os.path.isdir(core_path):
-        core_path = _current_dir
-    if core_path not in sys.path:
-        sys.path.insert(0, core_path)
+
+def _discover_subfolder_dbs(workspace_path: str) -> list[tuple[str, str]]:
+    subfolder_dbs: list[tuple[str, str]] = []
+    if not workspace_path or not os.path.isdir(workspace_path):
+        return subfolder_dbs
+    for entry in sorted(os.listdir(workspace_path)):
+        sub_db = os.path.join(workspace_path, entry, "joshua_os", "memory_lance")
+        if os.path.isdir(sub_db):
+            subfolder_dbs.append((entry, sub_db))
+    return subfolder_dbs
+
+
+def _resolve_db_path(workspace_path: str) -> tuple[str | None, list[tuple[str, str]], str | None]:
+    """Return ``(db_path, subfolder_dbs, error)`` with strict project isolation."""
+    explicit = os.environ.get("AIM_MEMORY_DB", "").strip()
+    if explicit:
+        db_path = os.path.abspath(os.path.expanduser(explicit))
+        if os.path.isdir(db_path):
+            return db_path, [], None
+        return None, [], f"AIM_MEMORY_DB points to a missing directory: {db_path}"
+
+    if not workspace_path or _is_home_or_fs_root(workspace_path):
+        return (
+            None,
+            [],
+            f"No project workspace detected (resolved to '{workspace_path}', which is $HOME or a filesystem root).",
+        )
+
+    local_db = os.path.join(workspace_path, "joshua_os", "memory_lance")
+    if os.path.isdir(local_db):
+        return local_db, [], None
+
+    if _env_flag("AIM_UMBRELLA_SCAN"):
+        subfolder_dbs = _discover_subfolder_dbs(workspace_path)
+        if subfolder_dbs:
+            return None, subfolder_dbs, None
+
+    return None, [], f"No project memory DB found at {local_db}"
+
+
+def _fail_closed(workspace_path: str | None, reason: str) -> str:
+    expected = (
+        os.path.join(workspace_path, "joshua_os", "memory_lance")
+        if workspace_path
+        else "<project>/joshua_os/memory_lance"
+    )
+    return (
+        "[NO PROJECT MEMORY DB]\n"
+        f"Reason:    {reason}\n"
+        f"Workspace: {workspace_path or '(none)'}\n"
+        f"Expected:  {expected}\n"
+        "This server never borrows another project's database.\n"
+        "Fix: cd into the project and run `./aim init` or `./aim index`, "
+        "or set AIM_MEMORY_DB=/absolute/path/to/joshua_os/memory_lance."
+    )
+
+
+@mcp.tool()
+def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
+    """Search this project's LanceDB vector database for architectural context, code snippets, and mandates."""
+    workspace_path = _resolve_workspace(ctx)
+    db_path, subfolder_dbs, error = _resolve_db_path(workspace_path)
+    if error:
+        return _fail_closed(workspace_path, error)
+
+    # One shared engine: always import the code that is actually running this server.
+    if _current_dir not in sys.path:
+        sys.path.insert(0, _current_dir)
 
     try:
         from retriever import perform_search
 
-        # Rule 1 (Strict Project Isolation): If local DB exists, never scan subfolders.
-        # Rule 2 (Umbrella Fallback): Scan immediate */joshua_os/memory_lance subfolders when workspace_path
-        # came from an explicit workspace context (or a non-HOME/non-root cwd).
-        subfolder_dbs = []
-        allow_umbrella_scan = from_ctx or not _is_home_or_fs_root(workspace_path)
-        if not os.path.isdir(db_path) and allow_umbrella_scan and os.path.isdir(workspace_path):
-            for entry in sorted(os.listdir(workspace_path)):
-                sub_db = os.path.join(workspace_path, entry, "joshua_os", "memory_lance")
-                if os.path.isdir(sub_db):
-                    subfolder_dbs.append((entry, sub_db))
-
-        # Rule 3 (Desktop / Non-IDE Fallback, Issue #118): When the MCP host omits workspaceFolders
-        # (e.g. Antigravity 2.0 Desktop) and cwd is an app binary dir or $HOME, fall back to the
-        # registered installation's own _os_root/memory_lance (or default_lance seed).
-        if not from_ctx and not os.path.isdir(db_path) and not subfolder_dbs:
-            installed_db = os.path.join(_os_root, "memory_lance")
-            seed_db = os.path.join(_os_root, "assets", "default_lance")
-            if os.path.isdir(installed_db):
-                db_path = installed_db
-            elif os.path.isdir(seed_db):
-                db_path = seed_db
-
-        # Pass explicit db_path to perform_search without mutating module-global LANCE_DB_PATH (Issue #130)
         if subfolder_dbs:
             results = []
             for sub_name, sub_db in subfolder_dbs:
@@ -138,24 +181,27 @@ def search_lancedb(query: str, top_k: int = 10, ctx: Context = None) -> str:
                     results.append(hit_copy)
             results.sort(key=lambda r: r.get("score", 0.0), reverse=True)
             results = results[:top_k]
+            db_label = "[umbrella] " + ", ".join(name for name, _ in subfolder_dbs)
         else:
             results = perform_search(query, top_k=top_k, db_path=db_path)
-        
+            db_label = db_path
+
         if not results:
-            return f"No fragments found for query: '{query}'"
-            
-        output = f"--- LanceDB Search Results for: '{query}' ---\n\n"
+            return f"No fragments found for query: '{query}' (DB: {db_label})"
+
+        output = f"--- LanceDB Search Results for: '{query}' ---\nDB: {db_label}\n\n"
         for i, res in enumerate(results, 1):
             source = res.get('filename') or res.get('source_db') or res.get('session_id') or 'Unknown'
             content = res.get('content', '')
             score = res.get('score', 0.0)
             output += f"[{i}] Score: {score:.4f} | Source: {source}\n{content}\n"
             output += "-" * 45 + "\n"
-            
+
         return output
     except Exception as e:
         traceback.print_exc()
         return f"Retrieval Error: {str(e)}"
+
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

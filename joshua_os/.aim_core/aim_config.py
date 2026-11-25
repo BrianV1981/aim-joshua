@@ -239,6 +239,16 @@ def setup_cognitive_tier(tier_name):
 def mcp_server_menu():
     venv_py = resolve_venv_python(AIM_ROOT)
     mcp_script = os.path.join(AIM_ROOT, ".aim_core", "mcp_lancedb.py")
+    engine_root = None
+    try:
+        import aim_engine
+
+        candidate = aim_engine.engine_root()
+        if aim_engine.is_installed(candidate):
+            engine_root = candidate
+            venv_py, mcp_script = aim_engine.engine_paths(candidate)
+    except Exception:
+        engine_root = None
     while True:
         _clear_screen()
         rprint(Panel("[bold green]A.I.M. MCP SERVER CONTROL[/bold green]\nModel Context Protocol Integration (search_lancedb)"))
@@ -262,8 +272,11 @@ def mcp_server_menu():
         if "1." in choice:
             import register_mcp
 
-            touched = register_mcp.register_all_harnesses(project_root=PROJECT_ROOT, force=True)
-            rprint(f"[green]Registered search_lancedb for: {', '.join(touched)}[/green]")
+            touched = register_mcp.register_all_harnesses(
+                project_root=PROJECT_ROOT, force=True, engine_root=engine_root
+            )
+            target = f"shared engine ({engine_root})" if engine_root else "project engine"
+            rprint(f"[green]Registered search_lancedb for {target}: {', '.join(touched)}[/green]")
             input("\nPress Enter to continue...")
         elif "2." in choice:
             config_example = {
