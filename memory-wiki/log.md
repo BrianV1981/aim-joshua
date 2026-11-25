@@ -1,4 +1,8 @@
-# Memory Log
+## [2026-11-25] ingest | Shared Versioned MCP Engine & Fail-Closed Project Isolation (`#141`)
+- Replaced last-writer-wins per-project MCP registration with one shared engine at `~/.aim/engine` (`aim_engine.py`, `VERSION`, `engine.json`, dedicated venv; downgrade guard, `CONFIG.json` exclusion, requirements-hash venv reuse).
+- `mcp_lancedb.py` now resolves the DB strictly from the active workspace and fails closed with `[NO PROJECT MEMORY DB]` instead of borrowing the engine's own/another project's `memory_lance`; removed the #118 Rule 3 fallback and made umbrella scans explicit (`AIM_UMBRELLA_SCAN=1`). Added `AIM_MEMORY_DB` override and `DB: <path>` provenance in results.
+- `register_mcp.py` registers the shared engine across all six harnesses and writes `~/.aim/engine/registration.json`; installers, `./aim update`, `./aim doctor`, the TUI MCP menu, and new `./aim engine status|sync` are wired to it.
+- TDD: `tests/test_shared_engine.py` + updated `tests/test_mcp_lancedb.py` + `tests/conftest.py` engine isolation; 85/85 pytest green locally (`-W error::DeprecationWarning`).
 
 ## [2026-08-11] ingest | Initial Bootstrap & Legacy Purge
 - Bootstrapped the memory wiki structure.
