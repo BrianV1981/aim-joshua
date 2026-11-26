@@ -51,7 +51,7 @@ def test_search_lancedb_with_context(mock_perform_search, tmp_path):
     # Mock context
     ctx = MagicMock()
     ctx.request_context.session.client_params.model_extra = {
-        "workspaceFolders": [{"uri": f"file://{workspace}"}]
+        "workspaceFolders": [{"uri": workspace.as_uri()}]
     }
     mock_perform_search.return_value = []
 

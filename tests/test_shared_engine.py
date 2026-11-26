@@ -34,9 +34,11 @@ def _fake_installed_engine(tmp_path, version="v9.9.9"):
     (os_dir / ".aim_core").mkdir(parents=True)
     (os_dir / ".aim_core" / "mcp_lancedb.py").write_text("# engine mcp\n", encoding="utf-8")
     (os_dir / "VERSION").write_text(version + "\n", encoding="utf-8")
-    venv_bin = os_dir / "venv" / "bin"
-    venv_bin.mkdir(parents=True)
-    venv_py = venv_bin / "python3"
+    if os.name == "nt":
+        venv_py = os_dir / "venv" / "Scripts" / "python.exe"
+    else:
+        venv_py = os_dir / "venv" / "bin" / "python3"
+    venv_py.parent.mkdir(parents=True)
     venv_py.write_text("#!/bin/sh\n", encoding="utf-8")
     venv_py.chmod(0o755)
     return root
@@ -100,7 +102,7 @@ def test_register_harnesses_uses_shared_engine_paths(tmp_path):
     )
 
     expected_script = str(root / "joshua_os" / ".aim_core" / "mcp_lancedb.py")
-    expected_python = str(root / "joshua_os" / "venv" / "bin" / "python3")
+    expected_python = aim_engine.venv_python_path(str(root))
     assert touched == ["agy", "grok", "codex", "opencode", "cursor"]
 
     agy = json.loads((home / ".gemini" / "config" / "mcp_config.json").read_text(encoding="utf-8"))
@@ -111,9 +113,9 @@ def test_register_harnesses_uses_shared_engine_paths(tmp_path):
     opencode = json.loads((home / ".config" / "opencode" / "opencode.json").read_text(encoding="utf-8"))
     assert opencode["mcp"]["search_lancedb"]["command"] == [expected_python, expected_script]
     codex = (home / ".codex" / "config.toml").read_text(encoding="utf-8")
-    assert expected_script in codex
+    assert json.dumps(expected_script) in codex
     grok = (home / ".grok" / "config.toml").read_text(encoding="utf-8")
-    assert expected_script in grok
+    assert json.dumps(expected_script) in grok
 
     marker = json.loads((root / "registration.json").read_text(encoding="utf-8"))
     assert marker["version"] == "v9.9.9"
