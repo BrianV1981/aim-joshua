@@ -1,5 +1,5 @@
 ## [2026-11-26] ingest | Fleet Inventory Correction: `42` Project Roots (Not `21`)
-- Re-measured every `joshua_os/.aim_core` install under `$HOME` (excluding `venv/`, `node_modules/`, `.git/`, `workspace/`, and `~/.aim/engine`): **`42` project roots** — `22` v1.1.3, `14` v0.8.2, `3` v1.1.4 (`aim-joshua`, `aim-memory`, `aim-ld-videos`), `2` v1.0.7, `1` v1.0.8; plus inactive `aim-cron-dashboard.bak`.
+- Re-measured every `joshua_os/.aim_core` install under `$HOME` (excluding `venv/`, `node_modules/`, `.git/`, `workspace/`, and `~/.aim/engine`): **`42` project roots** — `22` v1.1.3, `14` v0.8.2, `3` v1.1.4 (this repo plus two sibling workspaces), `2` v1.0.7, `1` v1.0.8; plus inactive `aim-cron-dashboard.bak`.
 - The `21/21` figure was a Pass 14 rollout snapshot and is stale mainly because `aim-connect/agent_workspaces/*` session nodes multiplied. Corrected current-state claims in `HANDOFF.md` and `pages/operations.md`; historical rows remain untouched.
 - Verified the `#141` shared engine (`~/.aim/engine` v1.1.4) resolves each project's own `joshua_os/memory_lance` on v0.8.2, v1.1.3, and v1.1.4 samples with zero cross-project bleed; per-project `./aim update` is still required for CLI/GitOps version parity.
 
