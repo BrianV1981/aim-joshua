@@ -114,7 +114,7 @@ def _resolve_db_path(workspace_path: str) -> tuple[str | None, list[tuple[str, s
     """Return ``(db_path, subfolder_dbs, error)`` with strict project isolation."""
     explicit = os.environ.get("AIM_MEMORY_DB", "").strip()
     if explicit:
-        db_path = os.path.abspath(os.path.expanduser(explicit))
+        db_path = os.path.normpath(os.path.abspath(os.path.expanduser(explicit)))
         if os.path.isdir(db_path):
             return db_path, [], None
         return None, [], f"AIM_MEMORY_DB points to a missing directory: {db_path}"
@@ -126,7 +126,7 @@ def _resolve_db_path(workspace_path: str) -> tuple[str | None, list[tuple[str, s
             f"No project workspace detected (resolved to '{workspace_path}', which is $HOME or a filesystem root).",
         )
 
-    local_db = os.path.join(workspace_path, "joshua_os", "memory_lance")
+    local_db = os.path.normpath(os.path.join(workspace_path, "joshua_os", "memory_lance"))
     if os.path.isdir(local_db):
         return local_db, [], None
 
