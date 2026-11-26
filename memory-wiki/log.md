@@ -1,3 +1,8 @@
+## [2026-11-26] roadmap | v1.2 Hardening Roadmap Opened (Epic `#142`, 37 Tickets)
+- Published the repository-review recommendations as 37 tracked issues under Epic `#142` on Project `#7`: 5 security, 6 reliability, 5 memory, 4 packaging, 5 CI/tests, 5 proof/positioning, 5 UX/observability, 2 sandbox/integration.
+- 9 `P0`s: `#143` git-history purge (approval-gated), `#144` fail-closed updater, `#150` atomic engine swap + rollback, `#154` incremental upsert, `#156` zero-vector guard, `#159` pip/uvx packaging, `#168` LoCoMo publication, `#170` `aim demo`, `#173` doctor/embedding probe.
+- No code changed in this step. All issues were added to Project `#7`; GraphQL rate limits were exhausted after item creation, so remaining status promotions stay in Backlog (`#143`/`#144` are Todo).
+
 ## [2026-11-26] ingest | Fleet Inventory Correction: `42` Project Roots (Not `21`)
 - Re-measured every `joshua_os/.aim_core` install under `$HOME` (excluding `venv/`, `node_modules/`, `.git/`, `workspace/`, and `~/.aim/engine`): **`42` project roots** — `22` v1.1.3, `14` v0.8.2, `3` v1.1.4 (this repo plus two sibling workspaces), `2` v1.0.7, `1` v1.0.8; plus inactive `aim-cron-dashboard.bak`.
 - The `21/21` figure was a Pass 14 rollout snapshot and is stale mainly because `aim-connect/agent_workspaces/*` session nodes multiplied. Corrected current-state claims in `HANDOFF.md` and `pages/operations.md`; historical rows remain untouched.

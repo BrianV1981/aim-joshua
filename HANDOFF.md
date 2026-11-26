@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-26T00:15:00+00:00
+> **Updated:** 2026-11-26T03:05:00+00:00
 > **Updated by:** OpenCode (deepseek-flash)
-> **Priority Mission:** STANDBY — `#141` SHIPPED (`4a9a6f6a`), ONE SHARED MCP ENGINE (`~/.aim/engine` `v1.1.4`) WITH STRICT PER-PROJECT FAIL-CLOSED DB, `85/85` DUAL-OS PYTEST GREEN (`0` Warnings), `0` Open Issues
+> **Priority Mission:** ROADMAP OPEN — Epic `#142` (37 tickets, 9 `P0`) from the 2026-11-26 review; `#141` shared engine live (`~/.aim/engine` `v1.1.4`, strict per-project fail-closed DB, `85/85` dual-OS green); no code changes pending
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -39,14 +39,15 @@ J.O.S.H.U.A. is the CLI-agnostic OS brain for A.I.M. agents: nested `joshua_os/`
 
 ---
 
-## 2. YOUR MISSION: STANDBY
-The backlog is currently clear (`0` open issues). The shared MCP engine is installed at `~/.aim/engine` (`v1.1.4`) and all detected harnesses point to it. You are awaiting explicit operator directives. 
+## 2. YOUR MISSION: ROADMAP EXECUTION
+Open work is tracked in **Epic `#142`** on Project `#7` (37 tickets; statuses start in Backlog). Work top-down; never start `#143` (git-history rewrite) without explicit Operator approval and a `git bundle` backup.
 
 ### Execution Queue (in order)
-#### 1️⃣ Await Orders
-**Problem:** No active tickets.
-**Fix:** Parse operator input and execute via GitOps workflow.
-**Key files:** N/A
+1. **Trust & engine safety:** `#144` fail-closed updater, `#150` atomic engine swap + rollback, `#151` registration merge.
+2. **Visibility & index safety:** `#173` `doctor --fix` + embedding probe, `#156` zero-vector guard, `#154` incremental upsert.
+3. **Distribution & proof:** `#159` `pyproject`/pip/uvx, `#170` `aim demo`, `#168` LoCoMo publication.
+4. **Robustness:** `#148` structured logging for swallowed errors, `#149` subprocess timeouts.
+5. **Destructive (approval-gated):** `#143` purge private session blobs from git history.
 
 ---
 
@@ -101,7 +102,7 @@ Follow strict GitOps workflow for any future tasks:
 ---
 
 ## 7. THE FULL PICTURE / WHAT COMES AFTER
-Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`/`#141`, `85/85` dual-OS pytest), the shared MCP engine is live locally so future engine upgrades happen once (`./aim engine sync` or `./aim update`), downstream consumers (`42` project roots: `22` v1.1.3, `14` v0.8.2, `3` v1.1.4, `2` v1.0.7, `1` v1.0.8) can upgrade via a single `./aim update` pass (which also syncs the shared engine) whenever desired, and cross-OS inter-agent messaging in `aim-skill-library` (`aim-communicate` `v2.0`) is aligned with `aim-mailbox`. Primary ongoing directive is maintaining codebase parity, dual-OS CI stability, and strict OS-kernel hygiene.
+Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`/`#141`, `85/85` dual-OS pytest), the shared MCP engine is live locally so future engine upgrades happen once (`./aim engine sync` or `./aim update`), downstream consumers (`42` project roots: `22` v1.1.3, `14` v0.8.2, `3` v1.1.4, `2` v1.0.7, `1` v1.0.8) can upgrade via a single `./aim update` pass (which also syncs the shared engine) whenever desired, and cross-OS inter-agent messaging in `aim-skill-library` (`aim-communicate` `v2.0`) is aligned with `aim-mailbox`. Primary ongoing directive is executing Epic `#142` (trust -> engine safety -> packaging/proof -> memory scaling -> CI/UX) while maintaining dual-OS CI stability and strict OS-kernel hygiene.
 
 ---
 
@@ -115,5 +116,5 @@ Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`/`#141`, `85/85` dual
 ---
 
 ## 9. IMMEDIATE NEXT STEPS
-1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board` to verify baseline health, the shared engine (`~/.aim/engine`), and Project `#7` (`0` open issues at closeout).
-2. Read `memory-wiki/index.md` and await the Operator's next outcome-oriented directive, then claim and isolate work via `./aim bug` -> `./aim projects in-progress <id>` -> `./aim fix <id>`.
+1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board` to verify baseline health and the shared engine.
+2. Read Epic `#142` and the P0 list, claim the next ticket via `./aim projects in-progress <id>` -> `./aim fix <id>`, and ship via TDD + dual-OS CI.
