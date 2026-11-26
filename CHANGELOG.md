@@ -3,6 +3,10 @@
 
 # Changelog
 
+## [v1.2.1] - 2026-11-26
+- Fix: make A-Mail doctor test Windows extension-agnostic (#181)
+
+
 ## [v1.2.0] - 2026-11-26
 - Feature: standardize A-Mail inter-agent protocol and deprecate aim-communicate (#181)
 

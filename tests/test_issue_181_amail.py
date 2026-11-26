@@ -77,5 +77,6 @@ def test_doctor_reports_amail_cli_and_mailbox_non_blocking(tmp_path):
         timeout=180,
     )
     assert res.returncode == 0, res.stdout + res.stderr
-    assert "[OK] A-Mail CLI (amail)" in res.stdout
+    assert "[OK] A-Mail CLI" in res.stdout
+    assert "amail" in res.stdout.lower()
     assert "[OK] A-Mail Mailbox" in res.stdout
