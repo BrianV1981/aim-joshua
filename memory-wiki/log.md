@@ -1,3 +1,8 @@
+## [2026-11-26] ingest | A-Mail Standardized; `aim-communicate` Deprecated (Epic `#181`)
+- Kernel shipped at `ca771035` (`v1.2.0`, `90/90`): `AGENTS.md` + `default_AGENTS.md` §8c, `FLEET_ORCHESTRATION.md` §4, README matrix/bullet, non-blocking `aim doctor` A-Mail CLI/mailbox checks, and `tests/test_issue_181_amail.py`.
+- Deprecated `aim-communicate`, `tmux_send.sh`, raw `tmux send-keys`, and `aim-chalkboard`; A-Mail (`amail` / `aim-mail`, `aim-mailbox` v0.2.2) is the sole transport with `FROM`/`REPLY_TO`, `--operator-approved`, `max_hops=1`, and DND/WIP guards.
+- Delegated `aim-mailbox#19` and `aim-skill-library#35`; fleet-wide public consumer docs (redacted) and private/live-vertical follow-ups remain; the DND-protected live vertical stays untouched. `./aim index` deferred until embeddings are online (`#156`) to avoid zero-vector writes.
+
 ## [2026-11-26] roadmap | v1.2 Hardening Roadmap Opened (Epic `#142`, 37 Tickets)
 - Published the repository-review recommendations as 37 tracked issues under Epic `#142` on Project `#7`: 5 security, 6 reliability, 5 memory, 4 packaging, 5 CI/tests, 5 proof/positioning, 5 UX/observability, 2 sandbox/integration.
 - 9 `P0`s: `#143` git-history purge (approval-gated), `#144` fail-closed updater, `#150` atomic engine swap + rollback, `#154` incremental upsert, `#156` zero-vector guard, `#159` pip/uvx packaging, `#168` LoCoMo publication, `#170` `aim demo`, `#173` doctor/embedding probe.
