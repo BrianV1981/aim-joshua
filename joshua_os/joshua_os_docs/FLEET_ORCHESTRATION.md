@@ -28,3 +28,13 @@ When an agent or orchestrator begins a task, it must NOT execute on the `main` b
 
 ## 3. The Batch Merge (`aim merge-batch`)
 If a fleet of agents has completed numerous isolated worktrees, the orchestrator can execute `aim merge-batch`. This command evaluates all open `fix/*` branches, resolves non-conflicting merges into `main`, and safely deletes the isolated worktrees to maintain a clean OS state.
+
+
+## 4. Inter-Agent Communication (A-Mail / `aim-mailbox`)
+`amail` / `aim-mail` (powered by `aim-mailbox`) is the sole inter-agent transport across Linux, WSL, macOS, and Windows. It is zero-dependency Python stdlib, has no resident daemon, and ships native wake drivers (POSIX `tmux`, Windows Desktop Sidecar, HTTP, VS Code).
+
+- **Envelope contract:** every dispatch sets `--from` and `--reply-to`; initial dispatches require `--operator-approved`; automated replies are bounded by `max_hops=1`.
+- **Lifecycle:** `amail register` once per agent, `check` at turn boundaries, `inbox`/`read` before acting, `ack` when done, `wait`/`pulse`/hooks for zero-LLM blocking.
+- **Deprecated:** `aim-communicate`, `tmux_send.sh`, raw `tmux send-keys`, and `aim-chalkboard`. For a POSIX `tmux` target, use `amail`'s built-in `--driver tmux` with exact `=session:` anchoring.
+- **Guards:** respect `agents.json` DND/BUSY state and WIP locks. Never wake a DND agent or mutate a live vertical mid-batch; file a follow-up ticket instead.
+- **Closeout:** a one-hop completion report goes back to the dispatcher's `reply_to`, ending with `DO NOT reply`.

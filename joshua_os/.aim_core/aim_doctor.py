@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import shutil
 import sys
 
 print("--- A.I.M. DOCTOR ---")
@@ -65,6 +66,18 @@ if os.name != "nt" and os.path.isdir(venv_bin):
         )
     else:
         print("[OK] Virtualenv Entrypoints")
+
+# A-Mail inter-agent communication (non-blocking; Issue #181)
+amail_cli = shutil.which("aim-mail") or shutil.which("amail")
+mailbox_dir = os.environ.get("AIM_MAILBOX_DIR", "").strip() or os.path.expanduser("~/.aim/mailbox")
+if amail_cli:
+    print(f"[OK] A-Mail CLI ({os.path.basename(amail_cli)})")
+else:
+    print("[WARNING] A-Mail CLI not found (install aim-mailbox) — inter-agent mail unavailable")
+if os.path.isdir(mailbox_dir):
+    print("[OK] A-Mail Mailbox")
+else:
+    print("[WARNING] A-Mail mailbox missing (run 'aim-mail register <agent> ...')")
 
 print("--- DOCTOR COMPLETE ---")
 sys.exit(1 if has_errors else 0)

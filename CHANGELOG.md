@@ -3,6 +3,10 @@
 
 # Changelog
 
+## [v1.2.0] - 2026-11-26
+- Feature: standardize A-Mail inter-agent protocol and deprecate aim-communicate (#181)
+
+
 ## [v1.1.4] - 2026-11-21
 - Fix: Honor configured reasoning models, enforce 768-dim provider embeddings & Tantivy alphanumeric BM25, and self-heal moved venv shebangs (#137, #138, #139)
 

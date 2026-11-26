@@ -130,9 +130,9 @@ J.O.S.H.U.A. separates its cross-platform **Universal Core** from optional **POS
 
 | Tier / Harness Group | Platforms & Harnesses | Included Capabilities |
 |----------------------|-----------------------|-----------------------|
-| **Tier 1A: Full Harness Pack** | **Windows 10/11, macOS, Linux, WSL** · Antigravity (`agy`), Grok CLI (`grok`), OpenCode (`opencode`), Codex CLI (`codex`) | `AGENTS.md` constitution, `search_lancedb` MCP auto-registration, `aim-skill-library` slash skills (`/aim-memory-wiki`, `/aim-handoff`, etc.), dedicated session sealers (`agy-blackbox`, `grok-blackbox`, `opencode-blackbox`, `codex-blackbox`), FTS5 session notebook (`./aim sessions`), and GitOps worktrees. |
+| **Tier 1A: Full Harness Pack** | **Windows 10/11, macOS, Linux, WSL** · Antigravity (`agy`), Grok CLI (`grok`), OpenCode (`opencode`), Codex CLI (`codex`) | `AGENTS.md` constitution, `search_lancedb` MCP auto-registration, `aim-skill-library` slash skills (`/aim-memory-wiki`, `/aim-handoff`, `/aim-mail`, etc.), dedicated session sealers (`agy-blackbox`, `grok-blackbox`, `opencode-blackbox`, `codex-blackbox`), FTS5 session notebook (`./aim sessions`), and GitOps worktrees. |
 | **Tier 1B: Universal MCP + CLI** | **Windows 10/11, macOS, Linux, WSL** · Claude Code, Cursor, or any MCP/CLI agent | `AGENTS.md` constitution, automatic `search_lancedb` MCP registration (when `~/.claude.json` or `~/.cursor` exists), `./aim` / `.\aim.ps1` CLI retrieval & GitOps worktrees, and manual transcript sealing via `./aim vault seal --path <transcript>`. |
-| **Tier 2: POSIX Swarm** | **Linux, WSL, macOS** (`tmux`; `bwrap` on Linux) | Detached `tmux` execution, `aim-communicate` live multi-agent pane messaging, `/aim-handoff` automated `tmux` baton pass, and Linux `bwrap` sandbox isolation (`aim-bwrap-forge`). |
+| **Tier 2: POSIX Swarm** | **Linux, WSL, macOS** (`tmux`; `bwrap` on Linux) | Detached `tmux` execution, A-Mail (`amail` / `aim-mail`) inter-agent messaging with a native `tmux` wake driver, `/aim-handoff` automated `tmux` baton pass, and Linux `bwrap` sandbox isolation (`aim-bwrap-forge`). |
 
 ---
 
@@ -143,6 +143,7 @@ J.O.S.H.U.A. separates its cross-platform **Universal Core** from optional **POS
 *   **Embedded Local Memory:** Two-Tier Hybrid RAG (LanceDB vectors + Tantivy BM25 FTS + RRF reranking) with zero-copy Parquet ROM cartridge mounting (`./aim bake`, `./aim jack-in`, `./aim unplug`).
 *   **GitOps Enforcement (with Memory-State Exemption):** Application code and configuration changes run inside isolated `workspace/issue-<id>` worktrees (`./aim fix` → TDD → `./aim promote`), while living Agent Memory (`memory-wiki/**` and `HANDOFF.md`) commits and pushes directly to `origin/main` with zero prompts.
 *   **Autonomous Memory Wiki & One-Command Handoffs:** `/aim-memory-wiki` runs as a fast mid-session "Save Game" checkpoint directly to `main`, and `/aim-handoff` automatically checks `memory-wiki/log.md` for unlogged session deltas, surgically updates `HANDOFF.md` (`0–9` template), and pushes both to `origin/main`.
+*   **A-Mail Inter-Agent Communication:** `amail` / `aim-mail` (zero-dependency `aim-mailbox`) is the single transport across Linux, WSL, macOS, and Windows, with mandatory `FROM`/`REPLY_TO`, `--operator-approved` dispatch gates, `max_hops=1` reply bounds, and DND guards; `aim-communicate` / `tmux_send.sh` are deprecated.
 *   **Encrypted Blackbox Vault & Session Notebook:** Fernet (`AES-128-CBC + HMAC-SHA256`) at-rest encrypted session archival (`archive/.raw_jsonl_blackbox/`, keyed via OS keyring or `0600` `~/.aim/blackbox.key` for safe Git/cloud backup) paired with a local SQLite WAL/FTS5 project session notebook (`./aim sessions`, `./aim search-sessions`).
 *   **Anti-Drift Shield (Antigravity Hook):** When registered in Antigravity, `cognitive_mantra.py` (`AfterTool` via `aim_router.py`) periodically reinforces `AGENTS.md` mandates during long tool-call chains.
 
