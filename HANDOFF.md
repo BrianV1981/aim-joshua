@@ -96,7 +96,8 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/joshua_os/.aim_core/bootstrap_install.py` & `register_mcp.py`
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py` & `reasoning_utils.py`
-- `~/aim-joshua/tests/` (`74/74` Pytest Coverage on Linux + Windows, `0` Warnings)
+- `~/aim-joshua/artifacts/AUDIT_ROADMAP_2026-11-26.md` (Epic `#142` audit packet: 37 tickets, evidence, sequencing, auditor prompt)
+- `~/aim-joshua/tests/` (`85/85` Pytest Coverage on Linux + Windows, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` & `aim_projects.py` (CLI Router & Multi-Repo Kanban GitOps)
 
 ---
