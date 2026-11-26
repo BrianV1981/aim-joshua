@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-23T18:57:45-05:00
-> **Updated by:** Antigravity (Session ID: ad4cc84c-13a6-4ee7-b5fc-ebdd1c5017cf)
-> **Priority Mission:** STANDBY — `#140` SHIPPED ON `main` (`v1.1.4+`), `74/74` DUAL-OS PYTEST GREEN (`0` Warnings), `0` Open Issues, Session Sealed
+> **Updated:** 2026-11-26T00:15:00+00:00
+> **Updated by:** OpenCode (deepseek-flash)
+> **Priority Mission:** STANDBY — `#141` SHIPPED (`4a9a6f6a`), ONE SHARED MCP ENGINE (`~/.aim/engine` `v1.1.4`) WITH STRICT PER-PROJECT FAIL-CLOSED DB, `85/85` DUAL-OS PYTEST GREEN (`0` Warnings), `0` Open Issues
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -10,6 +10,7 @@
 ## 0. COMPLETED WORK (DO NOT REVISIT)
 | Session | Work | Status |
 |---------|------|--------|
+| 4a9a6f6a | #141 (`b9ea4f70` / `84d65321` / `4a9a6f6a`, GHA Ubuntu + Windows smoke & Gitleaks `success`, `85/85` dual-OS pytest, `0` warnings): Replaced last-writer-wins per-project MCP registration with one shared versioned engine at `~/.aim/engine` (`aim_engine.py`; dedicated venv, `VERSION`, `engine.json`, downgrade guard, `CONFIG.json` exclusion, requirements-hash venv reuse) registered across AGY/Grok/Codex/OpenCode/Claude with `registration.json` provenance. `mcp_lancedb.py` now resolves `<workspace>/joshua_os/memory_lance` strictly and fails closed with `[NO PROJECT MEMORY DB]` (removed #118 Rule 3 fallback), adds `AIM_MEMORY_DB` / `AIM_UMBRELLA_SCAN=1` escape hatches and `DB: <path>` provenance. Wired installers, `./aim update`, `./aim doctor`, TUI, and new `./aim engine status|sync`; added `tests/test_shared_engine.py`, `tests/conftest.py` engine isolation, and Windows-safe test fixes. Engine installed locally and all harnesses re-registered. | ✅ SHIPPED |
 | ad4cc84c | #140 (`b05512dc` / `e2633067`, GHA `45117722225` Ubuntu + Windows `success`, `74/74` dual-OS pytest, `0` warnings): Fixed multi-repo issue-number collisions in `aim_projects.py` (`_repos_match()` exact segment equality, `content.url` & `remote.origin.url` repo resolution, `limit=500` board scans, `shutil.which("gh")` Windows `PATHEXT` resolution, and `_ensure_utf8_stdio()` `cp1252` UTF-8 safety), added unit + unmocked CLI subprocess E2E tests (`tests/test_issue_140_projects_multirepo.py`), shipped paired satellite upgrades (`BrianV1981/aim-browser#14` & `#15`, `45/45` Jest, GHA `45284432934` `success`) while keeping `aim-joshua/memory-wiki/` pure OS-kernel (`e37f3a2d`), and sealed session `ad4cc84c` | ✅ SHIPPED |
 | afc18927 | #137, #138, #139 (`v1.1.4`, `441a840e`, GHA `44977104811` Ubuntu + Windows & `44977104321` Gitleaks `success`, GitHub Release `v1.1.4` published): Removed hardcoded `agy-3.1-flash-lite-preview` override in `reasoning_utils.py`, added `agy-*` -> `gemini-*` REST model mapping + `"openai-api-key"` alignment + `rc=1` synthesis error exits (`audit`/`recall`), wired `output_dimensionality=768` / `dimensions=768` in `forensic_utils.py` + UTC/relpath `aim_bake.py` + alphanumeric/sentence-case Tantivy BM25 in `lance_backend.py`, added `repair_venv_shebangs()` (`32` host venv scripts repaired) + `archive-*` / `--include-local` `prune-remote` + dynamic `VERSION` in `aim_init.py` (`71/71` dual-OS pytest, `0` warnings), published Nov 2026 ecosystem audit to `aim-knowledge` (`e6abdb7`), and sealed session `afc18927` | ✅ SHIPPED |
 | ffa01d2f | #136 (`badcb829`, GHA `44696621963` `success`): Vaulted verbatim pre-compaction `HANDOFF.md` (`21,692` bytes, `SHA-256: 8d5e209c...`) in Issue `#136`, executed surgical rolling-window compaction (`21.7 KB -> 14.1 KB`, `143 -> 116` lines, `10/10` `§5` traps preserved), aligned `aim-skill-library` (`aim-communicate` `v2.0`, `#19`/`#24`) + `aim-mailbox` (`v0.1.1`) + `aim-ecosystem`, and sealed session `ffa01d2f` to Blackbox Vault | ✅ RESOLVED |
@@ -39,7 +40,7 @@ J.O.S.H.U.A. is the CLI-agnostic OS brain for A.I.M. agents: nested `joshua_os/`
 ---
 
 ## 2. YOUR MISSION: STANDBY
-The backlog is currently clear. You are awaiting explicit operator directives. 
+The backlog is currently clear (`0` open issues). The shared MCP engine is installed at `~/.aim/engine` (`v1.1.4`) and all detected harnesses point to it. You are awaiting explicit operator directives. 
 
 ### Execution Queue (in order)
 #### 1️⃣ Await Orders
@@ -83,7 +84,7 @@ Follow strict GitOps workflow for any future tasks:
 - **Onboarding `AGENTS.md` Protection (`#103`–`#104`):** `aim_init.provision_agents_md()` (`joshua_os/.aim_core/aim_init.py`) and `joshua_os/.aim_core/templates/default_AGENTS.md` must stay in lockstep with the root `AGENTS.md` (`test_aim_init_never_truncates_agents_md_to_stub` in `tests/test_cli.py` enforces exact equality). Never allow any onboarding or init script to overwrite `AGENTS.md` with a stub.
 - **Legacy `aim-agy_os/` Migration Sequence:** When migrating legacy `aim-agy_os/` repos to `joshua_os/`, copy the updated `joshua_os/.aim_core/config_utils.py` *before* running `./aim update` so `find_project_root()` does not walk up to `~/aim-agy_os`.
 - **Strict OS Kernel Scope & Single `aim-ecosystem` Pointer:** Keep `aim-joshua/memory-wiki/` and `HANDOFF.md` strictly scoped to the J.O.S.H.U.A. OS kernel — never ingest sibling or client repository domain lore here (each sibling repo maintains its own `memory-wiki/`). In `README.md` and release notes, point external readers to the single standardized `aim-ecosystem` hub rather than hardcoding evolving sibling repository lists.
-- **Live MCP Reader-Safe Indexing & Unmocked CLI Gate:** Never run `./aim clean --immediate` on live consumer workspaces while sibling agent sessions hold open `mcp_lancedb.py` stdio readers (use `./aim index`, which retains 5 minutes of manifests safely). All new CLI entrypoints must include real unmocked subprocess Pytest tests (mocking `subprocess.run` previously masked `health`/`clean` defects in Pass 13). All `21` active Linux consumer workspaces are on `v1.1.3` (ready for single-pass `./aim update --source ~/aim-joshua --skip-deps` to `v1.1.4` whenever requested), and `build_engine_venv()` (`repair_venv_shebangs()`) automatically heals stale POSIX `venv/bin` shebangs after directory moves.
+- **Live MCP Reader-Safe Indexing & Unmocked CLI Gate:** Never run `./aim clean --immediate` on live consumer workspaces while sibling agent sessions hold open `mcp_lancedb.py` stdio readers (use `./aim index`, which retains 5 minutes of manifests safely). All new CLI entrypoints must include real unmocked subprocess Pytest tests (mocking `subprocess.run` previously masked `health`/`clean` defects in Pass 13). All `21` active Linux consumer workspaces are on `v1.1.3` (ready for single-pass `./aim update --source ~/aim-joshua --skip-deps` to `v1.1.4` whenever requested), and `build_engine_venv()` (`repair_venv_shebangs()`) automatically heals stale POSIX `venv/bin` shebangs after directory moves. **Shared MCP engine (`#141`):** the server code lives once at `~/.aim/engine` (override `AIM_ENGINE_ROOT`); never register a project-local `mcp_lancedb.py` path or reintroduce an engine/other-project DB fallback. `./aim engine status|sync` manages it, `AIM_MEMORY_DB` is the only explicit DB override, and `AIM_UMBRELLA_SCAN=1` is the only cross-project read (opt-in, read-only).
 
 ---
 
@@ -100,7 +101,7 @@ Follow strict GitOps workflow for any future tasks:
 ---
 
 ## 7. THE FULL PICTURE / WHAT COMES AFTER
-Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`, `74/74` dual-OS pytest), downstream Linux consumers (`21/21` on `v1.1.3`) can upgrade via a single `./aim update` pass whenever desired, and cross-OS inter-agent messaging in `aim-skill-library` (`aim-communicate` `v2.0`) is aligned with `aim-mailbox`. Primary ongoing directive is maintaining codebase parity, dual-OS CI stability, and strict OS-kernel hygiene.
+Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`/`#141`, `85/85` dual-OS pytest), the shared MCP engine is live locally so future engine upgrades happen once (`./aim engine sync` or `./aim update`), downstream Linux consumers (`21/21` on `v1.1.3`) can upgrade via a single `./aim update` pass (which also syncs the shared engine) whenever desired, and cross-OS inter-agent messaging in `aim-skill-library` (`aim-communicate` `v2.0`) is aligned with `aim-mailbox`. Primary ongoing directive is maintaining codebase parity, dual-OS CI stability, and strict OS-kernel hygiene.
 
 ---
 
@@ -114,5 +115,5 @@ Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`, `74/74` dual-OS pyt
 ---
 
 ## 9. IMMEDIATE NEXT STEPS
-1. Run `./aim doctor && ./aim health && ./aim projects board` to verify baseline health and inspect Project `#7` (`0` open issues at closeout).
+1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board` to verify baseline health, the shared engine (`~/.aim/engine`), and Project `#7` (`0` open issues at closeout).
 2. Read `memory-wiki/index.md` and await the Operator's next outcome-oriented directive, then claim and isolate work via `./aim bug` -> `./aim projects in-progress <id>` -> `./aim fix <id>`.
