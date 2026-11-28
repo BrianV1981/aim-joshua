@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-26T03:05:00+00:00
-> **Updated by:** OpenCode (deepseek-flash)
-> **Priority Mission:** ROADMAP OPEN — Epic `#142` (37 tickets, 9 `P0`) from the 2026-11-26 review; `#141` shared engine live (`~/.aim/engine` `v1.1.4`, strict per-project fail-closed DB, `85/85` dual-OS green); no code changes pending
+> **Updated:** 2026-11-28T04:04:56Z
+> **Updated by:** OpenCode (deepseek-flash, session `ses_dedc690adffetv1kmeP4M0FvVV`)
+> **Priority Mission:** A-MAIL EPIC `#181` — landed surface green (`v1.2.1`, `90/90`, Ubuntu+Windows CI); `aim-connect#319` / `aim-office#33` / `aim-google#21` + private verticals remain; `aim-auditor` E2E in progress. Epic `#142` roadmap open; shared engine `v1.1.4` needs `./aim engine sync` to `v1.2.1`.
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -10,7 +10,7 @@
 ## 0. COMPLETED WORK (DO NOT REVISIT)
 | Session | Work | Status |
 |---------|------|--------|
-| ca771035 | #181 (kernel, `v1.2.0`, `90/90`): Standardized A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.2.2`) as the sole inter-agent transport; added `AGENTS.md` + `default_AGENTS.md` §8c, `FLEET_ORCHESTRATION.md` §4, README matrix/bullet, non-blocking `aim doctor` A-Mail checks, and `tests/test_issue_181_amail.py`; deprecated `aim-communicate` / `tmux_send.sh` / `aim-chalkboard`. Fleet-wide docs sweep and `aim-mailbox#19` / `aim-skill-library#35` are delegated/pending. | 🚧 IN PROGRESS |
+| ca771035→e0dc4bff | #181 (kernel + fleet sweep, `v1.2.1`, `90/90`, Ubuntu+Windows CI green): A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.3.0`) is the sole transport; `AGENTS.md` + `default_AGENTS.md` §8c, `FLEET_ORCHESTRATION.md` §4, README, non-blocking `aim doctor` checks, `tests/test_issue_181_amail.py`. `aim-mailbox#19` (`8f78f91`), `aim-skill-library#35` (`043d462`, PR `#36`), `aim-coagents#20` (`ed5a892`, §6/§7 DNA preserved); public docs in `aim-ecosystem` / `aim-browser` / `aim-flight-recorder` / `aim-calc-skill` / `aim-cron-dashboard` / `aim-memory` / `aim-calendar` / `aim-office`; 6 specialist desks registered in both mailboxes; auditor status reply delivered. Open migrations: `aim-connect#319`, `aim-office#33`, `aim-google#21`; private/live verticals deferred. | 🚧 IN PROGRESS (E2E) |
 | 4a9a6f6a | #141 (`b9ea4f70` / `84d65321` / `4a9a6f6a`, GHA Ubuntu + Windows smoke & Gitleaks `success`, `85/85` dual-OS pytest, `0` warnings): Replaced last-writer-wins per-project MCP registration with one shared versioned engine at `~/.aim/engine` (`aim_engine.py`; dedicated venv, `VERSION`, `engine.json`, downgrade guard, `CONFIG.json` exclusion, requirements-hash venv reuse) registered across AGY/Grok/Codex/OpenCode/Claude with `registration.json` provenance. `mcp_lancedb.py` now resolves `<workspace>/joshua_os/memory_lance` strictly and fails closed with `[NO PROJECT MEMORY DB]` (removed #118 Rule 3 fallback), adds `AIM_MEMORY_DB` / `AIM_UMBRELLA_SCAN=1` escape hatches and `DB: <path>` provenance. Wired installers, `./aim update`, `./aim doctor`, TUI, and new `./aim engine status|sync`; added `tests/test_shared_engine.py`, `tests/conftest.py` engine isolation, and Windows-safe test fixes. Engine installed locally and all harnesses re-registered. | ✅ SHIPPED |
 | ad4cc84c | #140 (`b05512dc` / `e2633067`, GHA `45117722225` Ubuntu + Windows `success`, `74/74` dual-OS pytest, `0` warnings): Fixed multi-repo issue-number collisions in `aim_projects.py` (`_repos_match()` exact segment equality, `content.url` & `remote.origin.url` repo resolution, `limit=500` board scans, `shutil.which("gh")` Windows `PATHEXT` resolution, and `_ensure_utf8_stdio()` `cp1252` UTF-8 safety), added unit + unmocked CLI subprocess E2E tests (`tests/test_issue_140_projects_multirepo.py`), shipped paired satellite upgrades (`BrianV1981/aim-browser#14` & `#15`, `45/45` Jest, GHA `45284432934` `success`) while keeping `aim-joshua/memory-wiki/` pure OS-kernel (`e37f3a2d`), and sealed session `ad4cc84c` | ✅ SHIPPED |
 | afc18927 | #137, #138, #139 (`v1.1.4`, `441a840e`, GHA `44977104811` Ubuntu + Windows & `44977104321` Gitleaks `success`, GitHub Release `v1.1.4` published): Removed hardcoded `agy-3.1-flash-lite-preview` override in `reasoning_utils.py`, added `agy-*` -> `gemini-*` REST model mapping + `"openai-api-key"` alignment + `rc=1` synthesis error exits (`audit`/`recall`), wired `output_dimensionality=768` / `dimensions=768` in `forensic_utils.py` + UTC/relpath `aim_bake.py` + alphanumeric/sentence-case Tantivy BM25 in `lance_backend.py`, added `repair_venv_shebangs()` (`32` host venv scripts repaired) + `archive-*` / `--include-local` `prune-remote` + dynamic `VERSION` in `aim_init.py` (`71/71` dual-OS pytest, `0` warnings), published Nov 2026 ecosystem audit to `aim-knowledge` (`e6abdb7`), and sealed session `afc18927` | ✅ SHIPPED |
@@ -40,16 +40,15 @@ J.O.S.H.U.A. is the CLI-agnostic OS brain for A.I.M. agents: nested `joshua_os/`
 
 ---
 
-## 2. YOUR MISSION: ROADMAP EXECUTION
-Open work is tracked in **Epic `#142`** on Project `#7` (37 tickets; statuses start in Backlog). Work top-down; never start `#143` (git-history rewrite) without explicit Operator approval and a `git bundle` backup.
+## 2. YOUR MISSION: FINISH A-MAIL E2E, THEN EPIC #142
+Epic `#181` is the active blocker: the kernel, companion tickets, and public docs are landed, but three scoped migrations and private/live-vertical follow-ups remain, and `aim-auditor` is waiting on the E2E result. Do **not** start `#143` without explicit Operator approval and a `git bundle` backup.
 
 ### Execution Queue (in order)
-1. **Trust & engine safety:** `#144` fail-closed updater, `#150` atomic engine swap + rollback, `#151` registration merge.
-2. **Visibility & index safety:** `#173` `doctor --fix` + embedding probe, `#156` zero-vector guard, `#154` incremental upsert.
-3. **Distribution & proof:** `#159` `pyproject`/pip/uvx, `#170` `aim demo`, `#168` LoCoMo publication.
-4. **Robustness:** `#148` structured logging for swallowed errors, `#149` subprocess timeouts.
-5. **Destructive (approval-gated):** `#143` purge private session blobs from git history.
-
+1. **Functional A-Mail gap (`aim-connect#319`):** replace the raw `tmux set-buffer` / `paste-buffer` / `Escape`+`Enter` dispatch and the chalkboard `/api/swarm/activity` scan with `amail`; keep `160/160` green.
+2. **Remaining public migrations:** `aim-office#33` (UI labels; `22/22` Vitest + `3/3` pytest) and `aim-google#21` (README; preserve the WIP branch).
+3. **Live/private follow-ups:** specialist desk + commercial vertical docs/cron scripts via tickets; never wake the DND-protected live vertical or edit `aim-auditor`.
+4. **Auditor E2E:** after `#319`/`#33`/`#21` land, send a new-thread completion report and act on findings.
+5. **Epic `#142` P0s (parallel):** `#150` atomic engine rollback, `#154` incremental upsert, `#156` zero-vector guard, `#173` doctor/embedding probe, `#159` packaging.
 ---
 
 ## 3. DETAILED ANALYSIS / BREAKDOWN
@@ -57,9 +56,14 @@ Open work is tracked in **Epic `#142`** on Project `#7` (37 tickets; statuses st
 - **Cross-Platform Installers, Launchers & Multi-Harness MCP (Linux/macOS/WSL & Windows 10/11):** Onboarding scripts (`install*.sh` and `install*.ps1` delegating to `bootstrap_install.py`), root entrypoints `./aim` (Bash), `aim.ps1` (PowerShell), and `aim.cmd` (CMD), `resolve_venv_python()`, `git_push_changes()`, and `register_mcp.py` (`agy`, `grok`, `codex`, `opencode`, `cursor`, `claude`) allow Tier 1 J.O.S.H.U.A. features to run natively across Linux, macOS, WSL, and Windows 10/11 without requiring Bash, while keeping Tier 2 (`tmux` and `bwrap`) cleanly POSIX-scoped.
 - **GitOps Enforcement:** Never code on `main`. Always `aim fix <id>` to branch into a worktree sandbox.
 - **Vector Ingestion & 768-Dim Provider Parity (Index):** Ingestion (`bootstrap_brain.py` + `VectorBackend.upsert_fragments()` + `forensic_utils.get_embedding()`) is idempotent across re-runs using collision-free repo-relative `session_id` keys, `768`-dim output config across Ollama/Google/OpenAI, alphanumeric Tantivy `FTS(with_position=True)` queries, and `table.optimize` compaction. Custom directories can be ingested via `aim index --dir <path>`.
-- **Testing Framework (`74/74` Dual-OS Pytest):** Core Python modules (`mcp_lancedb.py`, `bootstrap_brain.py`, `reasoning_utils.py`, `aim_projects.py`) and all advertised CLI/GitOps/Vault entrypoints (`tests/test_v1_1_2_remediation.py`, `tests/test_v1_1_3_remediation.py`, `tests/test_v1_1_4_remediation.py`, `tests/test_issue_140_projects_multirepo.py`) enforce both unit tests and real unmocked subprocess CLI E2E coverage across `ubuntu-latest` and `windows-latest` under `-W error::DeprecationWarning`.
+- **Testing Framework (`90/90` Dual-OS Pytest):** Core Python modules (`mcp_lancedb.py`, `bootstrap_brain.py`, `reasoning_utils.py`, `aim_projects.py`) and all advertised CLI/GitOps/Vault entrypoints (`tests/test_v1_1_2_remediation.py`, `tests/test_v1_1_3_remediation.py`, `tests/test_v1_1_4_remediation.py`, `tests/test_issue_140_projects_multirepo.py`) enforce both unit tests and real unmocked subprocess CLI E2E coverage across `ubuntu-latest` and `windows-latest` under `-W error::DeprecationWarning`.
 - **DHH Agentic Philosophy:** The OS now runs on outcome-oriented directives. The Operator supplies the "what/why" (the fuzzy problem), and agents determine the "how" (architecture, routing). The agent acts as an automated gatekeeper during `aim promote`, ensuring TDD and architectural rules are strictly followed before hitting main.
 - **Plain-Text Ascendancy:** J.O.S.H.U.A. relies on the Unix Philosophy. All configs, wikis, and tasks must be CLI-accessible flat files (Markdown, JSON) avoiding opaque GUIs.
+
+- **A-Mail Fleet Rollout (`#181`, in progress):** Kernel + `aim-mailbox#19` + `aim-skill-library#35` + `aim-coagents#20` + public docs are landed. Functional debt is `aim-connect#319` (its WebSocket submit still runs raw tmux paste + `Escape`+`Enter`, and `/api/swarm/activity` scans chalkboard files); UI debt is `aim-office#33`; docs debt is `aim-google#21`. Private/live verticals and cron scripts are follow-ups, not mid-batch mutations.
+- **OpenCode Skill UX (discovery):** Skills are **not** slash commands. `opencode debug skill` lists IDs; invoke via `@<id>` as plain text, natural language ("use the `aim-handoff` skill"), or a custom `commands/*.md` wrapper. The library's `Slash: /aim-*` text is aspirational; no command files are installed. `handoff_pulse_generator.py` is the `./aim handoff` pulse CLI, **not** the `aim-handoff` skill.
+- **Shared Engine Drift:** The shared MCP engine is `v1.1.4` while this project is `v1.2.1`; run `./aim engine sync` (or `./aim update`) to align code. The MCP DB contract is unchanged.
+
 
 ---
 
@@ -86,7 +90,12 @@ Follow strict GitOps workflow for any future tasks:
 - **Onboarding `AGENTS.md` Protection (`#103`–`#104`):** `aim_init.provision_agents_md()` (`joshua_os/.aim_core/aim_init.py`) and `joshua_os/.aim_core/templates/default_AGENTS.md` must stay in lockstep with the root `AGENTS.md` (`test_aim_init_never_truncates_agents_md_to_stub` in `tests/test_cli.py` enforces exact equality). Never allow any onboarding or init script to overwrite `AGENTS.md` with a stub.
 - **Legacy `aim-agy_os/` Migration Sequence:** When migrating legacy `aim-agy_os/` repos to `joshua_os/`, copy the updated `joshua_os/.aim_core/config_utils.py` *before* running `./aim update` so `find_project_root()` does not walk up to `~/aim-agy_os`.
 - **Strict OS Kernel Scope & Single `aim-ecosystem` Pointer:** Keep `aim-joshua/memory-wiki/` and `HANDOFF.md` strictly scoped to the J.O.S.H.U.A. OS kernel — never ingest sibling or client repository domain lore here (each sibling repo maintains its own `memory-wiki/`). In `README.md` and release notes, point external readers to the single standardized `aim-ecosystem` hub rather than hardcoding evolving sibling repository lists.
-- **Live MCP Reader-Safe Indexing & Unmocked CLI Gate:** Never run `./aim clean --immediate` on live consumer workspaces while sibling agent sessions hold open `mcp_lancedb.py` stdio readers (use `./aim index`, which retains 5 minutes of manifests safely). All new CLI entrypoints must include real unmocked subprocess Pytest tests (mocking `subprocess.run` previously masked `health`/`clean` defects in Pass 13). **Current fleet inventory (2026-11-26):** `42` project roots carry `joshua_os/.aim_core` — `22` on `v1.1.3`, `14` on `v0.8.2` (mostly `aim-connect/agent_workspaces/*` session nodes), `3` on `v1.1.4` (this repo plus two sibling workspaces), `2` on `v1.0.7`, and `1` on `v1.0.8` (plus inactive `aim-cron-dashboard.bak`). The shared MCP engine (`~/.aim/engine`, `v1.1.4`) serves every project's own DB regardless of that project's engine version; per-project `./aim update` is still required for CLI/GitOps parity. Separately, `build_engine_venv()` (`repair_venv_shebangs()`) automatically heals stale POSIX `venv/bin` shebangs after directory moves. **Shared MCP engine (`#141`):** the server code lives once at `~/.aim/engine` (override `AIM_ENGINE_ROOT`); never register a project-local `mcp_lancedb.py` path or reintroduce an engine/other-project DB fallback. `./aim engine status|sync` manages it, `AIM_MEMORY_DB` is the only explicit DB override, and `AIM_UMBRELLA_SCAN=1` is the only cross-project read (opt-in, read-only).
+- **Live MCP Reader-Safe Indexing & Unmocked CLI Gate:** Never run `./aim clean --immediate` on live consumer workspaces while sibling agent sessions hold open `mcp_lancedb.py` stdio readers (use `./aim index`, which retains 5 minutes of manifests safely). All new CLI entrypoints must include real unmocked subprocess Pytest tests (mocking `subprocess.run` previously masked `health`/`clean` defects in Pass 13). **Current fleet inventory (2026-11-26):** `42` project roots carry `joshua_os/.aim_core` — `22` on `v1.1.3`, `14` on `v0.8.2` (mostly `aim-connect/agent_workspaces/*` session nodes), `1` on `v1.2.1` (this repo) and `2` on `v1.1.4`, `2` on `v1.0.7`, and `1` on `v1.0.8` (plus inactive `aim-cron-dashboard.bak`). The shared MCP engine (`~/.aim/engine`, `v1.1.4`) serves every project's own DB regardless of that project's engine version; per-project `./aim update` is still required for CLI/GitOps parity. Separately, `build_engine_venv()` (`repair_venv_shebangs()`) automatically heals stale POSIX `venv/bin` shebangs after directory moves. **Shared MCP engine (`#141`):** the server code lives once at `~/.aim/engine` (override `AIM_ENGINE_ROOT`); never register a project-local `mcp_lancedb.py` path or reintroduce an engine/other-project DB fallback. `./aim engine status|sync` manages it, `AIM_MEMORY_DB` is the only explicit DB override, and `AIM_UMBRELLA_SCAN=1` is the only cross-project read (opt-in, read-only).
+
+- **OpenCode Skills ≠ Slash Commands:** The TUI `/` menu lists commands, not skills. Use `opencode debug skill` to list IDs, then `@<id>` (plain text, do not pick a `.py`/`.md` file from the picker) or ask by name. `handoff_pulse_generator.py` is the `./aim handoff` pulse generator, not the `aim-handoff` skill. Slash wrappers are a pending UX fix.
+- **A-Mail E2E Is Not Complete:** `aim-connect` still dispatches through the banned raw tmux sequence until `aim-connect#319` lands; do not certify the rollout or send a final completion report before it and the other scoped issues are green.
+- **Shared Engine Version Drift:** `~/.aim/engine` is `v1.1.4` while the repo is `v1.2.1`; run `./aim engine sync` after version bumps. Do not register project-local `mcp_lancedb.py` paths.
+- **No `./aim index` While Embeddings Are Offline:** Ollama is inactive and 19 legacy fragments already have zero vectors; indexing now would create unsearchable chunks (`#156`). Re-index only after the embedding probe/guard lands.
 
 ---
 
@@ -98,13 +107,15 @@ Follow strict GitOps workflow for any future tasks:
 - `~/aim-joshua/joshua_os/.aim_core/mcp_lancedb.py`
 - `~/aim-joshua/joshua_os/.aim_core/retriever.py` & `reasoning_utils.py`
 - `~/aim-joshua/artifacts/AUDIT_ROADMAP_2026-11-26.md` (Epic `#142` audit packet: 37 tickets, evidence, sequencing, auditor prompt)
-- `~/aim-joshua/tests/` (`85/85` Pytest Coverage on Linux + Windows, `0` Warnings)
+- `~/aim-joshua/tests/` (`90/90` Pytest Coverage on Linux + Windows, `0` Warnings)
 - `~/aim-joshua/joshua_os/.aim_core/aim_cli.py` & `aim_projects.py` (CLI Router & Multi-Repo Kanban GitOps)
+- `~/.config/opencode/skills/` (global skill symlinks) + `~/aim-skill-library/vessels/opencode/manifest.txt`
+- `~/.aim/engine/` (shared MCP engine) + `$AIM_MAILBOX_DIR` (A-Mail Maildir; WSL default `/mnt/c/Users/<user>/.aim/mailbox`)
 
 ---
 
 ## 7. THE FULL PICTURE / WHAT COMES AFTER
-Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`/`#141`, `85/85` dual-OS pytest), the shared MCP engine is live locally so future engine upgrades happen once (`./aim engine sync` or `./aim update`), downstream consumers (`42` project roots: `22` v1.1.3, `14` v0.8.2, `3` v1.1.4, `2` v1.0.7, `1` v1.0.8) can upgrade via a single `./aim update` pass (which also syncs the shared engine) whenever desired, and A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.2.2`) is the sole inter-agent transport (`AGENTS.md` §8c); the fleet-wide rollout is tracked in `#181`. Primary ongoing directive is executing Epic `#142` (trust -> engine safety -> packaging/proof -> memory scaling -> CI/UX) while maintaining dual-OS CI stability and strict OS-kernel hygiene.
+Upstream `aim-joshua` is clean on `main` (`v1.2.1`, `#181` landed surface, `90/90` dual-OS pytest). The shared MCP engine is `v1.1.4` and should be synced to `v1.2.1`. A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.3.0`) is the sole transport (`AGENTS.md` §8c); the remaining rollout debt is `aim-connect#319`, `aim-office#33`, `aim-google#21`, and private/live-vertical follow-ups. `aim-auditor` holds the E2E pass. Parallel track: Epic `#142` (trust -> engine safety -> packaging/proof -> memory scaling -> CI/UX), with `#143` still approval-gated.
 
 ---
 
@@ -118,6 +129,8 @@ Upstream `aim-joshua` is clean on `main` (`v1.1.4` + `#140`/`#141`, `85/85` dual
 ---
 
 ## 9. IMMEDIATE NEXT STEPS
-1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board` to verify baseline health and the shared engine.
-2. Read Epic `#142` and the P0 list, claim the next ticket via `./aim projects in-progress <id>` -> `./aim fix <id>`, and ship via TDD + dual-OS CI.
-3. Execute `#181`: confirm `aim-mailbox#19` / `aim-skill-library#35`, update public consumer docs with redaction, file follow-ups for private/live verticals (the DND-protected live vertical stays untouched), then reply to `aim-auditor` via `amail`.
+1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board`; then `./aim engine sync` to align the shared engine to `v1.2.1`.
+2. Check A-Mail (`aim-mail inbox aim-joshua --state active`) for `aim-auditor` E2E findings. The dispatch thread is at `1/1`; open a **new** thread for any reply.
+3. Ship `aim-connect#319` (functional), then `aim-office#33` and `aim-google#21`; file the private/live-vertical follow-ups without waking the DND-protected vertical.
+4. Send the final 1-hop completion report to `aim-auditor` once `#319`/`#33`/`#21` and the vertical follow-ups are green.
+5. Resume Epic `#142` P0s: `#150` atomic engine rollback, `#154` incremental upsert, `#156` zero-vector guard, `#173` doctor/embedding probe, `#159` packaging.

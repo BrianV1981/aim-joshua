@@ -56,3 +56,10 @@ When retiring legacy pre-J.O.S.H.U.A. vessels or inactive sandboxes to reclaim h
 3. Deduplicate identical large `.engram` / Parquet artifacts via SHA256 verification + symlinks, sweep dotfile-hidden temp clones (e.g., `.aim_temp_clone`) and loose root `.tar.gz` backups (`tar -ztf` verified before cold-vault relocation), and strip rebuildable `venv/`, `.venv/`, and `node_modules/` trees from inactive archive folders.
 
 
+
+
+## A-Mail Fleet Rollout (Epic `#181`, In Progress)
+- **Landed:** `aim-joshua` kernel `v1.2.1` (`e0dc4bff`; `90/90`; Ubuntu+Windows CI green), `aim-mailbox` `v0.3.0` (`8f78f91`), `aim-skill-library` PR `#36` (`043d462`), `aim-coagents#20` (`ed5a892`), public consumer docs, and 6 specialist desk registrations (24 agents per mailbox).
+- **Open:** `aim-connect#319` (WebSocket submit still uses raw tmux paste + `Escape`+`Enter`; `/api/swarm/activity` scans chalkboard files), `aim-office#33` (UI labels), `aim-google#21` (README; WIP branch preserved), and private/live-vertical follow-ups. The DND-protected live vertical and `aim-auditor` were not touched.
+- **E2E:** `aim-auditor` holds the verification pass. Do not certify or send a final completion report until `#319`/`#33`/`#21` and the vertical follow-ups are green.
+- **Engine parity:** the shared MCP engine is `v1.1.4` while this repo is `v1.2.1`; run `./aim engine sync` after version bumps.

@@ -1,3 +1,10 @@
+## [2026-11-28] ingest | A-Mail Fleet Sweep, Auditor E2E Handoff & OpenCode Skill UX
+- `#181` kernel `v1.2.1` (`e0dc4bff`; `90/90`; Ubuntu+Windows CI green); `aim-mailbox#19` `8f78f91` (`v0.3.0`), `aim-skill-library#35` `043d462` (PR `#36`), `aim-coagents#20` `ed5a892` (§6/§7 DNA preserved). Public docs: `aim-ecosystem` `13d7a89`, `aim-browser` `fa305b3`, `aim-flight-recorder` `8821507`, `aim-calc-skill` `03a83b8`, `aim-cron-dashboard` `db91854`, `aim-memory` `08890e9`, `aim-calendar` `95afe80`, `aim-office` `8e6b8ee`; `aim-connect` local `AGENTS.md` §8c (gitignored).
+- 6 specialist desks registered in both mailboxes (24 agents each). Scoped migrations open: `aim-connect#319` (raw tmux dispatch + chalkboard feed), `aim-office#33` (UI labels), `aim-google#21` (README). Private/live verticals deferred; DND-protected live vertical untouched.
+- A-Mail status reply delivered to `aim-auditor` (msg `20261126T235452091509Z_193ce16b`, thread `thr_ddeac96cc76d`, hop `1/1`); E2E may start on the landed surface, open items not certified. No separate manifest envelope arrived; the dispatch file is the manifest.
+- OpenCode skill UX: skills are not slash commands; `opencode debug skill` lists IDs; invoke via `@<id>`/natural language or a custom command wrapper. `handoff_pulse_generator.py` is the `./aim handoff` pulse CLI, not the `aim-handoff` skill.
+- Shared engine remains `v1.1.4` while the project is `v1.2.1`; run `./aim engine sync`. `./aim index` deferred (embeddings offline, `#156`).
+
 ## [2026-11-26] ingest | A-Mail Standardized; `aim-communicate` Deprecated (Epic `#181`)
 - Kernel shipped at `ca771035` (`v1.2.0`, `90/90`): `AGENTS.md` + `default_AGENTS.md` §8c, `FLEET_ORCHESTRATION.md` §4, README matrix/bullet, non-blocking `aim doctor` A-Mail CLI/mailbox checks, and `tests/test_issue_181_amail.py`.
 - Deprecated `aim-communicate`, `tmux_send.sh`, raw `tmux send-keys`, and `aim-chalkboard`; A-Mail (`amail` / `aim-mail`, `aim-mailbox` v0.2.2) is the sole transport with `FROM`/`REPLY_TO`, `--operator-approved`, `max_hops=1`, and DND/WIP guards.
