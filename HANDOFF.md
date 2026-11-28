@@ -1,8 +1,8 @@
 # J.O.S.H.U.A. — Engineering Handoff
 
-> **Updated:** 2026-11-28T05:31:00Z
+> **Updated:** 2026-11-28T06:00:00Z
 > **Updated by:** OpenCode (deepseek-flash, session `ses_dedc690adffetv1kmeP4M0FvVV`)
-> **Priority Mission:** A-MAIL EPIC `#181` — **all scoped migrations CLOSED** (`aim-connect#319`, `aim-office#33`, `aim-google#21`); E2E completion report delivered to `aim-auditor` (new thread `thr_8833d4ec85eb`). Shared engine synced to `v1.2.1`. Next: act on auditor findings, file private/live-vertical follow-ups, then Epic `#142` P0s (`#143` still approval-gated).
+> **Priority Mission:** Epic `#142` P0s — `#156` (zero-vector guard) + `#173` (doctor embedding probe) SHIPPED on `main` (`2aac1673`, `99/99`, Ubuntu+Windows CI green). Epic `#181` scoped migrations all CLOSED; auditor E2E report sent (`thr_8833d4ec85eb`); private/live-vertical tickets filed as board Backlog (`#182`, `aim-youtube#23`, `aim-gbp#1`). Next: `#150` atomic engine rollback, `#154` incremental upsert, `#159` packaging (`#143` still approval-gated).
 > **Operator:** Brian Vasquez (`@BrianV1981` / `brianv1981@gmail.com`)
 
 ---
@@ -10,6 +10,7 @@
 ## 0. COMPLETED WORK (DO NOT REVISIT)
 | Session | Work | Status |
 |---------|------|--------|
+| 2026-11-28 P0s | Epic `#142`: `#156` zero-vector guard (offline `aim index` refuses `[0.0]*768`, exits `1`, new `--allow-lexical-only` opt-in) + `#173` doctor embedding probe (`probe_embedding_provider`, `--fix` shebang/mailbox repair, `--strict` exit codes); `2aac1673`, dual-OS smoke + gitleaks green, `99/99` pytest; board Done. | ✅ SHIPPED |
 | 2026-11-28 E2E | #181 scoped migrations completed: `aim-connect#319` CLOSED (`d84638e`, WS submit via `amail --driver tmux` Enter-only/zero Escape + `/api/swarm/activity` reads Maildir, `160/160`), `aim-office#33` CLOSED (`3b2e7d1`, UI relabel, `22/22` Vitest + `3/3` pytest), `aim-google#21` CLOSED (PR `#22`, README footer → `aim-mailbox`, all CI green, WIP `docs/ecosystem-aim-codex` untouched); shared engine synced `v1.2.1`; auditor new-thread E2E report sent (`thr_8833d4ec85eb`), original dispatch ACKed. | ✅ SHIPPED (awaiting auditor E2E) |
 | ca771035→e0dc4bff | #181 (kernel + fleet sweep, `v1.2.1`, `90/90`, Ubuntu+Windows CI green): A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.3.0`) is the sole transport; `AGENTS.md` + `default_AGENTS.md` §8c, `FLEET_ORCHESTRATION.md` §4, README, non-blocking `aim doctor` checks, `tests/test_issue_181_amail.py`. `aim-mailbox#19` (`8f78f91`), `aim-skill-library#35` (`043d462`, PR `#36`), `aim-coagents#20` (`ed5a892`, §6/§7 DNA preserved); public docs in `aim-ecosystem` / `aim-browser` / `aim-flight-recorder` / `aim-calc-skill` / `aim-cron-dashboard` / `aim-memory` / `aim-calendar` / `aim-office`; 6 specialist desks registered in both mailboxes; auditor status reply delivered. Open migrations: `aim-connect#319`, `aim-office#33`, `aim-google#21`; private/live verticals deferred. | 🚧 IN PROGRESS (E2E) |
 | 4a9a6f6a | #141 (`b9ea4f70` / `84d65321` / `4a9a6f6a`, GHA Ubuntu + Windows smoke & Gitleaks `success`, `85/85` dual-OS pytest, `0` warnings): Replaced last-writer-wins per-project MCP registration with one shared versioned engine at `~/.aim/engine` (`aim_engine.py`; dedicated venv, `VERSION`, `engine.json`, downgrade guard, `CONFIG.json` exclusion, requirements-hash venv reuse) registered across AGY/Grok/Codex/OpenCode/Claude with `registration.json` provenance. `mcp_lancedb.py` now resolves `<workspace>/joshua_os/memory_lance` strictly and fails closed with `[NO PROJECT MEMORY DB]` (removed #118 Rule 3 fallback), adds `AIM_MEMORY_DB` / `AIM_UMBRELLA_SCAN=1` escape hatches and `DB: <path>` provenance. Wired installers, `./aim update`, `./aim doctor`, TUI, and new `./aim engine status|sync`; added `tests/test_shared_engine.py`, `tests/conftest.py` engine isolation, and Windows-safe test fixes. Engine installed locally and all harnesses re-registered. | ✅ SHIPPED |
@@ -46,8 +47,8 @@ Epic `#181` scoped migrations are **complete** (`aim-connect#319`, `aim-office#3
 
 ### Execution Queue (in order)
 1. **Await/act on auditor E2E:** check `aim-mail inbox aim-joshua` for findings; fix in the owning repo via worktree, then re-report. Keep `#181` open until the auditor certifies.
-2. **Live/private follow-ups:** specialist desk + commercial vertical docs/cron scripts via tickets; never wake the DND-protected live vertical or edit `aim-auditor`.
-3. **Epic `#142` P0s (parallel):** `#150` atomic engine rollback, `#154` incremental upsert, `#156` zero-vector guard, `#173` doctor/embedding probe, `#159` packaging.
+2. **Private/live follow-ups (board Backlog):** `#182` (local specialist desks AGENTS/TOOLS/cron), `aim-youtube#23` (README/template), `aim-gbp#1` (AGENTS.md). Never wake the DND-protected live vertical or edit `aim-auditor`.
+3. **Remaining Epic `#142` P0s:** `#150` atomic engine rollback, `#154` incremental upsert, `#159` packaging (`#156`/`#173` are shipped; `#143` still approval-gated).
 ---
 
 ## 3. DETAILED ANALYSIS / BREAKDOWN
@@ -94,7 +95,7 @@ Follow strict GitOps workflow for any future tasks:
 - **OpenCode Skills ≠ Slash Commands:** The TUI `/` menu lists commands, not skills. Use `opencode debug skill` to list IDs, then `@<id>` (plain text, do not pick a `.py`/`.md` file from the picker) or ask by name. `handoff_pulse_generator.py` is the `./aim handoff` pulse generator, not the `aim-handoff` skill. Slash wrappers are a pending UX fix.
 - **A-Mail E2E Pending Auditor Sign-off:** Scoped code migrations are CLOSED and green, but `#181` stays open until `aim-auditor` certifies the E2E pass. Do not close the epic on the strength of the self-report alone.
 - **Shared Engine Sync:** `~/.aim/engine` is now `v1.2.1` (matches repo); re-run `./aim engine sync` after any version bump. Do not register project-local `mcp_lancedb.py` paths.
-- **No `./aim index` While Embeddings Are Offline:** Ollama is inactive and 19 legacy fragments already have zero vectors; indexing now would create unsearchable chunks (`#156`). Re-index only after the embedding probe/guard lands.
+- **Offline Index Is Fail-Closed Now (`#156`):** `./aim index` refuses to write zero-vector fragments when embeddings are offline and exits `1`; pass `--allow-lexical-only` only when FTS-only retrieval is acceptable. Do not "fix" the new error by disabling the guard. Re-index online (or with the opt-in) to heal the pre-existing ~19 zero-norm fragments.
 
 ---
 
@@ -114,7 +115,7 @@ Follow strict GitOps workflow for any future tasks:
 ---
 
 ## 7. THE FULL PICTURE / WHAT COMES AFTER
-Upstream `aim-joshua` is clean on `main` (`v1.2.1`, `90/90` dual-OS pytest) and the shared MCP engine is synced to `v1.2.1`. A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.3.0`) is the sole transport (`AGENTS.md` §8c); **all scoped migrations are CLOSED** (`aim-connect#319`, `aim-office#33`, `aim-google#21`), leaving only private/live-vertical follow-ups. `aim-auditor` holds the E2E pass on thread `thr_8833d4ec85eb`. Parallel track: Epic `#142` (trust -> engine safety -> packaging/proof -> memory scaling -> CI/UX), with `#143` still approval-gated.
+Upstream `aim-joshua` is clean on `main` (`v1.2.1`, `99/99` dual-OS pytest) and the shared MCP engine is synced to `v1.2.1`. A-Mail (`amail` / `aim-mail`, `aim-mailbox` `v0.3.0`) is the sole transport (`AGENTS.md` §8c); **all scoped migrations are CLOSED** (`aim-connect#319`, `aim-office#33`, `aim-google#21`), leaving only board-Backlog private/live-vertical follow-ups. `aim-auditor` holds the E2E pass on thread `thr_8833d4ec85eb`. Epic `#142` P0s `#156`/`#173` shipped, so offline indexing is now fail-closed and `aim doctor` probes the embedding provider; remaining P0s are `#150`, `#154`, `#159` (`#143` approval-gated).
 
 ---
 
@@ -128,8 +129,8 @@ Upstream `aim-joshua` is clean on `main` (`v1.2.1`, `90/90` dual-OS pytest) and 
 ---
 
 ## 9. IMMEDIATE NEXT STEPS
-1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board`; the shared engine is already synced to `v1.2.1` (re-sync only after a version bump).
+1. Run `./aim doctor && ./aim engine status && ./aim health && ./aim projects board`; the shared engine is already synced to `v1.2.1` (re-sync only after a version bump). `./aim doctor` now probes embeddings; use `--strict` for CI-grade gating and `--fix` for shebang/mailbox repair.
 2. Check A-Mail (`aim-mail inbox aim-joshua --state active`) for `aim-auditor` E2E findings on thread `thr_8833d4ec85eb`; fix any finding in the owning repo via worktree and re-report.
-3. File the private/live-vertical follow-up tickets (no DND vertical woken, no `aim-auditor` edits) and claim them via `aim projects in-progress`.
+3. Work the private/live follow-ups from the board Backlog (`#182`, `aim-youtube#23`, `aim-gbp#1`) without waking the DND vertical.
 4. Close `#181` only after `aim-auditor` certifies the E2E pass.
-5. Resume Epic `#142` P0s: `#150` atomic engine rollback, `#154` incremental upsert, `#156` zero-vector guard, `#173` doctor/embedding probe, `#159` packaging.
+5. Continue Epic `#142` P0s: `#150` atomic engine rollback, `#154` incremental upsert, `#159` packaging (`#143` approval-gated).
