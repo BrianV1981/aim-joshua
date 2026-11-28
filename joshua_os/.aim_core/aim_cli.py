@@ -120,12 +120,21 @@ def cmd_index(args):
     cmd_args = []
     if getattr(args, "dir", None):
         cmd_args.extend(["--dir", args.dir])
+    if getattr(args, "allow_lexical_only", False):
+        cmd_args.append("--allow-lexical-only")
     run_script(os.path.join(AIM_CORE_DIR, "bootstrap_brain.py"), cmd_args)
 
 
 def cmd_doctor(args):
     """Dispatches to aim_doctor.py to validate environment dependencies."""
-    run_script(os.path.join(AIM_CORE_DIR, "aim_doctor.py"), [])
+    doctor_args = []
+    if getattr(args, "fix", False):
+        doctor_args.append("--fix")
+    if getattr(args, "strict", False):
+        doctor_args.append("--strict")
+    if getattr(args, "timeout", None) is not None:
+        doctor_args.extend(["--timeout", str(args.timeout)])
+    run_script(os.path.join(AIM_CORE_DIR, "aim_doctor.py"), doctor_args)
     try:
         import aim_engine
 
@@ -1232,7 +1241,10 @@ def build_parser() -> argparse.ArgumentParser:
     update_parser.add_argument("--ref", type=str, default=None, help="Optional Git tag or branch ref (defaults to latest release)")
     update_parser.add_argument("--skip-deps", action="store_true", help="Skip Python venv dependency sync")
 
-    subparsers.add_parser("doctor", help="Validate Python runtime and core package dependencies")
+    doctor_parser = subparsers.add_parser("doctor", help="Validate Python runtime and core package dependencies")
+    doctor_parser.add_argument("--fix", action="store_true", help="Repair venv shebangs and missing managed directories")
+    doctor_parser.add_argument("--strict", action="store_true", help="Exit non-zero on warnings (e.g. offline embeddings)")
+    doctor_parser.add_argument("--timeout", type=float, default=None, help="Embedding probe timeout in seconds")
     subparsers.add_parser("health", help="Check LanceDB, session history DB, and Memory Wiki health")
 
     engine_parser = subparsers.add_parser(
@@ -1274,6 +1286,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     index_parser = subparsers.add_parser("index", help="Index AGENTS.md, memory-wiki/, and docs into LanceDB")
     index_parser.add_argument("--dir", type=str, help="Additional custom directory to ingest")
+    index_parser.add_argument(
+        "--allow-lexical-only",
+        action="store_true",
+        help="Index for FTS-only search even when embeddings are offline (writes zero vectors)",
+    )
 
     handoff_parser = subparsers.add_parser("handoff", aliases=["pulse"], help="Generate session flight record pulse")
     handoff_parser.add_argument("--session-id", default=None, help="Explicit AGY conversation UUID")

@@ -102,9 +102,19 @@ def compute_doc_session_id(file_path, frag_type, *, base_dir=None, project_root=
     return f"{prefix}-{rel_key}", rel_key
 
 
-def bootstrap_foundation(target_dir=None, *, db_path=None, seed_default_lance=False):
+def bootstrap_foundation(target_dir=None, *, db_path=None, seed_default_lance=False, allow_lexical_only=False):
     embeddings_active = False if seed_default_lance else verify_embedding_engine()
+    # Issue #156: never write zero-vector fragments from an offline index run.
+    # Seed assets (default_lance) are the only intentional lexical-only build.
+    lexical_only = allow_lexical_only or seed_default_lance
+    zero_stats = {"zero_skipped": 0}
     print("\n--- A.I.M. BRAIN BOOTSTRAP ---")
+    if not embeddings_active and not lexical_only:
+        print(
+            "[WARNING] Embedding engine offline — refusing to write zero-vector fragments. "
+            "Start your embedding provider, or pass --allow-lexical-only for FTS-only indexing.",
+            file=sys.stderr,
+        )
 
     if seed_default_lance:
         default_dir = db_path or os.path.join(AIM_ROOT, "assets", "default_lance")
@@ -138,6 +148,8 @@ def bootstrap_foundation(target_dir=None, *, db_path=None, seed_default_lance=Fa
                 collector=pending_fragments,
                 base_dir=target_dir,
                 existing_vectors=existing_vectors,
+                allow_lexical_only=lexical_only,
+                stats=zero_stats,
             )
 
         if pending_fragments:
@@ -179,6 +191,8 @@ def bootstrap_foundation(target_dir=None, *, db_path=None, seed_default_lance=Fa
                     use_embeddings=embeddings_active,
                     collector=pending_fragments,
                     existing_vectors=existing_vectors,
+                    allow_lexical_only=lexical_only,
+                    stats=zero_stats,
                 )
 
         print("[2/2] Melting down Foundry materials into Engrams...")
@@ -195,6 +209,8 @@ def bootstrap_foundation(target_dir=None, *, db_path=None, seed_default_lance=Fa
                             use_embeddings=embeddings_active,
                             collector=pending_fragments,
                             existing_vectors=existing_vectors,
+                            allow_lexical_only=lexical_only,
+                            stats=zero_stats,
                         )
 
         def _full_refresh_purge(row, incoming):
@@ -234,6 +250,19 @@ def bootstrap_foundation(target_dir=None, *, db_path=None, seed_default_lance=Fa
     print(f"      -> New Fragments:   {new_fragments}")
     print(f"      -> Total Brain Size: {total_in_db} fragments")
 
+    if zero_stats.get("zero_skipped") and not lexical_only:
+        print(
+            f"\n[ERROR] Refused to write {zero_stats['zero_skipped']} zero-vector fragment(s): "
+            "the embedding provider is offline.",
+            file=sys.stderr,
+        )
+        print(
+            "        Start your embedding provider and re-run './aim index', "
+            "or pass --allow-lexical-only for FTS-only indexing.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
 
 def index_file(
     backend,
@@ -244,6 +273,8 @@ def index_file(
     collector=None,
     base_dir=None,
     existing_vectors=None,
+    allow_lexical_only=False,
+    stats=None,
 ):
     filename = os.path.basename(file_path)
     try:
@@ -278,6 +309,17 @@ def index_file(
             else:
                 vec = None
 
+            # Issue #156: never persist zero-vector fragments. Offline runs that
+            # would have written [0.0]*768 now skip the chunk and fail loudly,
+            # unless the caller explicitly opts into lexical-only indexing.
+            if not _is_nonzero_vector(vec):
+                if allow_lexical_only:
+                    vec = [0.0] * 768
+                else:
+                    if stats is not None:
+                        stats["zero_skipped"] = stats.get("zero_skipped", 0) + 1
+                    continue
+
             fragments.append({
                 "session_id": session_id,
                 "type": frag_type,
@@ -293,7 +335,7 @@ def index_file(
                     }
                 ),
                 "source_db": rel_key,
-                "vector": vec if vec and len(vec) == 768 else ([0.0] * 768),
+                "vector": [float(x) for x in vec],
             })
 
         if fragments:
@@ -320,5 +362,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Rebuild joshua_os/assets/default_lance from universal OS docs",
     )
+    parser.add_argument(
+        "--allow-lexical-only",
+        action="store_true",
+        help="Allow FTS-only indexing with zero-vector fragments when embeddings are offline",
+    )
     args = parser.parse_args()
-    bootstrap_foundation(target_dir=args.dir, seed_default_lance=args.seed_default_lance)
+    bootstrap_foundation(
+        target_dir=args.dir,
+        seed_default_lance=args.seed_default_lance,
+        allow_lexical_only=args.allow_lexical_only,
+    )

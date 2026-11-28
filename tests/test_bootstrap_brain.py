@@ -114,12 +114,12 @@ def test_bootstrap_foundation_idempotent_two_runs_and_no_basename_collision(tmp_
     monkeypatch.setattr(bootstrap_brain, "AIM_ROOT", str(os_root))
     monkeypatch.setattr(bootstrap_brain, "verify_embedding_engine", lambda: False)
 
-    bootstrap_brain.bootstrap_foundation(db_path=str(db_dir))
+    bootstrap_brain.bootstrap_foundation(db_path=str(db_dir), allow_lexical_only=True)
     rows_after_run1 = vb.get_table().count_rows()
     assert rows_after_run1 == 6  # 1 session_history + 5 distinct markdown files
 
     # Second run must NOT append duplicate rows
-    bootstrap_brain.bootstrap_foundation(db_path=str(db_dir))
+    bootstrap_brain.bootstrap_foundation(db_path=str(db_dir), allow_lexical_only=True)
     rows_after_run2 = vb.get_table().count_rows()
     assert rows_after_run2 == rows_after_run1
 
@@ -145,11 +145,11 @@ def test_bootstrap_foundation_idempotent_two_runs_and_no_basename_collision(tmp_
     (custom_docs / "index.md").write_text("# Custom Docs Root\nCustomDocsRootToken\n", encoding="utf-8")
     (custom_docs / "nested" / "index.md").write_text("# Custom Docs Nested\nCustomDocsNestedToken\n", encoding="utf-8")
 
-    bootstrap_brain.bootstrap_foundation(target_dir=str(custom_docs), db_path=str(db_dir))
+    bootstrap_brain.bootstrap_foundation(target_dir=str(custom_docs), db_path=str(db_dir), allow_lexical_only=True)
     rows_custom_1 = vb.get_table().count_rows()
     assert rows_custom_1 == rows_after_run2 + 2
 
-    bootstrap_brain.bootstrap_foundation(target_dir=str(custom_docs), db_path=str(db_dir))
+    bootstrap_brain.bootstrap_foundation(target_dir=str(custom_docs), db_path=str(db_dir), allow_lexical_only=True)
     rows_custom_2 = vb.get_table().count_rows()
     assert rows_custom_2 == rows_custom_1
 
